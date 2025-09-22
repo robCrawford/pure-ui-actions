@@ -12,30 +12,30 @@ const { state, next } = action("Increment", { step: 1 });
 const { perform, success, failure } = task("ValidateCount", { count: 0 });
 const { name, data } = success({ text: "Test" });
 */
-import { Context, Dict, Next } from "./jetix";
+import { Context, Next } from "./jetix";
 
 type ComponentTestApi = {
   config: {
     state?: Function;
     init?: Next;
-    actions?: Dict;
-    tasks?: Dict;
+    actions?: Record<string, unknown>;
+    tasks?: Record<string, unknown>;
     view: Function;
   };
-  initialState: Dict;
-  action: <S>(name: string, data?: {}) => { state: S; next?: NextData | NextData[] };
+  initialState: Record<string, unknown>;
+  action: <TState>(name: string, data?: {}) => { state: TState; next?: NextData | NextData[] };
   task: (name: string, data?: {}) => TestTaskSpec;
 };
 
 export type NextData = {
   name: string;
-  data?: Dict;
+  data?: Record<string, unknown>;
 };
 
-type TestTaskSpec<P = Dict, S = Dict, RS = Dict> = {
+type TestTaskSpec<TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = {
   perform: () => Promise<{}> | void;
-  success?: (result?: {}, ctx?: Context<P, S, RS>) => NextData | NextData[];
-  failure?: (error?: {}, ctx?: Context<P, S, RS>) => NextData | NextData[];
+  success?: (result?: {}, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[];
+  failure?: (error?: {}, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[];
 };
 
 // Returns next action/task inputs as data
@@ -59,7 +59,7 @@ export function testComponent(component: { getConfig: Function }, props?: object
     initialState,
 
     // Run an action
-    action<S>(name: string, data?: {}): { state: S; next?: NextData } {
+    action<TState>(name: string, data?: {}): { state: TState; next?: NextData } {
       // Returns any next operations as data
       return config.actions[name](data, { props, state: initialState });
     },

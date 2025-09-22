@@ -6,7 +6,8 @@
   "types": "dist/jetix.d.ts",
   "scripts": {
     "build": "rm -rf ./dist && tsc",
-    "test": "jest"
+    "test": "jest",
+    "ts:check": "tsc --noEmit"
   },
   "author": "Rob Crawford",
   "repository": {
@@ -27,7 +28,7 @@
     "eslint": "^6.8.0",
     "jest": "^25.2.4",
     "ts-jest": "^25.3.0",
-    "typescript": "^3.8.3"
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "hyperscript-helpers": "^3.0.3",
