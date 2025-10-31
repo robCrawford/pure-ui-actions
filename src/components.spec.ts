@@ -206,22 +206,22 @@ describe("Jetix components", () => {
 
   it("should throw when state is mutated", () => {
     expect(() => childAction("Mutate", { k: 'state' })(testKey))
-      .toThrowError("Cannot assign to read only property 'count' of object");
+      .toThrow("Cannot assign to read only property 'count' of object");
   });
 
   it("should throw when props is mutated", () => {
     expect(() => childAction("Mutate", { k: 'props' })(testKey))
-      .toThrowError("Cannot assign to read only property 'test' of object");
+      .toThrow("Cannot assign to read only property 'test' of object");
   });
 
   it("should throw when a duplicate id is found", () => {
     expect(() => parentAction("Increment", { step: 1000 })(testKey))
-      .toThrowError('Component "parent" must have a unique id!');
+      .toThrow('Component "parent" must have a unique id!');
   });
 
   it("should throw when an action is called manually", () => {
     expect(() => parentAction("Increment", { step: 1 })())
-      .toThrowError('#parent "Increment" cannot be invoked manually');
+      .toThrow('#parent "Increment" cannot be invoked manually');
   });
 
   it("should allow action calls with a DOM event input", () => {
@@ -231,7 +231,7 @@ describe("Jetix components", () => {
 
   it("should throw when a task is called manually", () => {
     expect(() => parentTask("Validate", { count: 1 })())
-      .toThrowError('#parent "Validate" cannot be invoked manually');
+      .toThrow('#parent "Validate" cannot be invoked manually');
   });
 
   it("should allow task calls with a DOM event input", () => {

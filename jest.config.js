@@ -1,13 +1,33 @@
 module.exports = {
-  "testMatch": [
-    "<rootDir>/src/*.spec.ts"
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  testMatch: [
+    '<rootDir>/src/*.spec.ts'
   ],
-  "transform": {
-    "^.+\\.tsx?$": "ts-jest"
+  extensionsToTreatAsEsm: ['.ts'],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1'
   },
-  globals: {
-    'ts-jest': {
-      diagnostics: false
-    }
-  }
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+        diagnostics: false
+      }
+    ],
+    '^.+\\.jsx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+        diagnostics: false,
+        tsconfig: {
+          allowJs: true
+        }
+      }
+    ]
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!snabbdom)'
+  ]
 }

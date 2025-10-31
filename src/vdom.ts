@@ -2,17 +2,12 @@
 A wrapper around `https://github.com/snabbdom/snabbdom`
 with html functions from `https://github.com/ohanhi/hyperscript-helpers`
 */
-import { init, h } from "snabbdom";
-import sClass from "snabbdom/modules/class";
-import sAttr from "snabbdom/modules/attributes";
-import sProps from "snabbdom/modules/props";
-import sEvents from "snabbdom/modules/eventlisteners";
+import { init, h, classModule, attributesModule, propsModule, eventListenersModule } from "snabbdom";
 import hyperscriptHelpers from 'hyperscript-helpers';
-import { VNode } from "snabbdom/vnode";
-import { Hooks } from "snabbdom/hooks";
-export { VNode };
+import type { VNode, Hooks } from "snabbdom";
+export type { VNode };
 
-export const patch = init([ sClass, sAttr, sProps, sEvents ]);
+export const patch = init([ classModule, attributesModule, propsModule, eventListenersModule ]);
 
 export const html = hyperscriptHelpers(h);
 
