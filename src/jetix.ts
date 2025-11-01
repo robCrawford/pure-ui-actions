@@ -348,6 +348,11 @@ export function mount<TActions, TProps>({ app, props, init }: {
   }
 }
 
+export function withKey(key: string, vnode: VNode): VNode {
+  vnode.key = key;
+  return vnode;
+}
+
 function isDomEvent(e?: Record<string, unknown>): boolean {
   return Boolean(e && "eventPhase" in e);
 }

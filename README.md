@@ -195,3 +195,35 @@ describe("App", () => {
 
 });
 ```
+
+## Efficient List Rendering
+
+Use `withKey` to add unique identifiers to list items for efficient updates
+
+```JavaScript
+import { component, html, withKey } from "jetix";
+const { div, ul, li } = html;
+
+export default component(() => ({
+  state: () => ({
+    items: [
+      { id: '1', name: 'Alice' },
+      { id: '2', name: 'Bob' },
+      { id: '3', name: 'Charlie' }
+    ]
+  }),
+
+  view(id, { state }) {
+    return div(`#${id}`, [
+      ul([
+        // Keys help the VDOM library efficiently track changes
+        ...state.items.map(item =>
+          withKey(item.id, li(item.name))
+        )
+      ])
+    ]);
+  }
+}));
+```
+
+Keys are essential when items can be reordered, added, or removed

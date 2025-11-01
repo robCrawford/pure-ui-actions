@@ -1,4 +1,4 @@
-import { renderComponent, _setTestKey, html, GetActionThunk, VNode, Context } from "./jetix";
+import { renderComponent, withKey, _setTestKey, html, GetActionThunk, VNode, Context } from "./jetix";
 import * as vdom from "./vdom";
 const { div } = html;
 
@@ -320,5 +320,69 @@ describe("Jetix", () => {
     console.log('Completed ' + numActions + ' actions with '
     + patchCount + ' patch' + (patchCount === 1 ? '' : 'es'));
   }
+
+  describe("withKey", () => {
+    it("should add a key property to a VNode", () => {
+      const vnode = div("test");
+      const keyedVnode = withKey("unique-id", vnode);
+
+      expect(keyedVnode.key).toBe("unique-id");
+      expect(keyedVnode).toBe(vnode); // Should mutate and return the same VNode
+    });
+
+    it("should support numeric keys", () => {
+      const vnode = div("test");
+      const keyedVnode = withKey(123, vnode);
+
+      expect(keyedVnode.key).toBe(123);
+    });
+
+    it("should work with component VNodes", () => {
+      const component = renderComponent(getId(), () => ({
+        state: () => ({ count: 0 }),
+        view: (id: string): VNode => div(`#${id}`, "Component")
+      }));
+
+      const keyedComponent = withKey("comp-1", component);
+      expect(keyedComponent.key).toBe("comp-1");
+    });
+
+    it("should work with list rendering", () => {
+      const items = [
+        { id: 1, name: "Item 1" },
+        { id: 2, name: "Item 2" },
+        { id: 3, name: "Item 3" }
+      ];
+
+      const vnode = renderComponent(getId(), () => {
+        return {
+          state: () => ({ items }),
+          view: (id: string, { state }: Context<any, any, any>): VNode => {
+            return div(`#${id}`, [
+              ...state.items.map((item: typeof items[0]) =>
+                withKey(item.id, div(`.item-${item.id}`, item.name))
+              )
+            ]);
+          }
+        };
+      });
+
+      // Verify that children have keys
+      const children = vnode.children as VNode[];
+      expect(children[0].key).toBe(1);
+      expect(children[1].key).toBe(2);
+      expect(children[2].key).toBe(3);
+    });
+
+    it("should preserve keys through component renders", () => {
+      const vnode = div("test content");
+      withKey("my-key", vnode);
+
+      expect(vnode.key).toBe("my-key");
+
+      // Keys should persist on the VNode
+      expect(vnode.key).toBe("my-key");
+    });
+  });
 
 });
