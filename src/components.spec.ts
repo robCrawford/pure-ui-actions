@@ -27,7 +27,7 @@ describe("Jetix components", () => {
     (err, { props, state, rootState }) => parentAction("Decrement", { step: err })
   );
   const parentTasks = {
-    Validate: ({ count }) => {
+    Validate: (data: { count: number } | undefined) => {
       return {
         perform: () => validatePerform(),
         success: validateSuccess,
@@ -36,13 +36,13 @@ describe("Jetix components", () => {
     }
   };
 
-  const jestReset = () => {
+  const jestReset = (): void => {
     patchSpy.mockClear();
     renderSpy.mockClear();
     validateSuccess.mockClear();
     validateFailure.mockClear();
     Object.keys(parentActions).forEach(
-      (k) => parentActions[k].mockClear()
+      (k) => (parentActions as Record<string, jest.Mock>)[k].mockClear()
     );
   };
 
@@ -65,9 +65,19 @@ describe("Jetix components", () => {
       return {
         state: () => ({ count: 0 }),
         actions: {
-          Increment: ({ step }, { state }) => ({ state: { ...state, count: state.count + step } }),
-          NoOp: (_, { state }) => ({ state }),
-          Mutate: ({ k }, { state, props }) => {
+          Increment: (data, ctx) => {
+            const step = data?.step ?? 0;
+            const state = ctx?.state ?? { count: 0 };
+            return { state: { ...state, count: state.count + step } };
+          },
+          NoOp: (_, ctx) => {
+            const state = ctx?.state ?? { count: 0 };
+            return { state };
+          },
+          Mutate: (data, ctx) => {
+            const k = data?.k;
+            const state = ctx?.state ?? { count: 0 };
+            const props = ctx?.props ?? { test: "" };
             if (k === 'state') state.count = 999;
             if (k === 'props') props.test = '999';
             return { state };
@@ -94,16 +104,19 @@ describe("Jetix components", () => {
         state: () => ({ count: 0 }),
         actions: parentActions,
         tasks: parentTasks,
-        view: (id, { state }) => div(`#${id}`,
-        state.count < 100
-          // < 100 renders child component
-          ? child(`#child`, { test: "x" })
-          : state.count < 1000
-            // 100 to 999 renders with no child component
-            ? "-"
-            // 1000+ renders child component but with a duplicate id
-            : child(`#parent`, { test: "x" })
-        )
+        view: (id, { state }) => {
+          const count = state?.count ?? 0;
+          return div(`#${id}`,
+            count < 100
+              // < 100 renders child component
+              ? child(`#child`, { test: "x" })
+              : count < 1000
+                // 100 to 999 renders with no child component
+                ? "-"
+                // 1000+ renders child component but with a duplicate id
+                : child(`#parent`, { test: "x" })
+          );
+        }
       };
     });
 
@@ -119,8 +132,15 @@ describe("Jetix components", () => {
       return {
         state: () => ({ theme: "a" }),
         actions: {
-          SetTheme: ({ theme }, { state }) => ({ state: { ...state, theme }}),
-          NoOp: (_, { state }) => ({ state })
+          SetTheme: (data, ctx) => {
+            const theme = data?.theme ?? "";
+            const state = ctx?.state ?? { theme: "" };
+            return { state: { ...state, theme } };
+          },
+          NoOp: (_, ctx) => {
+            const state = ctx?.state ?? { theme: "" };
+            return { state };
+          }
         },
         view: id => div(`#${id}`, [ parent(`#parent`, { test: "x" }) ])
       }
@@ -235,7 +255,9 @@ describe("Jetix components", () => {
   });
 
   it("should allow task calls with a DOM event input", () => {
-    expect(() => parentTask("Validate", { count: 1 })({ eventPhase: 1 }))
+    const mockEvent = { eventPhase: 1, target: null, type: 'test' };
+
+    expect(() => parentTask("Validate", { count: 1 })(mockEvent))
       .not.toThrow();
   });
 

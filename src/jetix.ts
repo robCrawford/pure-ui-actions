@@ -11,8 +11,8 @@ enum ThunkType {
 };
 
 export type ActionThunk = {
-  (data?: Record<string, unknown>): void | ActionThunk; // Returns another `ActionThunk` when currying
-  type: ThunkType;
+  (data?: Record<string, unknown> | Event): void | ActionThunk; // Returns another `ActionThunk` when currying
+  type: ThunkType.Action;
 }
 
 export type GetActionThunk<TActions> = <TKey extends keyof TActions>(actionName: TKey, data?: TActions[TKey]) => ActionThunk;
@@ -20,9 +20,10 @@ export type GetActionThunk<TActions> = <TKey extends keyof TActions>(actionName:
 export type RunAction<TActions> = (actionName: keyof TActions, data?: ValueOf<TActions>) => void;
 
 export type TaskThunk = {
-  (data?: Record<string, unknown>): Promise<Next | void> | void;
-  type: ThunkType;
+  (data?: Record<string, unknown> | Event): Promise<Next | void> | void;
+  type: ThunkType.Task;
   taskName: string;
+  taskData?: unknown;
 };
 
 export type GetTaskThunk<TTasks> = (taskName: keyof TTasks, data?: ValueOf<TTasks>) => TaskThunk;
@@ -141,9 +142,12 @@ function createActionThunk(componentId: string, actionName: string, data: unknow
     return cached;
   }
 
-  const actionThunk = (thunkInput?: Record<string, unknown> | object): void | ActionThunk => {
+  const actionThunk: {
+    (thunkInput?: Record<string, unknown> | Event): void | ActionThunk;
+    type: ThunkType.Action;
+  } = (thunkInput) => {
     // Defer instance lookup until thunk is actually invoked
-    if (isDomEvent(thunkInput as Record<string, unknown>)) {
+    if (isDomEvent(thunkInput)) {
       const instance = componentRegistry.get(componentId);
       if (!instance) {
         throw Error(`Component ${componentId} not found in registry`);
@@ -180,7 +184,12 @@ function createTaskThunk(componentId: string, taskName: string, data: unknown): 
     return cached;
   }
 
-  const taskThunk = (thunkInput?: Record<string, unknown>): Promise<Next | void> | void => {
+  const taskThunk: {
+    (thunkInput?: Record<string, unknown> | Event): Promise<Next | void> | void;
+    type: ThunkType.Task;
+    taskName: string;
+    taskData?: unknown;
+  } = (thunkInput) => {
     // Defer instance lookup until thunk is actually invoked
     if (isDomEvent(thunkInput) || thunkInput === internalKey) {
       const instance = componentRegistry.get(componentId);
@@ -188,9 +197,7 @@ function createTaskThunk(componentId: string, taskName: string, data: unknown): 
         throw Error(`Component ${componentId} not found in registry`);
       }
       const result = performTask(instance, taskName, data);
-      return isPromise(result)
-        ? result.then((next?: Next): void => runNext(instance, next))
-        : result;
+      return result.then((next?: Next): void => runNext(instance, next));
     }
     else {
       log.manualError(componentId, taskName);
@@ -199,6 +206,7 @@ function createTaskThunk(componentId: string, taskName: string, data: unknown): 
 
   taskThunk.type = ThunkType.Task;
   taskThunk.taskName = String(taskName);
+  taskThunk.taskData = data;
   taskThunkCache.set(cacheKey, taskThunk);
   return taskThunk;
 }
@@ -232,7 +240,9 @@ function executeAction(
     rootStateChanged = currStateChanged;
   }
 
-  log.updateEnd(currStateChanged && instance.state as Record<string, unknown>);
+  if (currStateChanged && instance.state) {
+    log.updateEnd(instance.state);
+  }
   runNext(instance, next, actionName);
 }
 
@@ -240,7 +250,7 @@ function performTask(
   instance: ComponentInstance,
   taskName: string,
   data: unknown
-): Promise<Next> | void {
+): Promise<Next | undefined> {
   const { config, state, props, id } = instance;
   const tasks = config.tasks;
 
@@ -261,11 +271,11 @@ function performTask(
     if (isPromise(output)) {
       renderComponentInstance(instance); // Render pending state updates
       return output
-        .then((result: unknown): Next => {
+        .then((result: unknown): Next | undefined => {
           log.taskSuccess(id, String(taskName));
           return runSuccess(result);
         })
-        .catch((err: Error): Next => {
+        .catch((err: Error): Next | undefined => {
           log.taskFailure(id, String(taskName), err);
           return runFailure(err);
         });
@@ -300,7 +310,7 @@ function runNext(instance: ComponentInstance, next: Next | undefined, prevTag?: 
 }
 
 // Render function
-function renderComponentInstance(instance: ComponentInstance): VNode | void {
+function renderComponentInstance(instance: ComponentInstance): VNode | undefined {
   if (!noRender) {
     if (rootStateChanged) {
       const rootInstance = componentRegistry.get(appId);
@@ -324,8 +334,8 @@ function renderComponentInstance(instance: ComponentInstance): VNode | void {
       });
       log.render(instance.id, instance.props);
 
-      if (isRenderRoot) {
-        patch(prevVNode as VNode, instance.vnode);
+      if (isRenderRoot && prevVNode) {
+        patch(prevVNode, instance.vnode);
         log.patch();
         stateChanged = false;
         renderRootId = undefined;
@@ -391,7 +401,10 @@ export function renderComponent<TComponent extends Component>(
   if (existing) {
     existing.props = props;
     const result = renderComponentInstance(existing);
-    return result as VNode;
+    if (!result) {
+      throw Error(`Component ${id} failed to render`);
+    }
+    return result;
   }
 
   const action: GetActionThunk<TComponent['Actions']> = (actionName, data): ActionThunk => {
@@ -436,7 +449,16 @@ export function renderComponent<TComponent extends Component>(
   // Handle init
   if (config.init) {
     noRender++;
-    runNext(instance, config.init);
+
+    if (isThunk(config.init) && config.init.type === ThunkType.Task) {
+      const taskThunk = config.init;
+      const result = performTask(instance, taskThunk.taskName, taskThunk.taskData);
+
+      result.then((next?: Next): void => runNext(instance, next));
+    } else {
+      runNext(instance, config.init);
+    }
+
     noRender--;
   }
   else {
@@ -468,10 +490,11 @@ export function mount<TActions, TProps>({ app, props, init }: {
 }): void {
   resetAppState();
   // Mount the top-level app component
-  patch(
-    document.getElementById(appId) as Element,
-    app(appId, props)
-  );
+  const appElement = document.getElementById(appId);
+  if (!appElement) {
+    throw Error(`Element with id "${appId}" not found`);
+  }
+  patch(appElement, app(appId, props));
   log.patch();
   publish("patch");
 
@@ -495,8 +518,8 @@ export function withKey(key: string, vnode: VNode): VNode {
   return vnode;
 }
 
-function isDomEvent(e?: Record<string, unknown>): boolean {
-  return Boolean(e && "eventPhase" in e);
+function isDomEvent(e?: Record<string, unknown> | Event): boolean {
+  return Boolean(e && "eventPhase" in e && "target" in e && "type" in e);
 }
 
 function setRenderRef(instance: ComponentInstance): void {
