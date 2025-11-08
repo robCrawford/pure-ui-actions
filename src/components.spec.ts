@@ -1,4 +1,4 @@
-import { _setTestKey, component, html, mount, renderRefs, prevProps, renderIds } from "../src/jetix";
+import { _setTestKey, component, html, mount, getComponentRegistry } from "../src/jetix";
 import { log } from "../src/jetixLog";
 import * as vdom from "../src/vdom";
 const { div } = html;
@@ -10,11 +10,11 @@ const ctx = { rootState: { theme: "a" }, props: { test: "x" }, state: { count: 0
 
 
 describe("Jetix components", () => {
-  let rootAction;
-  let parentAction;
-  let parentTask;
-  let childAction;
-  let validatePerform;
+  let rootAction: Function = () => {};
+  let parentAction: Function = () => {};
+  let parentTask: Function = () => {};
+  let childAction: Function = () => {};
+  let validatePerform: Function = () => {};
 
   const parentActions = {
     Increment: jest.fn( ({ step }, { state }) => ({ state: { ...state, count: state.count + step } }) ),
@@ -240,11 +240,22 @@ describe("Jetix components", () => {
   });
 
   it("should remove references when an existing component is not rendered", () => {
-    const testRefs = (expectedIds) => {
-      const refIds = Object.keys(renderRefs);
-      expect(refIds).toEqual(expectedIds);
-      expect(Object.keys(prevProps)).toEqual(refIds);
-      expect(renderIds).toEqual({});
+    const testRefs = (expectedIds: string[]) => {
+      const registry = getComponentRegistry();
+      const refIds = Array.from(registry.keys()).sort();
+      expect(refIds).toEqual(expectedIds.sort());
+
+      // Verify all components have prevProps set
+      refIds.forEach(id => {
+        const instance = registry.get(id);
+        expect(instance?.prevProps).toBeDefined();
+      });
+
+      // Verify no components are marked as inCurrentRender after render completes
+      refIds.forEach(id => {
+        const instance = registry.get(id);
+        expect(instance?.inCurrentRender).toBe(false);
+      });
     }
 
     parentAction("Increment", { step: 1 })(testKey);

@@ -80,7 +80,7 @@ export default component<Component>(
     },
 
     tasks: {
-      ValidateCount: ({ count }): Task<Props, State> => {
+      ValidateCount: ({ count }) => {
         return {
           perform: (): Promise<{ text: string }> => validateCount(count),
           success: (result: { text: string }, { props, state, rootState }): Next => {

@@ -5,9 +5,9 @@
   "main": "dist/jetix.js",
   "types": "dist/jetix.d.ts",
   "scripts": {
-    "build": "rm -rf ./dist && tsc",
-    "test": "jest",
-    "ts:check": "tsc --noEmit"
+    "ts:check": "tsc --noEmit",
+    "ts:build": "rm -rf ./dist && tsc",
+    "test": "jest"
   },
   "author": "Rob Crawford",
   "repository": {

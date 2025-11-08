@@ -40,11 +40,11 @@ export type ActionHandler<TData = Record<string, unknown>, TProps = Record<strin
   ctx?: Context<TProps, TState, TRootState>
 ) => { state: TState; next?: Next };
 
-type TaskHandler<TData = Record<string, unknown>, TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = (data?: TData) => Task<TProps, TState, TRootState>;
+type TaskHandler<TData = Record<string, unknown>, TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = (data?: TData) => Task<any, TProps, TState, TRootState>;
 
-export type Task<TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = {
-  perform: () => Promise<unknown> | unknown;
-  success?: (result: unknown, ctx: Context<TProps, TState, TRootState>) => Next;
+export type Task<TResult = unknown, TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = {
+  perform: () => Promise<TResult | void> | TResult | void;
+  success?: (result: TResult, ctx: Context<TProps, TState, TRootState>) => Next;
   failure?: (error: unknown, ctx: Context<TProps, TState, TRootState>) => Next;
 };
 
@@ -58,7 +58,7 @@ type Component = {
   RootTasks?: Record<string, unknown>;
 };
 
-export type Config<TComponent extends Component = Record<string, unknown>> = {
+export type Config<TComponent extends Component = Component> = {
   state?: (props?: TComponent['Props']) => TComponent['State'];
   init?: Next;
   actions?: {[TKey in keyof TComponent['Actions']]: ActionHandler<TComponent['Actions'][TKey], TComponent['Props'], TComponent['State'], TComponent['RootState']>};
@@ -78,20 +78,42 @@ export type GetConfig<TComponent extends Component> = (fns: {
 
 type RenderFn<TProps> = (props?: TProps) => VNode | void;
 
+// Internal type for component registry
+type ComponentInstance = {
+  id: string;
+  config: Config<any>;
+  state: Record<string, unknown> | undefined;
+  props: Record<string, unknown> | undefined;
+  prevProps: Record<string, unknown> | undefined;
+  render: RenderFn<Record<string, unknown>>;
+  vnode: VNode | undefined;
+  isRoot: boolean;
+  inCurrentRender: boolean;
+};
 
-// App state
-export let renderRefs: { [id: string]: RenderFn<Record<string, unknown>> } = {};
-export let prevProps: Record<string, Record<string, unknown> | undefined> = {};
-export let renderIds: Record<string, boolean> = {};
+const componentRegistry = new Map<string, ComponentInstance>();
+
+// Thunk caches for memoization
+const actionThunkCache = new Map<string, ActionThunk>();
+const taskThunkCache = new Map<string, TaskThunk>();
+
+// Export for testing
+export const getComponentRegistry = (): Map<string, ComponentInstance> => componentRegistry;
+
+let rootAction: GetActionThunk<any> | undefined;
+let rootTask: GetTaskThunk<any> | undefined;
 let rootState: Record<string, unknown> | undefined;
 let renderRootId: string | undefined;
 
 function resetAppState(): void {
-  renderRefs = {};
-  prevProps = {};
-  renderIds = {};
+  componentRegistry.clear();
+  actionThunkCache.clear();
+  taskThunkCache.clear();
+
   rootState = undefined;
   renderRootId = undefined;
+  rootAction = undefined;
+  rootTask = undefined;
 }
 
 const appId = "app";
@@ -101,8 +123,233 @@ export const _setTestKey = // Set for tests
 let noRender = 0;
 let rootStateChanged = false;
 let stateChanged = false;
-let rootAction: Function;
-let rootTask: Function;
+
+// Helper to create stable cache keys
+function createCacheKey(id: string, name: string, data: unknown): string {
+  const dataKey = data === null || data === undefined
+    ? ''
+    : JSON.stringify(data);
+  return `${id}:${name}:${dataKey}`;
+}
+
+// Action thunk creator with memoization
+function createActionThunk(componentId: string, actionName: string, data: unknown): ActionThunk {
+  const cacheKey = createCacheKey(componentId, actionName, data);
+
+  const cached = actionThunkCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const actionThunk = (thunkInput?: Record<string, unknown> | object): void | ActionThunk => {
+    // Defer instance lookup until thunk is actually invoked
+    if (isDomEvent(thunkInput as Record<string, unknown>)) {
+      const instance = componentRegistry.get(componentId);
+      if (!instance) {
+        throw Error(`Component ${componentId} not found in registry`);
+      }
+      executeAction(instance, actionName, data);
+    }
+    else if (thunkInput === internalKey) {
+      const instance = componentRegistry.get(componentId);
+      if (!instance) {
+        throw Error(`Component ${componentId} not found in registry`);
+      }
+      executeAction(instance, actionName, data);
+    }
+    else if (thunkInput) {
+      // Currying: return new thunk with updated data
+      return createActionThunk(componentId, actionName, thunkInput);
+    }
+    else {
+      log.manualError(componentId, actionName);
+    }
+  };
+
+  actionThunk.type = ThunkType.Action;
+  actionThunkCache.set(cacheKey, actionThunk);
+  return actionThunk;
+}
+
+// Task thunk creator with memoization
+function createTaskThunk(componentId: string, taskName: string, data: unknown): TaskThunk {
+  const cacheKey = createCacheKey(componentId, taskName, data);
+
+  const cached = taskThunkCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const taskThunk = (thunkInput?: Record<string, unknown>): Promise<Next | void> | void => {
+    // Defer instance lookup until thunk is actually invoked
+    if (isDomEvent(thunkInput) || thunkInput === internalKey) {
+      const instance = componentRegistry.get(componentId);
+      if (!instance) {
+        throw Error(`Component ${componentId} not found in registry`);
+      }
+      const result = performTask(instance, taskName, data);
+      return isPromise(result)
+        ? result.then((next?: Next): void => runNext(instance, next))
+        : result;
+    }
+    else {
+      log.manualError(componentId, taskName);
+    }
+  };
+
+  taskThunk.type = ThunkType.Task;
+  taskThunk.taskName = String(taskName);
+  taskThunkCache.set(cacheKey, taskThunk);
+  return taskThunk;
+}
+
+function executeAction(
+  instance: ComponentInstance,
+  actionName: string,
+  data: unknown
+): void {
+  const { config, state: prevState, props, isRoot, id } = instance;
+  const actions = config.actions;
+
+  if (!actions || !actions[actionName]) {
+    return;
+  }
+
+  let next: Next;
+  const prevStateFrozen = deepFreeze(prevState);
+
+  ({ state: instance.state, next } = (actions[actionName] as ActionHandler)(
+    data as Record<string, unknown>,
+    { props, state: prevStateFrozen, rootState }
+  ));
+
+  const currStateChanged = instance.state !== prevState;
+  stateChanged = stateChanged || currStateChanged;
+  log.updateStart(id, currStateChanged && prevState, actionName, data as Record<string, unknown>);
+
+  if (isRoot) {
+    rootState = instance.state;
+    rootStateChanged = currStateChanged;
+  }
+
+  log.updateEnd(currStateChanged && instance.state as Record<string, unknown>);
+  runNext(instance, next, actionName);
+}
+
+function performTask(
+  instance: ComponentInstance,
+  taskName: string,
+  data: unknown
+): Promise<Next> | void {
+  const { config, state, props, id } = instance;
+  const tasks = config.tasks;
+
+  if (!tasks || !tasks[taskName]) {
+    throw Error(`Task ${taskName} not found`);
+  }
+
+  const { perform, success, failure }: Task = tasks[taskName](data);
+  const runSuccess = (result: unknown): Next | undefined =>
+    success && success(result, { props, state, rootState });
+  const runFailure = (err: unknown): Next | undefined =>
+    failure && failure(err, { props, state, rootState });
+
+  try {
+    const output = perform();
+    log.taskPerform(String(taskName), isPromise(output));
+
+    if (isPromise(output)) {
+      renderComponentInstance(instance); // Render pending state updates
+      return output
+        .then((result: unknown): Next => {
+          log.taskSuccess(id, String(taskName));
+          return runSuccess(result);
+        })
+        .catch((err: Error): Next => {
+          log.taskFailure(id, String(taskName), err);
+          return runFailure(err);
+        });
+    }
+    else {
+      log.taskSuccess(id, String(taskName));
+      return Promise.resolve(runSuccess(output));
+    }
+  }
+  catch(err) {
+    log.taskFailure(id, String(taskName), err as Error);
+    return Promise.resolve(runFailure(err));
+  }
+}
+
+// Next executor
+function runNext(instance: ComponentInstance, next: Next | undefined, prevTag?: string): void {
+  if (!next) {
+    renderComponentInstance(instance);
+  }
+  else if (isThunk(next)) {
+    // Thunks may only be invoked here or from the DOM
+    // `internalKey` prevents any manual calls from outside
+    next(internalKey);
+  }
+  else if (Array.isArray(next)) {
+    noRender++;
+    next.forEach((n: Next): void => runNext(instance, n, prevTag));
+    noRender--;
+    renderComponentInstance(instance);
+  }
+}
+
+// Render function
+function renderComponentInstance(instance: ComponentInstance): VNode | void {
+  if (!noRender) {
+    if (rootStateChanged) {
+      const rootInstance = componentRegistry.get(appId);
+      rootStateChanged = false;
+      if (rootInstance) {
+        return renderComponentInstance(rootInstance);
+      }
+    }
+    else if (stateChanged) {
+      let isRenderRoot = false;
+      if (!renderRootId) {
+        renderRootId = instance.id;
+        isRenderRoot = true;
+      }
+
+      const prevVNode = instance.vnode;
+      instance.vnode = instance.config.view(instance.id, {
+        props: instance.props,
+        state: instance.state,
+        rootState
+      });
+      log.render(instance.id, instance.props);
+
+      if (isRenderRoot) {
+        patch(prevVNode as VNode, instance.vnode);
+        log.patch();
+        stateChanged = false;
+        renderRootId = undefined;
+
+        // Reset render flags
+        Array.from(componentRegistry.values()).forEach((inst) => {
+          inst.inCurrentRender = false;
+        });
+      }
+
+      log.setStateGlobal(instance.id, instance.state);
+
+      if (isRenderRoot) {
+        publish("patch");
+      }
+
+      setRenderRef(instance);
+    }
+  }
+
+  instance.prevProps = instance.props;
+
+  return instance.vnode;
+}
 
 export function component<TComponent extends Component>(
   getConfig: GetConfig<TComponent>
@@ -111,11 +358,19 @@ export function component<TComponent extends Component>(
   // Returns render function that is called by parent e.g. `counter("counter-0", { start: 0 })`
   const renderFn = (idStr: string, props?: TComponent['Props']): VNode => {
     const id = (idStr || "").replace(/^#/, "");
-    if (!id.length || (!noRender && renderIds[id])) {
+
+    // Check if component exists in registry
+    const existing = componentRegistry.get(id);
+
+    if (!id.length || (!noRender && existing && existing.inCurrentRender)) {
       throw Error(`Component${id ? ` "${id}" ` : ' '}must have a unique id!`);
     }
-    // Ids included in this render
-    renderIds[id] = true;
+
+    // Mark as in current render
+    if (existing) {
+      existing.inCurrentRender = true;
+    }
+
     return renderComponent<TComponent>(id, getConfig, props);
   };
   // Add a handle to `getConfig` for tests
@@ -131,87 +386,20 @@ export function renderComponent<TComponent extends Component>(
   deepFreeze(props);
   const isRoot = id === appId;
 
-  // If component already exists, just run render() again
-  const existingComponentRoot = renderById(id, props);
-  if (existingComponentRoot) {
-    return existingComponentRoot;
+  // If component already exists, just render again
+  const existing = componentRegistry.get(id);
+  if (existing) {
+    existing.props = props;
+    const result = renderComponentInstance(existing);
+    return result as VNode;
   }
 
   const action: GetActionThunk<TComponent['Actions']> = (actionName, data): ActionThunk => {
-    const actionThunk = (thunkInput?: ValueOf<TComponent['Actions']> | object): void => {
-      if (isDomEvent(thunkInput as Record<string, unknown>)) {
-        // Invoked from the DOM, `thunkInput` is the (unused) event
-        update(actionName, data);
-      }
-      else if (thunkInput === internalKey) {
-        // Called by internal method `run()`
-        // `internalKey` disallows an action being invoked manually from outside
-        update(actionName, data);
-      }
-      else if (thunkInput) {
-        // If a data argument is supplied, return a new thunk instead of invoking the current one
-        // This enables currying e.g. when passing an action from parent to child via props
-        action(actionName, thunkInput as ValueOf<TComponent['Actions']>);
-      }
-      else {
-        log.manualError(id, String(actionName));
-      }
-    };
-    actionThunk.type = ThunkType.Action;
-    return actionThunk;
+    return createActionThunk(id, String(actionName), data);
   };
 
   const task: GetTaskThunk<TComponent['Tasks']> = (taskName, data): TaskThunk => {
-    if (!config.tasks) {
-      throw Error(`tasks ${String(config.tasks)}`);
-    }
-    const performTask = (): Promise<Next> | void => {
-      const tasks = config.tasks;
-      if (tasks) {
-        const { perform, success, failure }: Task<TComponent['Props'], TComponent['State'], TComponent['RootState']> = tasks[taskName as keyof TComponent['Tasks']](data);
-        const runSuccess = (result: unknown): Next | undefined => success && success(result, { props, state, rootState });
-        const runFailure = (err: unknown): Next | undefined => failure && failure(err, { props, state, rootState });
-        try {
-          const output = perform();
-          log.taskPerform(String(taskName), isPromise(output));
-          if (isPromise(output)) {
-            render(props); // Render any pending state updates
-            return output
-              .then((result: unknown): Next => {
-                log.taskSuccess(id, String(taskName));
-                return runSuccess(result);
-              })
-              .catch((err: Error): Next => {
-                log.taskFailure(id, String(taskName), err);
-                return runFailure(err);
-              });
-          }
-          else {
-            log.taskSuccess(id, String(taskName));
-            return Promise.resolve(runSuccess(output));
-          }
-        }
-        catch(err) {
-          log.taskFailure(id, String(taskName), err as Error);
-          return Promise.resolve(runFailure(err));
-        }
-      }
-    };
-    const taskThunk = (thunkInput?: Record<string, unknown>): Promise<Next | void> | void => {
-      // When invoked from the DOM, `thunkInput` is the (unused) event
-      if (isDomEvent(thunkInput) || thunkInput === internalKey) {
-        const result = performTask();
-        return isPromise(result)
-          ? result.then((next?: Next): void => run(next, props))
-          : result;
-      }
-      else {
-        log.manualError(id, String(taskName));
-      }
-    };
-    taskThunk.type = ThunkType.Task;
-    taskThunk.taskName = String(taskName);
-    return taskThunk;
+    return createTaskThunk(id, String(taskName), data);
   };
 
   const config = getConfig({
@@ -220,107 +408,57 @@ export function renderComponent<TComponent extends Component>(
     rootAction: rootAction as GetActionThunk<TComponent['RootActions']>,
     rootTask: rootTask as GetTaskThunk<TComponent['RootTasks']>
   });
-  let state = config.state && config.state(props);
 
-  function update(actionName: keyof TComponent['Actions'], data?: ValueOf<TComponent['Actions']>): void {
-    let next: Next;
-    const prevState = deepFreeze(state);
-    const actions = config.actions;
+  const state = config.state && config.state(props);
 
-    if (actions) {
-      ({ state, next } = (actions[actionName as keyof TComponent['Actions']] as ActionHandler<ValueOf<TComponent['Actions']>, TComponent['Props'], TComponent['State'], TComponent['RootState']>)(
-        data, { props, state: prevState, rootState }
-      ));
-
-      // Action handlers should return existing state by ref if no changes
-      const currStateChanged = state !== prevState;
-      stateChanged = stateChanged || currStateChanged;
-      log.updateStart(id, currStateChanged && prevState, String(actionName), data as Record<string, unknown>);
-
-      if (isRoot) {
-        rootState = state;
-        rootStateChanged = currStateChanged;
+  // Create component instance
+  const instance: ComponentInstance = {
+    id,
+    config,
+    state,
+    props,
+    prevProps: undefined,
+    render: (p) => {
+      const inst = componentRegistry.get(id);
+      if (inst) {
+        inst.props = p;
+        return renderComponentInstance(inst);
       }
-      log.updateEnd(currStateChanged && state as Record<string, unknown>);
-      run(next, props, String(actionName));
-    }
-  }
+    },
+    vnode: undefined,
+    isRoot,
+    inCurrentRender: true
+  };
 
-  function run(next: Next | undefined, props?: TComponent['Props'], prevTag?: string): void {
-    if (!next) {
-      render(props);
-    }
-    else if (isThunk(next)) {
-      // Thunks may only be invoked here or from the DOM
-      // `internalKey` prevents any manual calls from outside
-      next(internalKey);
-    }
-    else if (Array.isArray(next)) {
-      noRender++;
-      next.forEach((n: Next): void => run(n, props, prevTag));
-      noRender--;
-      render(props);
-    }
-  }
+  // Register the instance
+  componentRegistry.set(id, instance);
 
-  const render: RenderFn<TComponent['Props']> = (props?: TComponent['Props']): VNode | void => {
-    if (!noRender) {
-      if (rootStateChanged) {
-        const rootRender = renderRefs[appId];
-        rootStateChanged = false;
-        rootRender && rootRender(prevProps[appId]);
-      }
-      else if (stateChanged) {
-        let isRenderRoot = false;
-        if (!renderRootId) {
-          // The root component of this render
-          renderRootId = id;
-          isRenderRoot = true;
-        }
-        const prevComponentRoot = componentRoot;
-        componentRoot = config.view( id, { props, state, rootState });
-        log.render(id, props);
-
-        if (isRenderRoot) {
-          patch(prevComponentRoot as VNode, componentRoot);
-          log.patch();
-          stateChanged = false;
-          renderRootId = undefined;
-          renderIds = {};
-        }
-        log.setStateGlobal(id, state);
-        if (isRenderRoot) {
-          publish("patch");
-        }
-        setRenderRef(componentRoot as VNode, id, render as RenderFn<Record<string, unknown>>);
-      }
-    }
-    prevProps[id] = props;
-    return componentRoot;
-  }
-
+  // Handle init
   if (config.init) {
     noRender++;
-    run(config.init, props);
+    runNext(instance, config.init);
     noRender--;
   }
   else {
     log.noInitialAction(id, state);
   }
 
+  // Set root functions
   if (isRoot) {
     rootAction = action;
     rootTask = task;
     rootState = state;
   }
 
+  // Initial render
   log.render(id, props);
-  let componentRoot = config.view(id, { props, state, rootState });
-  prevProps[id] = props;
-  setRenderRef(componentRoot, id, render as RenderFn<Record<string, unknown>>);
+  instance.vnode = config.view(id, { props, state: instance.state, rootState });
+  instance.prevProps = props;
+
+  setRenderRef(instance);
   log.setStateGlobal(id, state);
 
-  return componentRoot;
+  return instance.vnode;
 }
 
 export function mount<TActions, TProps>({ app, props, init }: {
@@ -336,13 +474,17 @@ export function mount<TActions, TProps>({ app, props, init }: {
   );
   log.patch();
   publish("patch");
-  renderIds = {};
+
+  // Reset render flags
+  Array.from(componentRegistry.values()).forEach((instance) => {
+    instance.inCurrentRender = false;
+  });
 
   // Manually invoking an action without `internalKey` is an error, so `runRootAction`
   // is provided by `mount` for wiring up events to root actions (e.g. routing)
   if (init) {
     const runRootAction: RunAction<TActions> = (actionName, data): void => {
-      rootAction(actionName as string, data)(internalKey);
+      rootAction?.(actionName, data)(internalKey);
     };
     init(runRootAction);
   }
@@ -357,21 +499,28 @@ function isDomEvent(e?: Record<string, unknown>): boolean {
   return Boolean(e && "eventPhase" in e);
 }
 
-function renderById(id: string, props?: Record<string, unknown>): VNode | void {
-  const render = renderRefs[id];
-  if (render) {
-    return render(props);
-  }
-}
+function setRenderRef(instance: ComponentInstance): void {
+  if (!instance.vnode) return;
 
-function setRenderRef(vnode: VNode, id: string, render: RenderFn<Record<string, unknown>>): void {
-  renderRefs[id] = render;
-  setHook(vnode, "destroy", (): void => {
-    // Component not found in `renderIds` for this render
-    if(!renderIds[id] && id !== renderRootId) {
-      delete renderRefs[id];
-      delete prevProps[id];
-      log.setStateGlobal(id, undefined);
+  setHook(instance.vnode, "destroy", (): void => {
+    const inst = componentRegistry.get(instance.id);
+    if (inst && !inst.inCurrentRender && instance.id !== renderRootId) {
+      // Clean up registry
+      componentRegistry.delete(instance.id);
+
+      // Clean up thunk caches
+      Array.from(actionThunkCache.keys()).forEach((key) => {
+        if (key.startsWith(`${instance.id}:`)) {
+          actionThunkCache.delete(key);
+        }
+      });
+      Array.from(taskThunkCache.keys()).forEach((key) => {
+        if (key.startsWith(`${instance.id}:`)) {
+          taskThunkCache.delete(key);
+        }
+      });
+
+      log.setStateGlobal(instance.id, undefined);
     }
   });
 }

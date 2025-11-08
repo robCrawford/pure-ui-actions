@@ -2,8 +2,7 @@ import { mount, subscribe, RunAction } from "jetix";
 import Navigo from "navigo";
 import app, { RootActions, RootProps } from "./app";
 
-const router = new Navigo();
-
+const router = new Navigo("/");
 
 document.addEventListener("DOMContentLoaded", (): void => mount<RootActions, RootProps>({
   app,
@@ -18,6 +17,8 @@ document.addEventListener("DOMContentLoaded", (): void => mount<RootActions, Roo
 
     router.on({ about, counter, "*": counter }).resolve();
 
-    subscribe("patch", (): void => router.updatePageLinks());
+    subscribe("patch", (): void => {
+      router.updatePageLinks();
+    });
   }
 }));

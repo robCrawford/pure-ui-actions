@@ -81,7 +81,7 @@ export default component<Component>(
 
     tasks: {
       // Demonstrates a task that is only an effect
-      SetDocTitle: ({ title }): Task<RootProps, RootState> => ({
+      SetDocTitle: ({ title }) => ({
         perform: (): void => {
           document.title = title;
         }

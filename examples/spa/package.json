@@ -5,7 +5,8 @@
   "main": "src/app.js",
   "scripts": {
     "dev": "parcel serve ./index.html",
-    "build": "tsc && rm -rf ./dist && cross-env NODE_ENV=production parcel build ./index.html --public-url .",
+    "ts:check": "tsc --noEmit",
+    "ts:build": "tsc && rm -rf ./dist && cross-env NODE_ENV=production parcel build ./index.html --public-url .",
     "test": "jest"
   },
   "author": "Rob Crawford",

@@ -6,6 +6,7 @@ import { init, h, classModule, attributesModule, propsModule, eventListenersModu
 import hyperscriptHelpers from 'hyperscript-helpers';
 import type { VNode, Hooks } from "snabbdom";
 export type { VNode };
+export { thunk } from "snabbdom";
 
 export const patch = init([ classModule, attributesModule, propsModule, eventListenersModule ]);
 

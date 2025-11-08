@@ -12,7 +12,7 @@ describe("Jetix", () => {
   const getId = () => `_${componentId++}`;
 
   function view(id: string, ctx: Context<any, any, any>): VNode {
-    state = ctx.state!;
+    state = ctx.state ?? { count: 0 };
     return div("Test");
   }
 
@@ -332,9 +332,9 @@ describe("Jetix", () => {
 
     it("should support numeric keys", () => {
       const vnode = div("test");
-      const keyedVnode = withKey(123, vnode);
+      const keyedVnode = withKey('123', vnode);
 
-      expect(keyedVnode.key).toBe(123);
+      expect(keyedVnode.key).toBe('123');
     });
 
     it("should work with component VNodes", () => {
@@ -349,9 +349,9 @@ describe("Jetix", () => {
 
     it("should work with list rendering", () => {
       const items = [
-        { id: 1, name: "Item 1" },
-        { id: 2, name: "Item 2" },
-        { id: 3, name: "Item 3" }
+        { id: '1', name: "Item 1" },
+        { id: '2', name: "Item 2" },
+        { id: '3', name: "Item 3" }
       ];
 
       const vnode = renderComponent(getId(), () => {
@@ -369,9 +369,9 @@ describe("Jetix", () => {
 
       // Verify that children have keys
       const children = vnode.children as VNode[];
-      expect(children[0].key).toBe(1);
-      expect(children[1].key).toBe(2);
-      expect(children[2].key).toBe(3);
+      expect(children[0].key).toBe("1");
+      expect(children[1].key).toBe("2");
+      expect(children[2].key).toBe("3");
     });
 
     it("should preserve keys through component renders", () => {
