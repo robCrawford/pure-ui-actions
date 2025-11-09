@@ -11,7 +11,8 @@ enum ThunkType {
 };
 
 export type ActionThunk = {
-  (data?: Record<string, unknown> | Event): void | ActionThunk; // Returns another `ActionThunk` when currying
+  // When called with Event → executes action, when called with data → returns new thunk with that data bound
+  (data?: Record<string, unknown> | Event): void | ActionThunk;
   type: ThunkType.Action;
 }
 
@@ -146,7 +147,6 @@ function createActionThunk(componentId: string, actionName: string, data: unknow
     (thunkInput?: Record<string, unknown> | Event): void | ActionThunk;
     type: ThunkType.Action;
   } = (thunkInput) => {
-    // Defer instance lookup until thunk is actually invoked
     if (isDomEvent(thunkInput)) {
       const instance = componentRegistry.get(componentId);
       if (!instance) {
@@ -162,7 +162,7 @@ function createActionThunk(componentId: string, actionName: string, data: unknow
       executeAction(instance, actionName, data);
     }
     else if (thunkInput) {
-      // Currying: return new thunk with updated data
+      // Returns new thunk with `thunkInput` bound as data
       return createActionThunk(componentId, actionName, thunkInput);
     }
     else {
@@ -243,7 +243,7 @@ function executeAction(
   if (currStateChanged && instance.state) {
     log.updateEnd(instance.state);
   }
-  runNext(instance, next, actionName);
+  runNext(instance, next);
 }
 
 function performTask(
@@ -292,7 +292,7 @@ function performTask(
 }
 
 // Next executor
-function runNext(instance: ComponentInstance, next: Next | undefined, prevTag?: string): void {
+function runNext(instance: ComponentInstance, next: Next | undefined): void {
   if (!next) {
     renderComponentInstance(instance);
   }
@@ -303,7 +303,7 @@ function runNext(instance: ComponentInstance, next: Next | undefined, prevTag?: 
   }
   else if (Array.isArray(next)) {
     noRender++;
-    next.forEach((n: Next): void => runNext(instance, n, prevTag));
+    next.forEach((n: Next): void => runNext(instance, n));
     noRender--;
     renderComponentInstance(instance);
   }
