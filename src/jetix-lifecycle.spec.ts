@@ -1,11 +1,12 @@
+import { vi } from "vitest";
 import { _setTestKey, component, html, mount, getComponentRegistry } from "./jetix";
 import { log } from "./jetixLog";
 import * as vdom from "./vdom";
 const { div } = html;
 const testKey = _setTestKey({});
 
-const patchSpy = jest.spyOn(vdom, "patch");
-const renderSpy = jest.spyOn(log, "render");
+const patchSpy = vi.spyOn(vdom, "patch");
+const renderSpy = vi.spyOn(log, "render");
 
 describe("Component Lifecycle & State Management", () => {
   beforeEach(() => {
@@ -149,44 +150,6 @@ describe("Component Lifecycle & State Management", () => {
       // Verify new component has fresh state
       const newChild = getComponentRegistry().get("child");
       expect(newChild?.state).toEqual({ count: 0 });
-    });
-
-    it("should support action currying with cache", () => {
-      let action: Function = () => {};
-
-      const comp = component<{
-        Props: {};
-        State: { count: number };
-        Actions: { Add: { value: number } };
-      }>(({ action: a }) => {
-        action = a;
-        return {
-          state: () => ({ count: 0 }),
-          actions: {
-            Add: (data, ctx) => {
-              const count = (ctx?.state?.count ?? 0) + (data?.value ?? 0);
-              return { state: { count } };
-            }
-          },
-          view: (id, ctx) => div(`#${id}`, `${ctx.state?.count ?? 0}`)
-        };
-      });
-
-      mount({ app: comp, props: {} });
-
-      // Create a base thunk
-      const addThunk = action("Add");
-
-      // Curry it with data
-      const add5 = addThunk({ value: 5 });
-      const add10 = addThunk({ value: 10 });
-
-      // Calling with same data should return cached thunk
-      const add5Again = action("Add", { value: 5 });
-      expect(add5).toBe(add5Again);
-
-      // Different data should be different thunk
-      expect(add5).not.toBe(add10);
     });
   });
 

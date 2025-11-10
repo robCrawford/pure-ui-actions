@@ -1,9 +1,10 @@
+import { vi } from "vitest";
 import { _setTestKey, component, html, mount } from "./jetix";
 import * as vdom from "./vdom";
 const { div } = html;
 const testKey = _setTestKey({});
 
-const patchSpy = jest.spyOn(vdom, "patch");
+const patchSpy = vi.spyOn(vdom, "patch");
 
 describe("RootState with Memoization", () => {
   let rootAction: Function;

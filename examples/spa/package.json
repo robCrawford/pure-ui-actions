@@ -7,7 +7,8 @@
     "dev": "parcel serve ./index.html",
     "ts:check": "tsc --noEmit",
     "ts:build": "tsc && rm -rf ./dist && cross-env NODE_ENV=production parcel build ./index.html --public-url .",
-    "test": "jest"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "author": "Rob Crawford",
   "repository": {
@@ -16,16 +17,15 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
+    "@vitest/ui": "^2.1.8",
     "cross-env": "^10.1.0",
     "eslint": "^9.38.0",
-    "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0",
+    "jsdom": "^25.0.1",
     "parcel-bundler": "^1.12.4",
-    "ts-jest": "^29.2.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
   },
   "dependencies": {
     "jetix": "^0.2.3",

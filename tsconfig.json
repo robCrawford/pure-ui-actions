@@ -8,7 +8,9 @@
     "declaration": true,
     "esModuleInterop": true,
     "removeComments": true,
-    "outDir": "./dist/"
+    "outDir": "./dist/",
+    "types": ["vitest/globals"],
+    "skipLibCheck": true
   },
   "include": [
     "./src/**/*"

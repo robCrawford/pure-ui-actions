@@ -1,8 +1,9 @@
+import { vi } from "vitest";
 import { renderComponent, withKey, _setTestKey, html, GetActionThunk, VNode, Context } from "./jetix";
 import * as vdom from "./vdom";
 const { div } = html;
 
-const patchSpy = jest.spyOn(vdom, "patch");
+const patchSpy = vi.spyOn(vdom, "patch");
 const testKey = _setTestKey({});
 
 describe("Jetix", () => {
@@ -90,17 +91,21 @@ describe("Jetix", () => {
     expect(patchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("should patch twice when a chain of actions contains a promise", done => {
+  it("should patch twice when a chain of actions contains a promise", () => {
     const numTestActions = 20;
-    runActionsWithPromise(numTestActions, 2, done);
-    expect(patchSpy).not.toHaveBeenCalled();
-    action("Increment1")(testKey);
+    return new Promise<void>((resolve) => {
+      runActionsWithPromise(numTestActions, 2, resolve);
+      expect(patchSpy).not.toHaveBeenCalled();
+      action("Increment1")(testKey);
+    });
   });
 
-  it("should patch once when initial action chain contains a promise", done => {
+  it("should patch once when initial action chain contains a promise", () => {
     const numTestActions = 20;
-    runActionsWithPromise(numTestActions, 1, done, "Increment1"); // 1 patch after promise
-    expect(patchSpy).not.toHaveBeenCalled(); // No patch after init
+    return new Promise<void>((resolve) => {
+      runActionsWithPromise(numTestActions, 1, resolve, "Increment1"); // 1 patch after promise
+      expect(patchSpy).not.toHaveBeenCalled(); // No patch after init
+    });
   });
 
   function runActionsWithPromise(numTestActions: number, expectedPatchCount: number, done: any, initialAction?: string) {
@@ -157,50 +162,52 @@ describe("Jetix", () => {
     });
   }
 
-  it("should patch twice when a promise returns an array of actions", done => {
-    renderComponent(getId(), ({ action: a, task }) => {
-      action = a;
+  it("should patch twice when a promise returns an array of actions", () => {
+    return new Promise<void>((resolve) => {
+      renderComponent(getId(), ({ action: a, task }) => {
+        action = a;
 
-      return {
-        state: () => ({ count: 0 }),
-        actions: {
-          Increment1: (_: any, ctx: any) => {
-            return {
-              state: { ...ctx.state, count: (ctx.state.count as number) + 1 },
-              next: (task as any)("TestAsync")
-            };
+        return {
+          state: () => ({ count: 0 }),
+          actions: {
+            Increment1: (_: any, ctx: any) => {
+              return {
+                state: { ...ctx.state, count: (ctx.state.count as number) + 1 },
+                next: (task as any)("TestAsync")
+              };
+            },
+            Increment2: (_: any, ctx: any) => {
+              return {
+                state: { ...ctx.state, count: (ctx.state.count as number) + 1 }
+              };
+            },
+            Increment3: (_: any, ctx: any) => {
+              const newState = { ...ctx.state, count: (ctx.state.count as number) + 1 };
+              setTimeout(() => {
+                // After last action has been processed
+                logResult(newState.count, patchSpy.mock.calls.length);
+                expect(newState.count).toBe(3);
+                expect(patchSpy).toHaveBeenCalledTimes(2);
+                resolve();
+              });
+              return {
+                state: newState
+              };
+            }
           },
-          Increment2: (_: any, ctx: any) => {
-            return {
-              state: { ...ctx.state, count: (ctx.state.count as number) + 1 }
-            };
+          tasks: {
+            "TestAsync": () => ({
+              perform: () => new Promise<void>(resolve => setTimeout(() => resolve(), 100)),
+              success: () => [ action("Increment2"), action("Increment3") ]
+            })
           },
-          Increment3: (_: any, ctx: any) => {
-            const newState = { ...ctx.state, count: (ctx.state.count as number) + 1 };
-            setTimeout(() => {
-              // After last action has been processed
-              logResult(newState.count, patchSpy.mock.calls.length);
-              expect(newState.count).toBe(3);
-              expect(patchSpy).toHaveBeenCalledTimes(2);
-              done();
-            });
-            return {
-              state: newState
-            };
-          }
-        },
-        tasks: {
-          "TestAsync": () => ({
-            perform: () => new Promise<void>(resolve => setTimeout(() => resolve(), 100)),
-            success: () => [ action("Increment2"), action("Increment3") ]
-          })
-        },
-        view
-      };
+          view
+        };
+      });
+
+      expect(patchSpy).not.toHaveBeenCalled();
+      action("Increment1")(testKey);
     });
-
-    expect(patchSpy).not.toHaveBeenCalled();
-    action("Increment1")(testKey);
   });
 
   it("should patch once following a mix of action arrays and chains", () => {

@@ -1,11 +1,12 @@
+import { vi, type Mock } from "vitest";
 import { _setTestKey, component, html, mount, getComponentRegistry } from "../src/jetix";
 import { log } from "../src/jetixLog";
 import * as vdom from "../src/vdom";
 const { div } = html;
 const testKey = _setTestKey({});
 
-const patchSpy = jest.spyOn(vdom, "patch");
-const renderSpy = jest.spyOn(log, "render");
+const patchSpy = vi.spyOn(vdom, "patch");
+const renderSpy = vi.spyOn(log, "render");
 const ctx = { rootState: { theme: "a" }, props: { test: "x" }, state: { count: 0 } };
 
 
@@ -17,13 +18,13 @@ describe("Jetix components", () => {
   let validatePerform: Function = () => {};
 
   const parentActions = {
-    Increment: jest.fn( ({ step }, { state }) => ({ state: { ...state, count: state.count + step } }) ),
-    Decrement: jest.fn( ({ step }, { state }) => ({ state: { ...state, count: state.count - step } }) )
+    Increment: vi.fn( ({ step }, { state }) => ({ state: { ...state, count: state.count + step } }) ),
+    Decrement: vi.fn( ({ step }, { state }) => ({ state: { ...state, count: state.count - step } }) )
   };
-  const validateSuccess = jest.fn(
+  const validateSuccess = vi.fn(
     (result, { props, state, rootState }) => parentAction("Increment", { step: result })
   );
-  const validateFailure = jest.fn(
+  const validateFailure = vi.fn(
     (err, { props, state, rootState }) => parentAction("Decrement", { step: err })
   );
   const parentTasks = {
@@ -42,7 +43,7 @@ describe("Jetix components", () => {
     validateSuccess.mockClear();
     validateFailure.mockClear();
     Object.keys(parentActions).forEach(
-      (k) => (parentActions as Record<string, jest.Mock>)[k].mockClear()
+      (k) => (parentActions as Record<string, Mock>)[k].mockClear()
     );
   };
 
@@ -245,7 +246,7 @@ describe("Jetix components", () => {
   });
 
   it("should allow action calls with a DOM event input", () => {
-    expect(() => parentAction("Increment", { step: 1 })({ eventPhase: 1 }))
+    expect(() => parentAction("Increment", { step: 1 })({ eventPhase: 1, target: null, type: 'test' }))
       .not.toThrow();
   });
 

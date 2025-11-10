@@ -6,7 +6,9 @@
     "moduleResolution": "node",
     "declaration": true,
     "esModuleInterop": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": ["vitest/globals"],
+    "skipLibCheck": true
   },
   "include": [
     "./src/**/*"
