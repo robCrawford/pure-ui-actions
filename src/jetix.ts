@@ -251,8 +251,14 @@ function performTask(
   const { config, state, props, id } = instance;
   const tasks = config.tasks;
 
+
   if (!tasks || !tasks[taskName]) {
-    throw Error(`Task ${taskName} not found`);
+    // FIXME
+    // FIXME
+    // FIXME
+    console.log(`Task ${taskName} not found!!!`);
+    return Promise.resolve(undefined);
+    // throw Error(`Task ${taskName} not found`);
   }
 
   const { perform, success, failure }: Task = tasks[taskName](data);

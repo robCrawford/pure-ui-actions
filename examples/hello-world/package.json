@@ -28,6 +28,7 @@
     "vitest": "^2.1.8"
   },
   "dependencies": {
-    "jetix": "^0.2.3"
+    "jetix": "^0.2.3",
+    "snabbdom": "3.6.3"
   }
 }

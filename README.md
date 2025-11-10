@@ -28,7 +28,7 @@ export default component(
 );
 ```
 
-### Props and state
+### Context: Props and state
 All `action` handlers, `task` callbacks and `view` functions receive `props`, `state` and `rootState` via a `Context` input.
 
 ```JavaScript
@@ -39,6 +39,25 @@ view(id, { props, state, rootState }) {
     div(state.text)
   ]);
 }
+```
+
+### Context: DOM Events
+If a DOM event is available, an `event` prop will also be populated on `Context`.
+
+```JavaScript
+    actions: {
+      Input: (_, { props, state, event }) => ({
+        state: { 
+          ...state, 
+          text: event?.target?.value ?? "" 
+        }
+      })
+    },
+    view: (id, { state }) =>
+      html.input(`#${id}-input`, {
+        props: { value: state.text },
+        on: { input: action("Input") }
+      })
 ```
 
 

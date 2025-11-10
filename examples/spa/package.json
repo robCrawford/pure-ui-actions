@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "jetix": "^0.2.3",
-    "navigo": "^8.11.1"
+    "navigo": "^8.11.1",
+    "snabbdom": "3.6.3"
   }
 }

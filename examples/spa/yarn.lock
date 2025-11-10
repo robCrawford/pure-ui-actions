@@ -2789,6 +2789,11 @@ sirv@^3.0.0:
     mrmime "^2.0.0"
     totalist "^3.0.0"
 
+snabbdom@3.6.3:
+  version "3.6.3"
+  resolved "https://registry.yarnpkg.com/snabbdom/-/snabbdom-3.6.3.tgz#1cdcd0a7188d3590da77e1fad87dbcc026b87b26"
+  integrity sha512-W2lHLLw2qR2Vv0DcMmcxXqcfdBaIcoN+y/86SmHv8fn4DazEQSH6KN3TjZcWvwujW56OHiiirsbHWZb4vx/0fg==
+
 snabbdom@^0.7.4:
   version "0.7.4"
   resolved "https://registry.yarnpkg.com/snabbdom/-/snabbdom-0.7.4.tgz#817f07e8d3fb870960c3763b8da56f1ba982d31a"
