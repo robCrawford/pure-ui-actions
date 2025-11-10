@@ -11,8 +11,7 @@ enum ThunkType {
 };
 
 export type ActionThunk = {
-  // When called with Event → executes action, when called with data → returns new thunk with that data bound
-  (data?: Record<string, unknown> | Event): void | ActionThunk;
+  (data?: Record<string, unknown>): void;
   type: ThunkType.Action;
 }
 
@@ -35,6 +34,7 @@ export type Context<TProps, TState, TRootState> = {
   props?: TProps;
   state?: TState;
   rootState?: TRootState;
+  event?: Event;
 };
 
 export type ActionHandler<TData = Record<string, unknown>, TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = (
@@ -152,7 +152,7 @@ function createActionThunk(componentId: string, actionName: string, data: unknow
       if (!instance) {
         throw Error(`Component ${componentId} not found in registry`);
       }
-      executeAction(instance, actionName, data);
+      executeAction(instance, actionName, data, thunkInput as Event);
     }
     else if (thunkInput === internalKey) {
       const instance = componentRegistry.get(componentId);
@@ -160,10 +160,6 @@ function createActionThunk(componentId: string, actionName: string, data: unknow
         throw Error(`Component ${componentId} not found in registry`);
       }
       executeAction(instance, actionName, data);
-    }
-    else if (thunkInput) {
-      // Returns new thunk with `thunkInput` bound as data
-      return createActionThunk(componentId, actionName, thunkInput);
     }
     else {
       log.manualError(componentId, actionName);
@@ -214,7 +210,8 @@ function createTaskThunk(componentId: string, taskName: string, data: unknown): 
 function executeAction(
   instance: ComponentInstance,
   actionName: string,
-  data: unknown
+  data: unknown,
+  event?: Event
 ): void {
   const { config, state: prevState, props, isRoot, id } = instance;
   const actions = config.actions;
@@ -228,7 +225,7 @@ function executeAction(
 
   ({ state: instance.state, next } = (actions[actionName] as ActionHandler)(
     data as Record<string, unknown>,
-    { props, state: prevStateFrozen, rootState }
+    { props, state: prevStateFrozen, rootState, event }
   ));
 
   const currStateChanged = instance.state !== prevState;
