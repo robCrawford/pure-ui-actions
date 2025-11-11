@@ -251,14 +251,8 @@ function performTask(
   const { config, state, props, id } = instance;
   const tasks = config.tasks;
 
-
   if (!tasks || !tasks[taskName]) {
-    // FIXME
-    // FIXME
-    // FIXME
-    console.log(`Task ${taskName} not found!!!`);
-    return Promise.resolve(undefined);
-    // throw Error(`Task ${taskName} not found`);
+    throw Error(`Task ${taskName} not found in component ${id}`);
   }
 
   const { perform, success, failure }: Task = tasks[taskName](data);
@@ -446,36 +440,23 @@ export function renderComponent<TComponent extends Component>(
     inCurrentRender: true
   };
 
-  // Register the instance
   componentRegistry.set(id, instance);
 
-  // Handle init
   if (config.init) {
     noRender++;
-
-    if (isThunk(config.init) && config.init.type === ThunkType.Task) {
-      const taskThunk = config.init;
-      const result = performTask(instance, taskThunk.taskName, taskThunk.taskData);
-
-      result.then((next?: Next): void => runNext(instance, next));
-    } else {
-      runNext(instance, config.init);
-    }
-
+    runNext(instance, config.init);
     noRender--;
   }
   else {
     log.noInitialAction(id, state);
   }
 
-  // Set root functions
   if (isRoot) {
     rootAction = action;
     rootTask = task;
     rootState = state;
   }
 
-  // Initial render
   log.render(id, props);
   instance.vnode = config.view(id, { props, state: instance.state, rootState });
   instance.prevProps = props;
