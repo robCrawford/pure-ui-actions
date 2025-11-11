@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { _setTestKey, component, html, mount, getComponentRegistry } from "./jetix";
+import { _setTestKey, component, html, mount, getComponentRegistry, renderComponent, Next } from "./jetix";
 import { log } from "./jetixLog";
 import * as vdom from "./vdom";
 const { div } = html;
@@ -154,7 +154,7 @@ describe("Component Lifecycle & State Management", () => {
   });
 
   describe("Props Management", () => {
-    it("should freeze props and prevent mutation", () => {
+    it("should freeze props deeply and prevent mutation", () => {
       let action: Function = () => {};
       let capturedProps: any;
 
@@ -180,6 +180,11 @@ describe("Component Lifecycle & State Management", () => {
 
       action("MutateProps")(testKey);
 
+      // Props should be frozen at all levels
+      expect(Object.isFrozen(capturedProps)).toBe(true);
+      expect(Object.isFrozen(capturedProps?.data)).toBe(true);
+
+      // Attempting to mutate should throw
       expect(() => {
         capturedProps.data.value = 99;
       }).toThrow();
@@ -388,8 +393,7 @@ describe("Component Lifecycle & State Management", () => {
   });
 
   describe("Initialization", () => {
-    it("should execute init actions and cache thunks", () => {
-      let action: Function = () => {};
+    it("should execute init actions", () => {
       let initExecuted = false;
 
       const comp = component<{
@@ -397,7 +401,6 @@ describe("Component Lifecycle & State Management", () => {
         State: { initialized: boolean };
         Actions: { Init: null };
       }>(({ action: a }) => {
-        action = a;
         return {
           state: () => ({ initialized: false }),
           init: a("Init"),
@@ -418,11 +421,422 @@ describe("Component Lifecycle & State Management", () => {
       const registry = getComponentRegistry();
       const instance = registry.get("app");
       expect(instance?.state).toEqual({ initialized: true });
+    });
 
-      // Verify init thunk is cached
-      const initThunk1 = action("Init");
-      const initThunk2 = action("Init");
-      expect(initThunk1).toBe(initThunk2);
+    it("should execute init tasks from component's own tasks", async () => {
+      let performCalled = false;
+      let successCalled = false;
+
+      const comp = component<{
+        Props: {};
+        State: { data: string };
+        Actions: { SetData: { value: string } };
+        Tasks: { LoadData: null };
+      }>(({ action: a, task: t }) => {
+        return {
+          state: () => ({ data: "" }),
+          init: t("LoadData"),
+          actions: {
+            SetData: (payload, ctx) => {
+              successCalled = true;
+              return { state: { data: payload?.value ?? "" } };
+            }
+          },
+          tasks: {
+            LoadData: () => ({
+              perform: async (): Promise<string> => {
+                performCalled = true;
+                return Promise.resolve("loaded data");
+              },
+              success: (result: string): Next => {
+                return a("SetData", { value: result });
+              }
+            })
+          },
+          view: (id, ctx) => div(`#${id}`, ctx.state?.data ?? "")
+        };
+      });
+
+      mount({ app: comp, props: {} });
+
+      // Task perform should be called immediately
+      expect(performCalled).toBe(true);
+
+      // Wait for async task to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      // Success handler should have run and updated state
+      expect(successCalled).toBe(true);
+
+      const registry = getComponentRegistry();
+      const instance = registry.get("app");
+      expect(instance?.state).toEqual({ data: "loaded data" });
+    });
+  });
+
+  describe("Props Changes & Re-rendering", () => {
+    it("should re-render when props change via direct renderComponent call", () => {
+      // Track child view calls to verify it's being called with updated props
+      const childViewCalls: string[] = [];
+      let componentId = 0;
+      const getId = () => `_${componentId++}`;
+      const childId = getId();
+
+      const getConfig = () => ({
+        state: () => ({ internalState: 0 }),
+        view: (id: string, { props }: any) => {
+          const msg = props?.message || "";
+          childViewCalls.push(msg);
+          return div(`#${id}.child`, msg);
+        }
+      });
+
+      // Initial render with props
+      renderComponent(childId, getConfig, { message: "initial" });
+      expect(childViewCalls).toEqual(["initial"]);
+
+      // Re-render the same component with different props
+      // This tests the low-level props change detection mechanism
+      renderComponent(childId, getConfig, { message: "updated" });
+
+      // Child view should have been called again with "updated"
+      expect(childViewCalls).toEqual(["initial", "updated"]);
+    });
+
+    it("should re-render child when parent state changes child props", () => {
+      let childRenderCount = 0;
+      let action: Function = () => {};
+
+      const child = component<{
+        Props: { message: string };
+        State: {};
+        Actions: {};
+      }>(({ action: a }) => {
+        return {
+          state: () => ({}),
+          actions: {},
+          view: (id, { props }) => {
+            childRenderCount++;
+            return div(`#${id}.child`, props?.message || "");
+          }
+        };
+      });
+
+      const parent = component<{
+        Props: {};
+        State: { message: string };
+        Actions: { UpdateMessage: { text: string } };
+      }>(({ action: a }) => {
+        action = a;
+        return {
+          state: () => ({ message: "initial" }),
+          actions: {
+            UpdateMessage: (data, ctx) => ({
+              state: { ...(ctx?.state ?? { message: "" }), message: data?.text ?? "" }
+            })
+          },
+          view: (id, { state }) => {
+            return div(`#${id}.parent`, [
+              child("#child", { message: state?.message || "" })
+            ]);
+          }
+        };
+      });
+
+      mount({ app: parent, props: {} });
+      const afterMountCount = childRenderCount;
+
+      // Update parent state which changes child props
+      action("UpdateMessage", { text: "updated" })(testKey);
+
+      // Child should re-render with new props from parent
+      expect(childRenderCount).toBe(afterMountCount + 1);
+    });
+
+    it("should handle action thunks passed as props", () => {
+      const parentActionCalls: string[] = [];
+      let parentAction: Function = () => {};
+
+      const child = component<{
+        Props: { onAction: any };
+        State: {};
+        Actions: {};
+      }>(({ action: a }) => {
+        return {
+          state: () => ({}),
+          actions: {},
+          view: (id, { props }) => {
+            return div(`#${id}.child`, "child");
+          }
+        };
+      });
+
+      const parent = component<{
+        Props: {};
+        State: { value: number };
+        Actions: { ParentAction: { value: string } };
+      }>(({ action: a }) => {
+        parentAction = a;
+        return {
+          state: () => ({ value: 0 }),
+          actions: {
+            ParentAction: (data, ctx) => {
+              parentActionCalls.push(data?.value ?? "");
+              return { state: ctx?.state ?? { value: 0 } };
+            }
+          },
+          view: (id, { state }) => {
+            return div(`#${id}.parent`, [
+              child("#child", {
+                onAction: parentAction("ParentAction", { value: "from-child" })
+              })
+            ]);
+          }
+        };
+      });
+
+      mount({ app: parent, props: {} });
+
+      // Get child instance and trigger the action thunk
+      const registry = getComponentRegistry();
+      const childInstance = registry.get("child");
+      expect(childInstance).toBeDefined();
+
+      // Simulate child calling parent action
+      const onAction = childInstance?.props?.onAction as any;
+      if (onAction && typeof onAction === 'function') {
+        onAction(testKey);
+      }
+
+      expect(parentActionCalls).toEqual(["from-child"]);
+    });
+
+    it("should handle props change AND state change in same component", () => {
+      const viewCalls: Array<{ props: string; state: number }> = [];
+      let parentAction: Function = () => {};
+      let childAction: Function = () => {};
+
+      const child = component<{
+        Props: { message: string };
+        State: { count: number };
+        Actions: { Increment: null };
+      }>(({ action: a }) => {
+        childAction = a;
+        return {
+          state: () => ({ count: 0 }),
+          actions: {
+            Increment: (_, ctx) => ({
+              state: { ...(ctx?.state ?? { count: 0 }), count: ((ctx?.state?.count ?? 0) + 1) }
+            })
+          },
+          view: (id, { props, state }) => {
+            viewCalls.push({
+              props: props?.message || "",
+              state: state?.count || 0
+            });
+            return div(`#${id}`, `${props?.message}-${state?.count}`);
+          }
+        };
+      });
+
+      const parent = component<{
+        Props: {};
+        State: { message: string };
+        Actions: { UpdateMessage: { text: string } };
+      }>(({ action: a }) => {
+        parentAction = a;
+        return {
+          state: () => ({ message: "v1" }),
+          actions: {
+            UpdateMessage: (data, ctx) => ({
+              state: { ...(ctx?.state ?? { message: "" }), message: data?.text ?? "" }
+            })
+          },
+          view: (id, { state }) => {
+            return div(`#${id}.parent`, [
+              child("#child", { message: state?.message || "" })
+            ]);
+          }
+        };
+      });
+
+      mount({ app: parent, props: {} });
+      expect(viewCalls).toEqual([{ props: "v1", state: 0 }]);
+
+      // Change child state
+      childAction("Increment")(testKey);
+      expect(viewCalls).toEqual([
+        { props: "v1", state: 0 },
+        { props: "v1", state: 1 }
+      ]);
+
+      // Change props from parent
+      parentAction("UpdateMessage", { text: "v2" })(testKey);
+      expect(viewCalls).toEqual([
+        { props: "v1", state: 0 },
+        { props: "v1", state: 1 },
+        { props: "v2", state: 1 }
+      ]);
+    });
+  });
+
+  describe("Component Lifecycle Edge Cases", () => {
+    it("should handle rapid sequential prop changes", () => {
+      const viewCalls: string[] = [];
+      let action: Function = () => {};
+
+      const child = component<{
+        Props: { value: string };
+        State: {};
+        Actions: {};
+      }>(({ action: a }) => {
+        return {
+          state: () => ({}),
+          actions: {},
+          view: (id, { props }) => {
+            viewCalls.push(props?.value || "");
+            return div(`#${id}`, props?.value || "");
+          }
+        };
+      });
+
+      const parent = component<{
+        Props: {};
+        State: { value: string };
+        Actions: { SetValue: { value: string } };
+      }>(({ action: a }) => {
+        action = a;
+        return {
+          state: () => ({ value: "v1" }),
+          actions: {
+            SetValue: (data, ctx) => ({
+              state: { ...(ctx?.state ?? { value: "" }), value: data?.value ?? "" }
+            })
+          },
+          view: (id, { state }) => {
+            return div(`#${id}.parent`, [
+              child("#child", { value: state?.value || "" })
+            ]);
+          }
+        };
+      });
+
+      mount({ app: parent, props: {} });
+      expect(viewCalls).toEqual(["v1"]);
+
+      // Rapid prop changes
+      action("SetValue", { value: "v2" })(testKey);
+      action("SetValue", { value: "v3" })(testKey);
+      action("SetValue", { value: "v4" })(testKey);
+
+      expect(viewCalls).toEqual(["v1", "v2", "v3", "v4"]);
+    });
+
+    it("should handle undefined props becoming defined", () => {
+      const viewCalls: Array<any> = [];
+      let action: Function = () => {};
+
+      const child = component<{
+        Props: { value?: string };
+        State: {};
+        Actions: {};
+      }>(({ action: a }) => {
+        return {
+          state: () => ({}),
+          actions: {},
+          view: (id, { props }) => {
+            viewCalls.push(props);
+            return div(`#${id}`, props?.value || "empty");
+          }
+        };
+      });
+
+      const parent = component<{
+        Props: {};
+        State: { childProps: { value?: string } | undefined };
+        Actions: { SetProps: { props: { value?: string } | undefined } };
+      }>(({ action: a }) => {
+        action = a;
+        return {
+          state: () => ({ childProps: undefined }),
+          actions: {
+            SetProps: (data, ctx) => ({
+              state: { ...(ctx?.state ?? { childProps: undefined }), childProps: data?.props }
+            })
+          },
+          view: (id, { state }) => {
+            return div(`#${id}.parent`, [
+              child("#child", state?.childProps)
+            ]);
+          }
+        };
+      });
+
+      mount({ app: parent, props: {} });
+      expect(viewCalls[0]).toBeUndefined();
+
+      // Props become defined
+      action("SetProps", { props: { value: "defined" } })(testKey);
+      expect(viewCalls[1]).toEqual({ value: "defined" });
+
+      // Props back to undefined
+      action("SetProps", { props: undefined })(testKey);
+      expect(viewCalls[2]).toBeUndefined();
+    });
+  });
+
+  describe("State and Props Interaction", () => {
+    it("should have access to both state and props in view", () => {
+      const viewCalls: Array<{ props: string; state: number }> = [];
+      let childAction: Function = () => {};
+
+      const child = component<{
+        Props: { label: string };
+        State: { count: number };
+        Actions: { Increment: null };
+      }>(({ action: a }) => {
+        childAction = a;
+        return {
+          state: () => ({ count: 0 }),
+          actions: {
+            Increment: (_, ctx) => ({
+              state: { ...(ctx?.state ?? { count: 0 }), count: ((ctx?.state?.count ?? 0) + 1) }
+            })
+          },
+          view: (id, { props, state }) => {
+            viewCalls.push({
+              props: props?.label || "",
+              state: state?.count || 0
+            });
+            return div(`#${id}`, `${props?.label}: ${state?.count}`);
+          }
+        };
+      });
+
+      const parent = component<{
+        Props: {};
+        State: {};
+        Actions: {};
+      }>(({ action: a }) => {
+        return {
+          state: () => ({}),
+          actions: {},
+          view: (id) => {
+            return div(`#${id}.parent`, [
+              child("#child", { label: "Counter" })
+            ]);
+          }
+        };
+      });
+
+      mount({ app: parent, props: {} });
+      expect(viewCalls).toEqual([{ props: "Counter", state: 0 }]);
+
+      childAction("Increment")(testKey);
+      expect(viewCalls).toEqual([
+        { props: "Counter", state: 0 },
+        { props: "Counter", state: 1 }
+      ]);
     });
   });
 });

@@ -392,31 +392,38 @@ describe("Jetix", () => {
     });
   });
 
-  describe("props changes", () => {
-    it("should re-render child component when props change", () => {
-      // Track child view calls to verify it's being called with updated props
-      const childViewCalls: string[] = [];
-      const childId = getId();
+  describe("event context", () => {
+    it("should pass DOM event to action handler context", () => {
+      let capturedEvent: Event | undefined;
+      let action: GetActionThunk<{ Click: null }>;
 
-      const getConfig = () => ({
-        state: () => ({ internalState: 0 }),
-        view: (id: string, { props }: any) => {
-          const msg = props?.message || "";
-          childViewCalls.push(msg);
-          return div(`#${id}.child`, msg);
-        }
+      renderComponent(getId(), ({ action: a }) => {
+        action = a;
+        return {
+          state: () => ({ clicked: false }),
+          actions: {
+            Click: (_, ctx) => {
+              capturedEvent = ctx?.event;
+              return { state: { clicked: true } };
+            }
+          },
+          view: (id: string) => div(`#${id}`, "test")
+        };
       });
 
-      // Initial render with props
-      renderComponent(childId, getConfig, { message: "initial" });
-      expect(childViewCalls).toEqual(["initial"]);
+      // Create a mock DOM event
+      const mockEvent = new Event('click');
+      Object.defineProperty(mockEvent, 'eventPhase', { value: 1 });
+      Object.defineProperty(mockEvent, 'target', { value: null });
+      Object.defineProperty(mockEvent, 'type', { value: 'click' });
 
-      // Re-render the same component with different props
-      // This simulates what happens when a parent re-renders with new props
-      renderComponent(childId, getConfig, { message: "updated" });
+      // Trigger action with event (simulating DOM click)
+      // @ts-ignore test data
+      action("Click")(mockEvent);
 
-      // Child view should have been called again with "updated"
-      expect(childViewCalls).toEqual(["initial", "updated"]);
+      // Verify event was passed to context
+      expect(capturedEvent).toBeDefined();
+      expect(capturedEvent).toBe(mockEvent);
     });
   });
 

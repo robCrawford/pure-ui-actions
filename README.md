@@ -246,3 +246,457 @@ export default component(() => ({
 ```
 
 Keys are essential when items can be reordered, added, or removed
+
+## Idiomatic Patterns and Best Practices
+
+This section provides in-depth guidance for writing idiomatic Jetix applications with TypeScript.
+
+### Component Composition
+
+Components can be composed by rendering child components in the parent's view. Child components receive props including action thunks for communication back to the parent.
+
+**Defining a child component that accepts callbacks:**
+
+```typescript
+import { ActionThunk, component, html, Config, VNode, Next } from "jetix";
+const { div, button } = html;
+
+export type Props = Readonly<{
+  text: string;
+  onDismiss: ActionThunk;  // Parent action thunk passed as prop
+}>;
+
+type State = Readonly<{
+  show: boolean;
+}>;
+
+type Actions = Readonly<{
+  Dismiss: null;
+}>;
+
+type Component = {
+  Props: Props;
+  State: State;
+  Actions: Actions;
+};
+
+export default component<Component>(
+  ({ action }): Config<Component> => ({
+    state: (): State => ({
+      show: true
+    }),
+
+    actions: {
+      Dismiss: (_, { props, state }): { state: State; next: Next } => {
+        return {
+          state: { ...state, show: false },
+          next: props.onDismiss  // Invoke parent's action thunk
+        };
+      }
+    },
+
+    view(id, { props, state }): VNode {
+      return div(`#${id}.notification`, [
+        props.text,
+        button({ on: { click: action("Dismiss") } }, "Dismiss")
+      ]);
+    }
+  })
+);
+```
+
+**Using the child component from a parent:**
+
+```typescript
+import notification from "./components/notification";
+
+export default component<Component>(
+  ({ action }): Config<Component> => ({
+    state: (): State => ({
+      feedback: ""
+    }),
+
+    actions: {
+      SetFeedback: ({ text }, { state }): { state: State } => {
+        return {
+          state: { ...state, feedback: text }
+        };
+      }
+    },
+
+    view(id, { state }): VNode {
+      return div(`#${id}`, [
+        // Render child component, passing action thunk as prop
+        notification(`#${id}-feedback`, {
+          text: state.feedback,
+          onDismiss: action("SetFeedback", { text: "" })
+        })
+      ]);
+    }
+  })
+);
+```
+
+### Root Actions and Tasks
+
+Child components can access root-level actions and tasks by declaring them in their Component type and using `rootAction` and `rootTask` from the component callback.
+
+**Declaring root types in parent:**
+
+```typescript
+export type RootState = Readonly<{
+  theme: string;
+  likes: Record<string, number>;
+}>;
+
+export type RootActions = Readonly<{
+  SetTheme: { theme: string };
+  Like: { page: string };
+}>;
+
+export type RootTasks = Readonly<{
+  SetDocTitle: { title: string };
+}>;
+```
+
+**Using rootAction and rootTask from a child component:**
+
+```typescript
+import { component, html, Config, VNode, Next } from "jetix";
+import { RootState, RootActions, RootTasks } from "../app";
+const { button } = html;
+
+export type Props = Readonly<{
+  page: string;
+}>;
+
+type Actions = Readonly<{
+  Like: null;
+}>;
+
+type Component = {
+  Props: Props;
+  State: null;
+  Actions: Actions;
+  RootState: RootState;    // Access root state
+  RootActions: RootActions; // Access root actions
+  RootTasks: RootTasks;    // Access root tasks
+};
+
+export default component<Component>(
+  ({ action, rootAction, rootTask }): Config<Component> => ({
+    actions: {
+      Like: (_, { props }): { state: null; next: Next } => {
+        return {
+          state: null,
+          next: [
+            rootAction("Like", { page: props.page }),
+            rootTask("SetDocTitle", { title: "You like this!" })
+          ]
+        };
+      }
+    },
+
+    view: (id, { props, rootState }): VNode =>
+      button(
+        `#${id}.like`,
+        { on: { click: action("Like") } },
+        `👍${rootState.likes[props.page]}`
+      )
+  })
+);
+```
+
+Components can also use `rootAction` and `rootTask` in their `init` property:
+
+```typescript
+export default component<Component>(
+  ({ rootTask }): Config<Component> => ({
+    init: rootTask("SetDocTitle", { title: "Page Title" }),
+    
+    view(id): VNode {
+      return div(`#${id}`, "Content");
+    }
+  })
+);
+```
+
+### TypeScript Best Practices
+
+Follow these patterns for type-safe, idiomatic Jetix components:
+
+**1. Always use Readonly types for Props and State:**
+
+```typescript
+export type Props = Readonly<{
+  title: string;
+  count: number;
+}>;
+
+export type State = Readonly<{
+  items: string[];
+  selected: boolean;
+}>;
+```
+
+**2. Define the Component type with all generic parameters:**
+
+```typescript
+type Component = {
+  Props: Props;      // Required if component accepts props
+  State: State;      // Required if component has state (or null)
+  Actions: Actions;  // Required if component has actions
+  Tasks: Tasks;      // Required if component has tasks
+  RootState: RootState;    // Optional - for accessing root state
+  RootActions: RootActions; // Optional - for accessing root actions
+  RootTasks: RootTasks;    // Optional - for accessing root tasks
+};
+```
+
+**3. Include return type annotations on functions:**
+
+```typescript
+// State initializer
+state: (props: Props): State => ({
+  count: props.initialCount
+}),
+
+// Action handlers
+actions: {
+  Increment: ({ step }, { state }): { state: State; next: Next } => {
+    return {
+      state: { ...state, count: state.count + step },
+      next: action("Validate")
+    };
+  }
+},
+
+// View function
+view(id: string, { props, state }: Context<Props, State, null>): VNode {
+  return div(`#${id}`, state.count.toString());
+}
+```
+
+**4. Use null for components without State:**
+
+```typescript
+type Component = {
+  Props: Props;
+  State: null;      // No local state
+  Actions: Actions;
+};
+
+export default component<Component>(
+  ({ action }): Config<Component> => ({
+    // No state property needed
+    
+    actions: {
+      DoSomething: (_, { props }): { state: null } => {
+        return { state: null };  // Return null for state
+      }
+    }
+  })
+);
+```
+
+### Immutability Patterns
+
+Jetix freezes state and props to prevent mutations. Follow these patterns for updating state immutably:
+
+**1. Conditional same-state optimization:**
+
+```typescript
+actions: {
+  SetTheme: ({ theme }, { state }): { state: State } => {
+    // Return same state reference if value hasn't changed
+    return {
+      state: theme === state.theme ? state : {
+        ...state,
+        theme
+      }
+    };
+  }
+}
+```
+
+**2. Nested object spreading:**
+
+```typescript
+actions: {
+  IncrementLike: ({ page }, { state }): { state: State } => {
+    return {
+      state: {
+        ...state,
+        likes: {
+          ...state.likes,
+          [page]: state.likes[page] + 1
+        }
+      }
+    };
+  }
+}
+```
+
+**3. Array updates:**
+
+```typescript
+actions: {
+  AddItem: ({ item }, { state }): { state: State } => {
+    return {
+      state: {
+        ...state,
+        items: [...state.items, item]
+      }
+    };
+  },
+  
+  RemoveItem: ({ index }, { state }): { state: State } => {
+    return {
+      state: {
+        ...state,
+        items: state.items.filter((_, i) => i !== index)
+      }
+    };
+  },
+  
+  UpdateItem: ({ index, item }, { state }): { state: State } => {
+    return {
+      state: {
+        ...state,
+        items: state.items.map((existing, i) => 
+          i === index ? item : existing
+        )
+      }
+    };
+  }
+}
+```
+
+### Task Variations
+
+Tasks can be used for various types of side effects and async operations.
+
+**1. Effect-only tasks (no success/failure):**
+
+```typescript
+tasks: {
+  SetDocTitle: ({ title }) => ({
+    perform: (): void => {
+      document.title = title;
+    }
+    // No success or failure handlers needed
+  })
+}
+```
+
+**2. Async tasks with success and failure:**
+
+```typescript
+tasks: {
+  FetchData: ({ id }) => ({
+    perform: (): Promise<Data> => fetch(`/api/${id}`).then(r => r.json()),
+    
+    success: (data: Data, { state }): Next => {
+      return action("DataLoaded", { data });
+    },
+    
+    failure: (error: Error, { state }): Next => {
+      return action("DataFailed", { error: error.message });
+    }
+  })
+}
+```
+
+**3. Tasks that return actions based on results:**
+
+```typescript
+tasks: {
+  ValidateInput: ({ value }) => ({
+    perform: (): Promise<ValidationResult> => validateAsync(value),
+    
+    success: (result: ValidationResult): Next => {
+      // Return different actions based on result
+      if (result.valid) {
+        return action("ValidationPassed");
+      } else {
+        return action("ValidationFailed", { errors: result.errors });
+      }
+    },
+    
+    failure: (error: Error): Next => {
+      return action("ValidationError", { message: error.message });
+    }
+  })
+}
+```
+
+**4. Tasks that return multiple next actions:**
+
+```typescript
+tasks: {
+  Initialize: () => ({
+    perform: (): Promise<AppData> => loadAppData(),
+    
+    success: (data: AppData): Next => {
+      return [
+        action("SetData", data),
+        action("LoadComplete"),
+        task("TrackAnalytics", { event: "app_loaded" })
+      ];
+    }
+  })
+}
+```
+
+### Component Lifecycle
+
+Understanding when components render and update:
+
+**1. Initial render:**
+- Component's `state` function is called with props
+- `init` action/task runs (if defined)
+- `view` function renders the initial VNode
+
+**2. Re-rendering on state changes:**
+- Action handler returns new state
+- Component's `view` function is called with new state
+- VDOM patch updates only the changed DOM elements
+
+**3. Re-rendering on props changes:**
+- Parent re-renders and passes new props to child
+- Child's `view` function is called with new props
+- VDOM patch updates the DOM
+
+**4. Props updates flow parent to child:**
+
+```typescript
+// Parent component
+actions: {
+  UpdateCounter: ({ value }, { state }): { state: State } => {
+    return {
+      state: { ...state, counterValue: value }
+    };
+  }
+},
+
+view(id, { state }): VNode {
+  return div(`#${id}`, [
+    // When counterValue changes, child receives new props and re-renders
+    counter(`#${id}-counter`, { value: state.counterValue })
+  ]);
+}
+```
+
+**5. Optimization - memoized thunks:**
+
+Action and task thunks returned by `action()`, `task()`, `rootAction()`, and `rootTask()` are automatically memoized. If called with the same parameters, they return the same function reference, preventing unnecessary re-renders when passed as props.
+
+```typescript
+// These will be the same reference if called multiple times with same params
+const onClick1 = action("Click", { id: 1 });
+const onClick2 = action("Click", { id: 1 });
+// onClick1 === onClick2 → true
+
+const onClick3 = action("Click", { id: 2 });
+// onClick1 === onClick3 → false
+```
