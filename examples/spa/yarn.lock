@@ -2154,11 +2154,6 @@ https-proxy-agent@^7.0.5:
     agent-base "^7.1.2"
     debug "4"
 
-hyperscript-helpers@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/hyperscript-helpers/-/hyperscript-helpers-3.0.3.tgz#583ac45214c9ea810991feb97bdb37fc3d12a1e8"
-  integrity sha512-YWBZO3IlLR4UMnT8T+yRQFRt8VfeLU//qubw6AO5j5rWxlnNH6IjzWdX/SjHCliOqbNoW8u7jUUgIiWz/YtFpA==
-
 iconv-lite@0.6.3:
   version "0.6.3"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.6.3.tgz#a52f80bf38da1952eb5c681790719871a1a72501"
@@ -2215,14 +2210,6 @@ isexe@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/isexe/-/isexe-2.0.0.tgz#e8fbf374dc556ff8947a10dcb0572d633f2cfa10"
   integrity sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==
-
-jetix@^0.2.3:
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/jetix/-/jetix-0.2.3.tgz#fff54a9c594ac6476d0ad78362062bb41402079d"
-  integrity sha512-0FN1nfW3nRD3uwoqo7u8f4vNDvWmXVOnSfNks1LVCUrbVJRiWvQSlPHayFf1H/sF3SpOnM2Vjubv3ofDON8Vtg==
-  dependencies:
-    hyperscript-helpers "^3.0.3"
-    snabbdom "^0.7.4"
 
 js-yaml@^4.1.0:
   version "4.1.0"
@@ -2788,16 +2775,6 @@ sirv@^3.0.0:
     "@polka/url" "^1.0.0-next.24"
     mrmime "^2.0.0"
     totalist "^3.0.0"
-
-snabbdom@3.6.3:
-  version "3.6.3"
-  resolved "https://registry.yarnpkg.com/snabbdom/-/snabbdom-3.6.3.tgz#1cdcd0a7188d3590da77e1fad87dbcc026b87b26"
-  integrity sha512-W2lHLLw2qR2Vv0DcMmcxXqcfdBaIcoN+y/86SmHv8fn4DazEQSH6KN3TjZcWvwujW56OHiiirsbHWZb4vx/0fg==
-
-snabbdom@^0.7.4:
-  version "0.7.4"
-  resolved "https://registry.yarnpkg.com/snabbdom/-/snabbdom-0.7.4.tgz#817f07e8d3fb870960c3763b8da56f1ba982d31a"
-  integrity sha512-nnN+7uZ2NTIiu7EPMNwSDhmrYXqwlfCP/j72RdzvDPujXyvQxOW7Jl9yuLayzxMHDNWQR7FM6Pcn4wnDpKRe6Q==
 
 source-map-js@^1.2.1:
   version "1.2.1"

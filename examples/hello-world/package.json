@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Jetix example app",
   "scripts": {
-    "dev": "parcel ./index.html",
+    "dev": "parcel --no-cache ./index.html",
     "ts:check": "tsc --noEmit",
     "ts:build": "tsc && rm -rf ./dist && cross-env NODE_ENV=production parcel build ./index.html --public-url ./",
     "test": "vitest run",
@@ -26,9 +26,5 @@
     "parcel": "^2.13.3",
     "typescript": "^5.9.3",
     "vitest": "^2.1.8"
-  },
-  "dependencies": {
-    "jetix": "^0.2.3",
-    "snabbdom": "3.6.3"
   }
 }

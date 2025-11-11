@@ -8,7 +8,11 @@
     "esModuleInterop": true,
     "noEmit": true,
     "types": ["vitest/globals"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "jetix": ["../../src/jetix.ts"]
+    }
   },
   "include": [
     "./src/**/*"
