@@ -396,12 +396,22 @@ export function renderComponent<TComponent extends Component>(
   // If component already exists, just render again
   const existing = componentRegistry.get(id);
   if (existing) {
+    // Check if props changed (by reference)
+    const propsChanged = existing.props !== props;
     existing.props = props;
-    const result = renderComponentInstance(existing);
-    if (!result) {
-      throw Error(`Component ${id} failed to render`);
+
+    if (propsChanged) {
+      log.render(existing.id, existing.props);
+      existing.vnode = existing.config.view(existing.id, {
+        props: existing.props,
+        state: existing.state,
+        rootState
+      });
+      existing.prevProps = existing.props;
+      setRenderRef(existing);
     }
-    return result;
+
+    return existing.vnode as VNode;
   }
 
   const action: GetActionThunk<TComponent['Actions']> = (actionName, data): ActionThunk => {

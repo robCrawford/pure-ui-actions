@@ -392,4 +392,32 @@ describe("Jetix", () => {
     });
   });
 
+  describe("props changes", () => {
+    it("should re-render child component when props change", () => {
+      // Track child view calls to verify it's being called with updated props
+      const childViewCalls: string[] = [];
+      const childId = getId();
+
+      const getConfig = () => ({
+        state: () => ({ internalState: 0 }),
+        view: (id: string, { props }: any) => {
+          const msg = props?.message || "";
+          childViewCalls.push(msg);
+          return div(`#${id}.child`, msg);
+        }
+      });
+
+      // Initial render with props
+      renderComponent(childId, getConfig, { message: "initial" });
+      expect(childViewCalls).toEqual(["initial"]);
+
+      // Re-render the same component with different props
+      // This simulates what happens when a parent re-renders with new props
+      renderComponent(childId, getConfig, { message: "updated" });
+
+      // Child view should have been called again with "updated"
+      expect(childViewCalls).toEqual(["initial", "updated"]);
+    });
+  });
+
 });
