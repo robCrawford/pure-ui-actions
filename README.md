@@ -251,6 +251,255 @@ Keys are essential when items can be reordered, added, or removed
 
 This section provides in-depth guidance for writing idiomatic Jetix applications with TypeScript.
 
+### Pure Functions and I/O Separation
+
+**Core Principle: Actions are pure functions. All I/O and side effects must be isolated in Tasks.**
+
+Jetix follows the Elm Architecture pattern, enforcing a strict separation between pure logic and side effects:
+
+**Actions**: Pure functions that transform state
+- Receive input (payload + context) and return output (new state + next actions/tasks)
+- Must not perform I/O, mutate external state, or have side effects
+- Predictable and easy to test without mocks
+- Example: Incrementing a counter, updating form state, filtering a list
+
+```typescript
+actions: {
+  Increment: ({ step }, { state }): { state: State; next: Next } => {
+    // Pure function: input → output, no side effects
+    return {
+      state: { ...state, count: state.count + step },
+      next: action("Validate")  // Declare next action as data
+    };
+  }
+}
+```
+
+**Tasks**: The exclusive location for all side effects
+- API calls and network requests
+- DOM mutations (except rendering via the view function)
+- Browser APIs (localStorage, sessionStorage, document.title, etc.)
+- Timers, setTimeout, setInterval
+- Logging, analytics, and tracking
+- Any operation that affects the outside world
+
+```typescript
+tasks: {
+  // Effect-only task (synchronous side effect)
+  SetDocTitle: ({ title }) => ({
+    perform: (): void => {
+      document.title = title;  // Side effect isolated here
+    }
+  }),
+  
+  // Async task with success/failure handling
+  FetchUser: ({ id }) => ({
+    perform: (): Promise<User> => fetch(`/api/users/${id}`).then(r => r.json()),
+    success: (user: User): Next => action("UserLoaded", { user }),
+    failure: (error: Error): Next => action("UserLoadFailed", { error: error.message })
+  })
+}
+```
+
+**External I/O**: Use the `init` callback from `mount()` to wire external events (routing, websockets, browser events) to root actions:
+
+```typescript
+mount({
+  app,
+  props: {},
+  init: (runRootAction) => {
+    // Connect router to actions
+    router.on({ 
+      about: () => runRootAction("SetPage", { page: "about" }),
+      home: () => runRootAction("SetPage", { page: "home" })
+    }).resolve();
+    
+    // Connect other external events
+    window.addEventListener("online", () => 
+      runRootAction("SetOnlineStatus", { online: true })
+    );
+  }
+});
+```
+
+This architecture provides:
+- **Testability**: Actions are just data transformations, testable without mocks
+- **Predictability**: Pure functions always return the same output for the same input
+- **Maintainability**: Clear boundaries between logic and effects
+- **Debuggability**: Actions and tasks are declarative data, enabling time-travel debugging
+
+### Common Mistakes and Anti-Patterns
+
+Understanding what NOT to do is as important as knowing the correct patterns. Jetix enforces these rules at runtime (throwing errors or logging warnings), but following these guidelines will help you write correct code from the start.
+
+**❌ WRONG: Side effects in actions**
+
+```typescript
+actions: {
+  SaveData: ({ data }, { state }) => {
+    // Wrong - Side effects belong in tasks
+    localStorage.setItem('data', JSON.stringify(data));
+    fetch('/api/save', { method: 'POST', body: JSON.stringify(data) });
+    document.title = 'Data Saved';
+    
+    return { state: { ...state, saved: true } };
+  }
+}
+```
+
+**✅ CORRECT: Side effects in tasks**
+
+```typescript
+actions: {
+  SaveData: ({ data }, { state }) => {
+    return { 
+      state: { ...state, data },
+      next: task("PersistData", { data })
+    };
+  }
+},
+tasks: {
+  PersistData: ({ data }) => ({
+    perform: () => {
+      // All side effects go here
+      localStorage.setItem('data', JSON.stringify(data));
+      return fetch('/api/save', { 
+        method: 'POST', 
+        body: JSON.stringify(data) 
+      });
+    },
+    success: () => action("DataSaved"),
+    failure: (error) => action("SaveFailed", { error: error.message })
+  })
+}
+```
+
+**❌ WRONG: Mutating state directly**
+
+```typescript
+actions: {
+  AddItem: ({ item }, { state }) => {
+    // Wrong - Mutation will throw error due to deepFreeze
+    state.items.push(item);
+    state.count = state.count + 1;
+    
+    return { state };
+  }
+}
+```
+
+**✅ CORRECT: Immutable updates with spread operators**
+
+```typescript
+actions: {
+  AddItem: ({ item }, { state }) => {
+    return {
+      state: {
+        ...state,
+        items: [...state.items, item],
+        count: state.count + 1
+      }
+    };
+  }
+}
+```
+
+**❌ WRONG: Manually calling action thunks**
+
+```typescript
+// In some arbitrary function
+const myAction = action("DoSomething", { value: 1 });
+myAction(); // Wrong - Will log error, actions must be triggered by framework
+```
+
+**✅ CORRECT: Actions triggered by DOM events or as Next**
+
+```typescript
+// In view - bound to DOM event
+view(id, { state }): VNode {
+  return button(
+    { on: { click: action("DoSomething", { value: 1 }) } },
+    "Click me"
+  );
+}
+
+// In action - returned as Next
+actions: {
+  FirstAction: (_, { state }) => {
+    return {
+      state,
+      next: action("DoSomething", { value: 1 })
+    };
+  }
+}
+```
+
+**❌ WRONG: Async operations in actions**
+
+```typescript
+actions: {
+  LoadUser: async ({ id }, { state }) => {
+    // Wrong - Actions must be synchronous
+    const user = await fetch(`/api/users/${id}`).then(r => r.json());
+    return { state: { ...state, user } };
+  }
+}
+```
+
+**✅ CORRECT: Async operations in tasks**
+
+```typescript
+actions: {
+  LoadUser: ({ id }, { state }) => {
+    return {
+      state: { ...state, loading: true },
+      next: task("FetchUser", { id })
+    };
+  },
+  UserLoaded: ({ user }, { state }) => {
+    return {
+      state: { ...state, user, loading: false }
+    };
+  }
+},
+tasks: {
+  FetchUser: ({ id }) => ({
+    perform: () => fetch(`/api/users/${id}`).then(r => r.json()),
+    success: (user) => action("UserLoaded", { user }),
+    failure: (error) => action("LoadFailed", { error: error.message })
+  })
+}
+```
+
+**❌ WRONG: Conditional task execution in action**
+
+```typescript
+actions: {
+  Submit: ({ data }, { state }) => {
+    if (data.needsValidation) {
+      // Wrong - Can't conditionally execute tasks inline
+      validateData(data);
+    }
+    return { state: { ...state, data } };
+  }
+}
+```
+
+**✅ CORRECT: Conditional Next based on state**
+
+```typescript
+actions: {
+  Submit: ({ data }, { state }) => {
+    return {
+      state: { ...state, data },
+      next: data.needsValidation 
+        ? task("ValidateData", { data })
+        : action("SubmitComplete")
+    };
+  }
+}
+```
+
 ### Component Composition
 
 Components can be composed by rendering child components in the parent's view. Child components receive props including action thunks for communication back to the parent.
@@ -646,6 +895,393 @@ tasks: {
     }
   })
 }
+```
+
+### Service Functions Pattern
+
+Service functions are reusable, pure I/O operations that encapsulate API calls, browser APIs, and other external interactions. They are called from task `perform` functions, keeping your component logic clean and testable.
+
+**Organizing service functions:**
+
+```typescript
+// src/services/api.ts - API calls
+export async function fetchUser(id: string): Promise<User> {
+  const response = await fetch(`/api/users/${id}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function saveUser(user: User): Promise<void> {
+  const response = await fetch(`/api/users/${user.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(user)
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to save user: ${response.statusText}`);
+  }
+}
+
+// src/services/storage.ts - Browser storage
+export function saveToLocalStorage(key: string, data: unknown): void {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+export function loadFromLocalStorage<T>(key: string): T | null {
+  const data = localStorage.getItem(key);
+  return data ? JSON.parse(data) : null;
+}
+
+// src/services/browser.ts - Browser APIs
+export async function setDocTitle(title: string): Promise<void> {
+  document.title = title;
+}
+
+export function copyToClipboard(text: string): Promise<void> {
+  return navigator.clipboard.writeText(text);
+}
+```
+
+**Using service functions in tasks:**
+
+```typescript
+import { fetchUser, saveUser } from "./services/api";
+import { saveToLocalStorage } from "./services/storage";
+
+export default component<Component>(
+  ({ action, task }): Config<Component> => ({
+    
+    actions: {
+      LoadUser: ({ id }, { state }) => ({
+        state: { ...state, loading: true, error: null },
+        next: task("FetchUser", { id })
+      }),
+      UserLoaded: ({ user }, { state }) => ({
+        state: { ...state, user, loading: false }
+      })
+    },
+    
+    tasks: {
+      FetchUser: ({ id }) => ({
+        perform: () => fetchUser(id),  // Service function
+        success: (user) => action("UserLoaded", { user }),
+        failure: (error) => action("LoadFailed", { error: error.message })
+      }),
+      
+      SaveUser: ({ user }) => ({
+        perform: async () => {
+          await saveUser(user);  // Service function
+          saveToLocalStorage('lastSaved', Date.now());  // Service function
+        },
+        success: () => action("SaveComplete"),
+        failure: (error) => action("SaveFailed", { error: error.message })
+      })
+    },
+    
+    view(id, { state }): VNode {
+      return div(`#${id}`, [
+        state.loading ? div("Loading...") : div(state.user?.name ?? "")
+      ]);
+    }
+  })
+);
+```
+
+**Benefits of service functions:**
+- **Reusability**: Same function used across multiple components
+- **Testability**: Easy to unit test in isolation
+- **Type safety**: TypeScript ensures correct parameters and return types
+- **Separation of concerns**: Business logic separate from I/O implementation
+
+### Error Handling Patterns
+
+Proper error handling ensures your application gracefully handles failures and provides good user feedback.
+
+**Pattern 1: Loading, Error, and Data states**
+
+```typescript
+type State = Readonly<{
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+}>;
+
+export default component<Component>(
+  ({ action, task }): Config<Component> => ({
+    
+    state: (): State => ({
+      user: null,
+      loading: false,
+      error: null
+    }),
+    
+    actions: {
+      LoadUser: ({ id }, { state }) => ({
+        state: { ...state, loading: true, error: null },
+        next: task("FetchUser", { id })
+      }),
+      
+      UserLoaded: ({ user }, { state }) => ({
+        state: { ...state, user, loading: false, error: null }
+      }),
+      
+      LoadFailed: ({ error }, { state }) => ({
+        state: { ...state, loading: false, error }
+      }),
+      
+      ClearError: (_, { state }) => ({
+        state: { ...state, error: null }
+      })
+    },
+    
+    tasks: {
+      FetchUser: ({ id }) => ({
+        perform: () => fetchUser(id),
+        success: (user) => action("UserLoaded", { user }),
+        failure: (error) => action("LoadFailed", { 
+          error: error.message || "An unknown error occurred" 
+        })
+      })
+    },
+    
+    view(id, { state }): VNode {
+      return div(`#${id}`, [
+        state.loading && div(".loading", "Loading..."),
+        state.error && div(".error", [
+          span(state.error),
+          button({ on: { click: action("ClearError") } }, "Dismiss")
+        ]),
+        state.user && div(".user-profile", [
+          h2(state.user.name),
+          p(state.user.email)
+        ])
+      ]);
+    }
+  })
+);
+```
+
+**Pattern 2: Retry logic**
+
+```typescript
+type State = Readonly<{
+  data: Data | null;
+  retryCount: number;
+  maxRetries: number;
+  error: string | null;
+}>;
+
+actions: {
+  LoadData: (_, { state }) => ({
+    state: { ...state, error: null },
+    next: task("FetchData", {})
+  }),
+  
+  LoadFailed: ({ error }, { state }) => {
+    const shouldRetry = state.retryCount < state.maxRetries;
+    return {
+      state: {
+        ...state,
+        retryCount: state.retryCount + 1,
+        error: shouldRetry ? null : error
+      },
+      next: shouldRetry 
+        ? task("FetchData", {})
+        : undefined
+    };
+  },
+  
+  DataLoaded: ({ data }, { state }) => ({
+    state: { ...state, data, retryCount: 0, error: null }
+  })
+}
+```
+
+**Pattern 3: Validation errors**
+
+```typescript
+type ValidationError = {
+  field: string;
+  message: string;
+};
+
+type State = Readonly<{
+  formData: FormData;
+  validationErrors: ValidationError[];
+  submitting: boolean;
+}>;
+
+actions: {
+  Submit: (_, { state }) => ({
+    state: { ...state, submitting: true, validationErrors: [] },
+    next: task("ValidateAndSubmit", { data: state.formData })
+  }),
+  
+  ValidationFailed: ({ errors }, { state }) => ({
+    state: { 
+      ...state, 
+      submitting: false, 
+      validationErrors: errors 
+    }
+  }),
+  
+  SubmitSuccess: (_, { state }) => ({
+    state: { 
+      ...state, 
+      submitting: false, 
+      validationErrors: [],
+      formData: initialFormData 
+    }
+  })
+},
+
+view(id, { state }): VNode {
+  return form(`#${id}`, [
+    input({
+      props: { value: state.formData.email },
+      class: { 
+        error: state.validationErrors.some(e => e.field === 'email') 
+      }
+    }),
+    state.validationErrors
+      .filter(e => e.field === 'email')
+      .map(e => div(".error", e.message)),
+    
+    button(
+      { 
+        on: { click: action("Submit") },
+        props: { disabled: state.submitting }
+      },
+      state.submitting ? "Submitting..." : "Submit"
+    )
+  ]);
+}
+```
+
+### Project Structure Convention
+
+A consistent project structure helps maintain organization as your application grows. Here's the recommended structure based on the example applications:
+
+```
+your-project/
+├── index.html                 # Entry HTML with <div id="app"></div>
+├── package.json
+├── tsconfig.json
+├── vitest.config.ts          # Testing configuration
+└── src/
+    ├── app.ts                # Root component (mounted to #app)
+    ├── router.ts             # External I/O wiring (routing, etc.)
+    │
+    ├── components/           # Reusable components
+    │   ├── button.ts
+    │   ├── button.spec.ts
+    │   ├── notification.ts
+    │   └── notification.spec.ts
+    │
+    ├── pages/                # Page-level components
+    │   ├── homePage.ts
+    │   ├── homePage.spec.ts
+    │   ├── aboutPage.ts
+    │   └── aboutPage.spec.ts
+    │
+    ├── services/             # I/O functions (API, storage, etc.)
+    │   ├── api.ts
+    │   ├── api.spec.ts
+    │   ├── storage.ts
+    │   └── browser.ts
+    │
+    ├── types/                # Shared TypeScript types
+    │   └── models.ts
+    │
+    └── css/                  # Styles
+        └── main.css
+```
+
+**File naming conventions:**
+- `*.ts` - Component or service implementation
+- `*.spec.ts` - Unit tests
+- Use camelCase for file names: `userProfile.ts`, not `user-profile.ts`
+- Export components as default: `export default component<Component>(...)`
+
+**Component structure (app.ts):**
+
+```typescript
+import { component, html, Config, VNode, Next, Task } from "jetix";
+import homePage from "./pages/homePage";
+import aboutPage from "./pages/aboutPage";
+const { div } = html;
+
+// 1. Export types for use by child components
+export type RootProps = Readonly<{
+  // ...
+}>;
+
+export type RootState = Readonly<{
+  // ...
+}>;
+
+export type RootActions = Readonly<{
+  // ...
+}>;
+
+export type RootTasks = Readonly<{
+  // ...
+}>;
+
+// 2. Define Component type
+type Component = {
+  Props: RootProps;
+  State: RootState;
+  Actions: RootActions;
+  Tasks: RootTasks;
+};
+
+// 3. Create and export component
+export default component<Component>(
+  ({ action, task }): Config<Component> => ({
+    state: (): RootState => ({ /* ... */ }),
+    init: action("Initialize"),
+    actions: { /* ... */ },
+    tasks: { /* ... */ },
+    view(id, { state }): VNode { /* ... */ }
+  })
+);
+```
+
+**Router structure (router.ts):**
+
+```typescript
+import { mount, subscribe, RunAction } from "jetix";
+import Navigo from "navigo";
+import app, { RootActions, RootProps } from "./app";
+
+const router = new Navigo("/");
+
+document.addEventListener("DOMContentLoaded", (): void => {
+  mount<RootActions, RootProps>({
+    app,
+    props: {},
+    init: (runRootAction: RunAction<RootActions>): void => {
+      // Wire up routing
+      router.on({
+        home: () => runRootAction("SetPage", { page: "home" }),
+        about: () => runRootAction("SetPage", { page: "about" })
+      }).resolve();
+      
+      // Wire up other external events
+      window.addEventListener("online", () => 
+        runRootAction("SetOnlineStatus", { online: true })
+      );
+      
+      // Subscribe to patch events for router updates
+      subscribe("patch", (): void => {
+        router.updatePageLinks();
+      });
+    }
+  });
+});
 ```
 
 ### Component Lifecycle
