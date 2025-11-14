@@ -1205,6 +1205,125 @@ view(id, { state }) {
 
 Keys are essential when items can be reordered, added, or removed.
 
+### Component Memoization
+
+Jetix exports Snabbdom's `thunk` as both `thunk` and `memo` for optimizing expensive components.
+
+**CRITICAL CONSTRAINT**: Only use `memo` for components that **DO NOT access `rootState`**.
+
+#### Why This Matters
+
+Memoized components bypass Jetix's normal render flow. When `rootState` changes:
+1. Jetix re-renders from the root component
+2. Memoized components check their comparison key
+3. If key unchanged → skip re-render
+4. Component never receives the new `rootState`
+
+This creates stale state bugs that are difficult to debug.
+
+#### Safe Usage Pattern
+
+```typescript
+import { memo } from "jetix";
+
+// Component that ONLY uses props - safe to memoize
+const listComponent = (id, { items }) => 
+  div(`#${id}`, [
+    ul(items.map(item => li(item.name)))
+  ]);
+
+view(id, { state }) {
+  return div(`#${id}`, [
+    div(`Counter: ${state.counter}`),
+    
+    // Safe: listComponent doesn't access rootState
+    memo(
+      `#${id}-list`,
+      listComponent,
+      { items: state.items },
+      state.items  // Re-renders only when items change
+    )
+  ]);
+}
+```
+
+#### Unsafe Patterns
+
+**❌ WRONG: Component accesses rootState**
+```typescript
+// This component reads rootState.theme
+const themedList = (id, { items, rootState }) => 
+  div(`#${id}.${rootState.theme}`, [  // ❌ Uses rootState
+    ul(items.map(item => li(item.name)))
+  ]);
+
+view(id, { state, rootState }) {
+  return div(`#${id}`, [
+    // ❌ WRONG: When theme changes, memo blocks the re-render
+    memo(
+      `#${id}-list`,
+      themedList,
+      { items: state.items, rootState },
+      state.items  // Key doesn't include theme!
+    )
+  ]);
+}
+```
+
+**✅ CORRECT: Don't memoize components that need rootState**
+```typescript
+view(id, { state, rootState }) {
+  return div(`#${id}`, [
+    // Render normally - will see rootState changes
+    themedList(`#${id}-list`, { items: state.items, rootState })
+  ]);
+}
+```
+
+**✅ CORRECT ALTERNATIVE: Pass rootState as explicit prop**
+```typescript
+// Component takes theme as explicit prop (no rootState)
+const themedList = (id, { items, theme }) => 
+  div(`#${id}.${theme}`, [
+    ul(items.map(item => li(item.name)))
+  ]);
+
+view(id, { state, rootState }) {
+  return div(`#${id}`, [
+    // Include all dependencies in the key
+    memo(
+      `#${id}-list`,
+      themedList,
+      { items: state.items, theme: rootState.theme },
+      { items: state.items, theme: rootState.theme }  // ✅ Key includes theme
+    )
+  ]);
+}
+```
+
+#### When to Use Memo
+
+Use `memo` when:
+- Component is computationally expensive
+- Component renders frequently due to unrelated state changes
+- Component **only uses local state or explicit props**
+- Component does **NOT access rootState**
+
+Don't use `memo` when:
+- Component is already fast
+- Component needs rootState
+- The memoization overhead exceeds the rendering cost
+
+#### Best Practice
+
+Prefer the state management approach that avoids the need for memoization:
+1. Keep state local to components
+2. Lift state only to nearest common parent
+3. Pass data as explicit props
+4. Minimize rootState usage (see "State Management Best Practices" above)
+
+This approach avoids both the performance cost of excessive rootState re-renders AND the complexity of memoization.
+
 ## Common Workflows
 
 ### Adding a New Feature
@@ -1252,12 +1371,14 @@ mount({
 2. **Tasks contain all side effects** - API calls, browser APIs, logging
 3. **State is immutable** - Use spread operators for updates
 4. **Types are Readonly** - Props and State must be Readonly
-5. **External events in mount init** - Wire routing and browser events there
-6. **Service functions for reusable I/O** - Called from task perform
-7. **Test with testComponent** - Actions and tasks return data structures
-8. **Components are default exports** - Root types are named exports
-9. **Co-locate tests** - `*.spec.ts` files next to implementation
-10. **Use withKey for lists** - Enable efficient VDOM updates
+5. **Prefer local state over rootState** - Only use rootState for truly global concerns
+6. **Only memo components without rootState** - Memoized components won't see rootState changes
+7. **External events in mount init** - Wire routing and browser events there
+8. **Service functions for reusable I/O** - Called from task perform
+9. **Test with testComponent** - Actions and tasks return data structures
+10. **Components are default exports** - Root types are named exports
+11. **Co-locate tests** - `*.spec.ts` files next to implementation
+12. **Use withKey for lists** - Enable efficient VDOM updates
 
 ## Build and Test Commands
 

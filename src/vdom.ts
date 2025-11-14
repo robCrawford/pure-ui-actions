@@ -5,8 +5,9 @@ with html functions from `https://github.com/ohanhi/hyperscript-helpers`
 import { init, h, classModule, attributesModule, propsModule, eventListenersModule } from "snabbdom";
 import hyperscriptHelpers from 'hyperscript-helpers';
 import type { VNode, Hooks } from "snabbdom";
+import { thunk } from "snabbdom";
 export type { VNode };
-export { thunk } from "snabbdom";
+export { thunk, thunk as memo };
 
 export const patch = init([ classModule, attributesModule, propsModule, eventListenersModule ]);
 
