@@ -492,11 +492,15 @@ describe("Component Lifecycle & State Management", () => {
       });
 
       // Initial render with props
-      renderComponent(childId, getConfig, { message: "initial" });
+      const initialVnode = renderComponent(childId, getConfig, { message: "initial" });
       expect(childViewCalls).toEqual(["initial"]);
 
+      // Patch initial vnode to DOM
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      vdom.patch(container, initialVnode);
+
       // Re-render the same component with different props
-      // This tests the low-level props change detection mechanism
       renderComponent(childId, getConfig, { message: "updated" });
 
       // Child view should have been called again with "updated"

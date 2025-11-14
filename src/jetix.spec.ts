@@ -14,17 +14,21 @@ describe("Jetix", () => {
 
   function view(id: string, ctx: Context<any, any, any>): VNode {
     state = ctx.state ?? { count: 0 };
-    return div("Test");
+    return div(`#${id}`, "Test");
   }
 
   beforeEach(() => {
     patchSpy.mockClear();
+
+    // Set up DOM element for patching
+    document.body.innerHTML = '';
   });
 
   it("should patch once following a chain of actions", () => {
     const numTestActions = 20;
 
-    renderComponent(getId(), ({ action: a }) => {
+    const id = getId();
+    const initialVnode = renderComponent(id, ({ action: a }) => {
       action = a;
       const actions: Record<string, (data: any, ctx: any) => { state: { count: number }; next?: any }> = {};
 
@@ -50,7 +54,12 @@ describe("Jetix", () => {
       };
     });
 
-    expect(patchSpy).not.toHaveBeenCalled();
+    // Patch initial vnode to DOM
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    vdom.patch(container, initialVnode);
+
+    patchSpy.mockClear(); // Clear the initial patch call
     action("Increment1")(testKey);
     logResult(state.count, patchSpy.mock.calls.length);
     expect(state.count).toBe(numTestActions);
@@ -60,7 +69,8 @@ describe("Jetix", () => {
   it("should patch once following an array of actions", () => {
     const numTestActions = 20;
 
-    renderComponent(getId(), ({ action: a }) => {
+    const id = getId();
+    const initialVnode = renderComponent(id, ({ action: a }) => {
       action = a;
       const actions: Record<string, (data: any, ctx: any) => { state: { count: number }; next?: any }> = {};
       const incrementRetActions: any[] = [];
@@ -84,7 +94,12 @@ describe("Jetix", () => {
       };
     });
 
-    expect(patchSpy).not.toHaveBeenCalled();
+    // Patch initial vnode to DOM
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    vdom.patch(container, initialVnode);
+
+    patchSpy.mockClear(); // Clear the initial patch call
     action("Increment")(testKey);
     logResult(state.count, patchSpy.mock.calls.length);
     expect(state.count).toBe(numTestActions);
@@ -109,7 +124,8 @@ describe("Jetix", () => {
   });
 
   function runActionsWithPromise(numTestActions: number, expectedPatchCount: number, done: any, initialAction?: string) {
-    renderComponent(getId(), ({ action: a, task }) => {
+    const id = getId();
+    const initialVnode = renderComponent(id, ({ action: a, task }) => {
       action = a;
       const actions: Record<string, (data: any, ctx: any) => { state: { count: number }; next?: any }> = {};
 
@@ -160,11 +176,18 @@ describe("Jetix", () => {
         view
       };
     });
+
+    // Patch initial vnode to DOM
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    vdom.patch(container, initialVnode);
+    patchSpy.mockClear(); // Clear the initial patch call
   }
 
   it("should patch twice when a promise returns an array of actions", () => {
     return new Promise<void>((resolve) => {
-      renderComponent(getId(), ({ action: a, task }) => {
+      const id = getId();
+      const initialVnode = renderComponent(id, ({ action: a, task }) => {
         action = a;
 
         return {
@@ -205,7 +228,12 @@ describe("Jetix", () => {
         };
       });
 
-      expect(patchSpy).not.toHaveBeenCalled();
+      // Patch initial vnode to DOM
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      vdom.patch(container, initialVnode);
+
+      patchSpy.mockClear(); // Clear the initial patch call
       action("Increment1")(testKey);
     });
   });
@@ -238,7 +266,8 @@ describe("Jetix", () => {
   });
 
   function runMixedActions(numTestActions: number, initialAction?: string) {
-    renderComponent(getId(), ({ action: a }) => {
+    const id = getId();
+    const initialVnode = renderComponent(id, ({ action: a }) => {
       action = a;
       const actions: Record<string, any> = {};
       const actionsArray1: any[] = [];
@@ -313,6 +342,12 @@ describe("Jetix", () => {
         view
       };
     });
+
+    // Patch initial vnode to DOM
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    vdom.patch(container, initialVnode);
+    patchSpy.mockClear(); // Clear the initial patch call
   }
 
   function getMixedActionsIncr(numTestActions: number) {

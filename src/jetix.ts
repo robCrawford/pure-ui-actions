@@ -316,7 +316,7 @@ function renderComponentInstance(instance: ComponentInstance): VNode | undefined
         return renderComponentInstance(rootInstance);
       }
     }
-    else if (stateChanged) {
+    else if (stateChanged || instance.props !== instance.prevProps) {
       let isRenderRoot = false;
       if (!renderRootId) {
         renderRootId = instance.id;
@@ -394,24 +394,12 @@ export function renderComponent<TComponent extends Component>(
   const isRoot = id === appId;
 
   // If component already exists, just render again
-  const existing = componentRegistry.get(id);
-  if (existing) {
-    // Check if props changed (by reference)
-    const propsChanged = existing.props !== props;
-    existing.props = props;
-
-    if (propsChanged) {
-      log.render(existing.id, existing.props);
-      existing.vnode = existing.config.view(existing.id, {
-        props: existing.props,
-        state: existing.state,
-        rootState
-      });
-      existing.prevProps = existing.props;
-      setRenderRef(existing);
+  const existingRender = componentRegistry.get(id)?.render;
+  if (existingRender) {
+    const newVNode = existingRender(props);
+    if (newVNode) {
+      return newVNode;
     }
-
-    return existing.vnode as VNode;
   }
 
   const action: GetActionThunk<TComponent['Actions']> = (actionName, data): ActionThunk => {
