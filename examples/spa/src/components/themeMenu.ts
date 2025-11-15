@@ -16,7 +16,7 @@ export default component<Component>(({ rootAction }): Config<Component> => ({
       button(
         { on: { click: rootAction("SetTheme", { theme: "dark" }) } },
         "Dark theme"),
-      div('#note', "Add `debug` to the query string to activate logging.")
+      div('#note', "Add `debug=console` to the query string to activate console logging, or use redux devtools")
     ]);
   }
 

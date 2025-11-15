@@ -94,6 +94,8 @@ button.like {
   position: fixed;
   top: 0;
   right: 0;
+  width: 300px;
+  line-height: 1.5;
   background: #DDD;
   padding: 10px 14px;
   border-bottom-left-radius: 5px;

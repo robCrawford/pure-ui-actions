@@ -13,7 +13,7 @@ Also contains lightweight prevention of anti-patterns like state mutation and ma
 **For developers and AI agents:** See [AGENTS.md](./AGENTS.md) for comprehensive architectural patterns, best practices, and development guidelines.
 
 ### Examples:
-- [Single page app demo](http://robcrawford.github.io/demos/jetix/spa?debug) *[[ source ]](https://github.com/robCrawford/jetix/tree/master/examples/spa)*
+- [Single page app demo](http://robcrawford.github.io/demos/jetix/spa?debug=console) *[[ source ]](https://github.com/robCrawford/jetix/tree/master/examples/spa)*
 - Hello World *[[ source ]](https://github.com/robCrawford/jetix/tree/master/examples/hello-world)*
 
 ------------------------
@@ -216,6 +216,37 @@ describe("App", () => {
 
 });
 ```
+
+## Redux DevTools Integration
+
+Jetix automatically integrates with [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension for enhanced debugging:
+
+- **Action History** - See all actions fired with their payloads
+- **State Inspector** - View component states in a tree structure
+- **State Diff** - Automatically see what changed with each action
+- **Task Tracking** - Monitor async operations (success/failure)
+
+**Setup:**
+1. Install the [Redux DevTools Extension](https://github.com/reduxjs/redux-devtools/tree/main/extension) for your browser
+2. Open your Jetix app
+3. Open browser DevTools → Redux tab
+4. Watch actions and state updates in real-time
+
+**Example DevTools output:**
+```
+app/Initialize
+app/ShowMessage { text: "Hello World!" }
+app/[Task] SetDocTitle/success
+counter/Increment { step: 1 }
+counter/[Task] ValidateCount/success
+```
+
+**Note:** Time travel is disabled by design since Jetix's functional architecture makes action replay more appropriate than state snapshots.
+
+**Logging controls:**
+- Redux DevTools logging is automatic when the extension is installed
+- Add `?debug=console` to enable console logging
+- Add `?logRenders=true` to include render events in both outputs (can be verbose)
 
 ## Efficient List Rendering
 

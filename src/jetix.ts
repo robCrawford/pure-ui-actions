@@ -230,7 +230,7 @@ function executeAction(
 
   const currStateChanged = instance.state !== prevState;
   stateChanged = stateChanged || currStateChanged;
-  log.updateStart(id, currStateChanged && prevState, actionName, data as Record<string, unknown>);
+  log.updateStart(id, currStateChanged && prevState, actionName, data as Record<string, unknown>, instance.state);
 
   if (isRoot) {
     rootState = instance.state;
@@ -238,7 +238,7 @@ function executeAction(
   }
 
   if (currStateChanged && instance.state) {
-    log.updateEnd(instance.state);
+    log.updateEnd(instance.state, id);
   }
   runNext(instance, next);
 }
@@ -263,7 +263,7 @@ function performTask(
 
   try {
     const output = perform();
-    log.taskPerform(String(taskName), isPromise(output));
+    log.taskPerform(id, String(taskName), isPromise(output));
 
     if (isPromise(output)) {
       renderComponentInstance(instance); // Render pending state updates

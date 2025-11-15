@@ -24,7 +24,8 @@
     }
   </style>
   <script>
-    if (/[&?]debug/.test(window.location.search)) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('debug') === 'console') {
       document.body.className = 'debug';
       const stateEl = document.getElementById("state");
       const noteHtml = "<div><p>A state, render, patch timeline is logged to the JS console.</p></div>";

@@ -1591,20 +1591,41 @@ For most component lifecycle needs, use `init` actions and tasks instead.
 
 ### Debugging
 
-**Enable debug mode:**
-```typescript
-mount({
-  app,
-  props: {},
-  init: (runRootAction) => {
-    // Set ?debug in URL to enable logging
-    const debug = new URLSearchParams(location.search).get('debug');
-    if (debug !== null) {
-      // Debug logging enabled
-    }
-  }
-});
+**Redux DevTools Integration:**
+
+Jetix automatically integrates with [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension:
+
 ```
+Install Redux DevTools Extension → Open your Jetix app → Open DevTools → Redux tab
+```
+
+**What you get:**
+- **Action History** - All actions with payloads: `counter/Increment { step: 1 }`
+- **State Tree** - Component states: `{ app: {...}, counter: {...} }`
+- **State Diff** - Auto-computed changes for each action
+- **Task Tracking** - `counter/[Task] FetchData/success`
+- **Export/Import** - Save sessions for bug reports
+
+**Limitations:**
+- Time travel is disabled (not compatible with Jetix's functional architecture)
+- Read-only monitoring (can't dispatch actions from DevTools)
+
+**Logging Controls:**
+
+Jetix provides flexible logging via URL query parameters:
+
+- **Redux DevTools** - Automatic when extension is installed
+- **Console logging** - Add `?debug=console` to URL
+- **Render events** - Add `?logRenders=true` to include render/patch events (verbose)
+
+```
+Example URLs:
+http://localhost:3000/                              → Redux DevTools only (if installed)
+http://localhost:3000/?debug=console                → Console + Redux DevTools
+http://localhost:3000/?debug=console&logRenders=true → Everything with render events
+```
+
+Both console and DevTools logging can run simultaneously for maximum insight.
 
 **Framework enforces:**
 - No state mutation (deepFreeze throws errors)

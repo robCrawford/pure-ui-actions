@@ -7,7 +7,7 @@
   "scripts": {
     "ts:check": "tsc --noEmit",
     "ts:build": "rm -rf ./dist && tsc",
-    "test": "vitest"
+    "test": "vitest run"
   },
   "author": "Rob Crawford",
   "repository": {
