@@ -294,3 +294,15 @@ export default component(() => ({
 ```
 
 Components that need `rootState` should be rendered normally or receive it as explicit props.
+
+---
+
+## Additional APIs
+
+Jetix provides additional utilities for advanced use cases:
+
+- **`subscribe(event, handler)`** / **`unsubscribe(event, handler)`** - React to framework lifecycle events (like `"patch"`)
+- **`publish(event, detail?)`** - Emit custom application events
+- **`setHook(vnode, hookName, callback)`** - Access Snabbdom VDOM lifecycle hooks for third-party integrations
+
+See [AGENTS.md](./AGENTS.md) for complete documentation on these APIs and when to use them.

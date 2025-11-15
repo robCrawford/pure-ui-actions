@@ -98,6 +98,77 @@ mount({
 });
 ```
 
+### 3. Framework Events (Pub/Sub)
+
+Jetix provides a pub/sub system for reacting to lifecycle events and creating custom application events.
+
+#### Built-in Events
+
+**`"patch"` event** - Fires after every VDOM patch (DOM update)
+
+```typescript
+import { subscribe } from "jetix";
+
+subscribe("patch", () => {
+  // React to DOM updates
+  // Common use: Update third-party libraries that need to know about DOM changes
+  router.updatePageLinks();
+  updateCustomScrollbars();
+  highlightCodeBlocks();
+});
+```
+
+#### Custom Events
+
+Publish custom application events for cross-cutting concerns:
+
+```typescript
+import { publish, subscribe } from "jetix";
+
+// In a task - publish an event
+tasks: {
+  UserLoggedIn: ({ user }) => ({
+    perform: async () => {
+      const result = await authenticateUser(user);
+      publish("user:login", { userId: result.id });
+      return result;
+    },
+    success: (result) => action("LoginSuccess", result)
+  })
+}
+
+// Elsewhere in your app - subscribe to events
+mount({
+  app,
+  props: {},
+  init: (runRootAction) => {
+    subscribe("user:login", (event) => {
+      const { userId } = event.detail;
+      analytics.track("login", userId);
+    });
+  }
+});
+```
+
+#### Cleanup
+
+Always clean up subscriptions when they're no longer needed:
+
+```typescript
+import { subscribe, unsubscribe } from "jetix";
+
+const handler = () => { /* ... */ };
+subscribe("patch", handler);
+
+// Later, clean up
+unsubscribe("patch", handler);
+```
+
+**Best Practice:** Use framework events sparingly. Most component-to-component communication should use props and actions. Use pub/sub for:
+- Integration with third-party libraries
+- Cross-cutting concerns (analytics, logging)
+- Reacting to framework lifecycle events
+
 ## Anti-Patterns and Common Mistakes
 
 ### ❌ WRONG: Side effects in actions
@@ -314,6 +385,70 @@ tasks: {
 ```typescript
 view(id: string, { props, state }: Context<Props, State, null>): VNode {
   return div(`#${id}`, state.count.toString());
+}
+```
+
+### Context Object
+
+All action handlers, task callbacks, and view functions receive a `Context` object:
+
+```typescript
+export type Context<TProps, TState, TRootState> = {
+  props?: TProps;         // Component's props
+  state?: TState;         // Component's local state
+  rootState?: TRootState; // Root application state
+  event?: Event;          // DOM event (only in action handlers)
+};
+```
+
+**When `event` is available:**
+- Only in action handlers
+- Only when triggered by a DOM event (click, input, submit, etc.)
+- Not available in tasks or view functions
+- Undefined when action is triggered programmatically via `next`
+
+**Accessing DOM events in actions:**
+```typescript
+actions: {
+  HandleInput: (_, { state, event }) => {
+    // Access native DOM event
+    const value = (event?.target as HTMLInputElement)?.value ?? "";
+    return {
+      state: { ...state, inputValue: value }
+    };
+  },
+  
+  HandleSubmit: (_, { state, event }) => {
+    event?.preventDefault(); // Prevent form submission
+    return {
+      state,
+      next: task("SubmitForm", { data: state.formData })
+    };
+  }
+}
+```
+
+**Context in tasks:**
+Task success and failure callbacks also receive context (without event):
+```typescript
+tasks: {
+  FetchData: ({ id }) => ({
+    perform: () => fetch(`/api/${id}`).then(r => r.json()),
+    
+    // Context available: props, state, rootState (no event)
+    success: (data, { props, state, rootState }) => {
+      // Can access current component state and rootState
+      if (rootState.theme === "dark") {
+        return action("DataLoadedDark", { data });
+      }
+      return action("DataLoaded", { data });
+    },
+    
+    failure: (error, { state }) => {
+      console.error("Failed with state:", state);
+      return action("LoadFailed", { error: error.message });
+    }
+  })
 }
 ```
 
@@ -714,8 +849,15 @@ tasks: {
 tasks: {
   FetchData: ({ id }) => ({
     perform: (): Promise<Data> => fetch(`/api/${id}`).then(r => r.json()),
-    success: (data: Data): Next => action("DataLoaded", { data }),
-    failure: (error: Error): Next => action("DataFailed", { error: error.message })
+    
+    // Success and failure callbacks receive context
+    success: (data: Data, { props, state, rootState }): Next => {
+      return action("DataLoaded", { data });
+    },
+    
+    failure: (error: Error, { props, state, rootState }): Next => {
+      return action("DataFailed", { error: error.message });
+    }
   })
 }
 ```
@@ -1324,6 +1466,110 @@ Prefer the state management approach that avoids the need for memoization:
 
 This approach avoids both the performance cost of excessive rootState re-renders AND the complexity of memoization.
 
+## Advanced Patterns
+
+### VDOM Lifecycle Hooks
+
+For advanced use cases, you can hook into Snabbdom's Virtual DOM lifecycle using `setHook`. This is useful for third-party integrations or special DOM manipulation needs.
+
+```typescript
+import { setHook } from "jetix";
+
+view(id, { state }): VNode {
+  const vnode = div(`#${id}`, "Content");
+  
+  // Hook into VDOM lifecycle
+  setHook(vnode, "insert", () => {
+    // Called when element is inserted into DOM
+    console.log("Element mounted");
+    // Initialize third-party library
+    initializeChartLibrary(id);
+  });
+  
+  setHook(vnode, "destroy", () => {
+    // Called when element is removed from DOM
+    // Useful for cleanup (e.g., removing event listeners, destroying instances)
+    console.log("Element unmounted");
+    cleanupChartLibrary(id);
+  });
+  
+  return vnode;
+}
+```
+
+#### Available Hooks
+
+- **`init`** - A vnode has been added
+- **`create`** - A DOM element has been created based on a vnode
+- **`insert`** - An element has been inserted into the DOM
+- **`prepatch`** - An element is about to be patched
+- **`update`** - An element is being updated
+- **`postpatch`** - An element has been patched
+- **`destroy`** - An element is directly or indirectly being removed
+- **`remove`** - An element is directly being removed from the DOM
+
+See [Snabbdom hooks documentation](https://github.com/snabbdom/snabbdom#hooks) for complete details.
+
+#### Common Use Cases
+
+**Integrating third-party libraries:**
+```typescript
+view(id, { state }): VNode {
+  const chartContainer = div(`#${id}-chart`);
+  
+  setHook(chartContainer, "insert", () => {
+    // Initialize chart after element is in DOM
+    const chart = new Chart(document.getElementById(`${id}-chart`), {
+      type: 'bar',
+      data: state.chartData
+    });
+  });
+  
+  setHook(chartContainer, "update", () => {
+    // Update chart when data changes
+    const element = document.getElementById(`${id}-chart`);
+    if (element) {
+      Chart.getChart(element)?.update();
+    }
+  });
+  
+  setHook(chartContainer, "destroy", () => {
+    // Clean up chart instance
+    const element = document.getElementById(`${id}-chart`);
+    if (element) {
+      Chart.getChart(element)?.destroy();
+    }
+  });
+  
+  return chartContainer;
+}
+```
+
+**Managing focus:**
+```typescript
+view(id, { state }): VNode {
+  const input = html.input({
+    props: { value: state.value }
+  });
+  
+  if (state.shouldFocus) {
+    setHook(input, "insert", () => {
+      const el = document.querySelector(`#${id} input`) as HTMLInputElement;
+      el?.focus();
+    });
+  }
+  
+  return div(`#${id}`, [input]);
+}
+```
+
+**Note:** Most applications won't need lifecycle hooks. Use them only when:
+- Integrating third-party libraries that need direct DOM access
+- Performing imperative DOM operations that can't be expressed declaratively
+- Managing resources that need cleanup (WebGL contexts, observers, etc.)
+
+For most component lifecycle needs, use `init` actions and tasks instead.
+
 ## Common Workflows
 
 ### Adding a New Feature
@@ -1374,11 +1620,14 @@ mount({
 5. **Prefer local state over rootState** - Only use rootState for truly global concerns
 6. **Only memo components without rootState** - Memoized components won't see rootState changes
 7. **External events in mount init** - Wire routing and browser events there
-8. **Service functions for reusable I/O** - Called from task perform
-9. **Test with testComponent** - Actions and tasks return data structures
-10. **Components are default exports** - Root types are named exports
-11. **Co-locate tests** - `*.spec.ts` files next to implementation
-12. **Use withKey for lists** - Enable efficient VDOM updates
+8. **Use pub/sub sparingly** - Subscribe to "patch" events; publish custom events for cross-cutting concerns
+9. **Service functions for reusable I/O** - Called from task perform
+10. **Test with testComponent** - Actions and tasks return data structures
+11. **Components are default exports** - Root types are named exports
+12. **Co-locate tests** - `*.spec.ts` files next to implementation
+13. **Use withKey for lists** - Enable efficient VDOM updates
+14. **Context provides event in actions** - Access DOM events via context.event in action handlers
+15. **Use setHook for advanced needs** - VDOM lifecycle hooks for third-party integrations only
 
 ## Build and Test Commands
 
