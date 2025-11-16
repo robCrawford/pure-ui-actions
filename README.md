@@ -2,7 +2,7 @@
 
 Minimal wiring for TypeScript components made of pure functions.
 
-- [Effects as data](https://www.youtube.com/watch?v=6EdXaWfoslc) for separation and cleaner tests
+- Pure actions with [deferred effects](https://www.youtube.com/watch?v=6EdXaWfoslc) for separation and testability
 - [Snabbdom VDOM](https://github.com/snabbdom/snabbdom) for a [unidirectional data flow](https://guide.elm-lang.org/architecture/)
 - [hyperscript-helpers](https://github.com/ohanhi/hyperscript-helpers) means the view is just functions
 - [Optimized](https://github.com/robCrawford/jetix/blob/master/src/jetix.spec.ts) for fewer renders/patches
@@ -156,7 +156,7 @@ export default app;
 
 ## Unit tests
 
-For tests the `action` and `task` functions just return data, so component logic can be tested without mocks.
+For tests, `action` and `task` calls are substituted to return plain data, so component logic can be tested without mocks or executing actual effects.
 
 ```JavaScript
 import { testComponent, NextData } from "jetix";

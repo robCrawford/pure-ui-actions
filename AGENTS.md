@@ -9,7 +9,8 @@ This document provides comprehensive guidance for AI agents working with the Jet
 
 - **Pure functional architecture**: Actions are pure functions, effects are isolated in Tasks
 - **Unidirectional data flow**: State changes flow through actions → state updates → view rendering
-- **Effects as data**: All side effects declared as data structures for testability
+- **Deferred effects**: Actions return effect thunks; framework controls execution timing
+- **Testable without mocks**: Test helpers substitute thunks with plain data for testing
 - **Type-safe**: High TypeScript coverage with strongly typed components
 - **Virtual DOM**: Uses Snabbdom for efficient DOM updates
 - **Immutable state**: Props and state are frozen to prevent mutations
@@ -1138,6 +1139,60 @@ describe("API Service", () => {
 });
 ```
 
+### Thunks vs Data: Runtime and Testing
+
+Understanding the difference between runtime and test behavior is key to Jetix's architecture.
+
+#### In Runtime:
+
+Actions return **thunks** - executable functions with metadata:
+
+```typescript
+// Runtime behavior
+const nextThunk = action("DoSomething", { value: 1 });
+
+// Thunk structure:
+{
+  (input): void,              // Callable function
+  type: ThunkType.Action,     // Metadata tag
+  // ... other metadata
+}
+```
+
+**Key points:**
+- Framework controls when effects execute (not user code)
+- Actions stay pure by returning thunks instead of executing them
+- Thunks enable memoization and efficient re-renders
+- User code never invokes `perform()` - only the framework does
+
+#### In Tests:
+
+`testComponent()` substitutes action/task creators to return **plain data**:
+
+```typescript
+// Test behavior with testComponent
+const { action, task } = testComponent(app, props);
+
+// action() and task() now return plain objects:
+const { state, next } = action("DoSomething", { value: 1 });
+// next = { name: "DoSomething", data: { value: 1 } }  // Plain data!
+```
+
+**Key points:**
+- No mocks needed to test logic
+- Inspect what effects would run without executing them
+- Test pure transformations in isolation
+- `testComponent` swaps thunk creators with `nextToData()` function
+
+#### Why This Matters:
+
+This substitution pattern is what enables testing without mocks. Actions are written to be pure - they don't know or care whether `action()` and `task()` return executable thunks or plain data. This allows the same action code to:
+
+1. **Run normally** in the app (returns thunks, framework executes)
+2. **Test easily** with `testComponent` (returns data, inspect without executing)
+
+The decoupling of declaration (what effect to run) from execution (actually running it) is what makes Jetix testable and predictable.
+
 ## Project Structure
 
 ### Recommended Directory Layout
@@ -1643,7 +1698,7 @@ Both console and DevTools logging can run simultaneously for maximum insight.
 7. **External events in mount init** - Wire routing and browser events there
 8. **Use pub/sub sparingly** - Subscribe to "patch" events; publish custom events for cross-cutting concerns
 9. **Service functions for reusable I/O** - Called from task perform
-10. **Test with testComponent** - Actions and tasks return data structures
+10. **Test with testComponent** - Test helper substitutes thunks with plain data
 11. **Components are default exports** - Root types are named exports
 12. **Co-locate tests** - `*.spec.ts` files next to implementation
 13. **Use withKey for lists** - Enable efficient VDOM updates
