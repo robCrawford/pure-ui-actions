@@ -1,14 +1,11 @@
-# pure-ui-actions (PUA)
+# pure-ui-actions (PUA /pjʊə/)
 
-Minimal wiring for TypeScript components made of pure functions.
+Build type-safe UI components with declarative actions from pure functions
 
-- Pure actions with [deferred effects](https://www.youtube.com/watch?v=6EdXaWfoslc) for separation and testability
-- [Snabbdom VDOM](https://github.com/snabbdom/snabbdom) for a [unidirectional data flow](https://guide.elm-lang.org/architecture/)
-- [hyperscript-helpers](https://github.com/ohanhi/hyperscript-helpers) means the view is just functions
-- [Optimized](https://github.com/robCrawford/pure-ui-actions/blob/master/src/pua.spec.ts) for fewer renders/patches
-- High type coverage
-
-Also contains lightweight prevention of anti-patterns like state mutation and manually calling declarative actions.
+- Pure actions with deferred effects for easier debug and [testing without mocks](https://www.youtube.com/watch?v=6EdXaWfoslc)
+- Designed for AI agents to generate explicit, semantic code that’s easy for humans and LLMs to read and maintain
+- [VDOM](https://github.com/snabbdom/snabbdom) for a [unidirectional data flow](https://guide.elm-lang.org/architecture/)
+- [Highly optimized](https://github.com/robCrawford/pure-ui-actions/blob/master/src/pua.spec.ts) for fewer renders
 
 **For developers and AI agents:** See [AGENTS.md](./AGENTS.md) for comprehensive architectural patterns, best practices, and development guidelines.
 
@@ -219,7 +216,7 @@ describe("App", () => {
 
 ## Redux DevTools Integration
 
-pure-ui-actions automatically integrates with [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension for enhanced debugging:
+PUA automatically integrates with [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension for enhanced debugging:
 
 - **Action History** - See all actions fired with their payloads
 - **State Inspector** - View component states in a tree structure
@@ -228,7 +225,7 @@ pure-ui-actions automatically integrates with [Redux DevTools](https://github.co
 
 **Setup:**
 1. Install the [Redux DevTools Extension](https://github.com/reduxjs/redux-devtools/tree/main/extension) for your browser
-2. Open your pure-ui-actions app
+2. Open your PUA app
 3. Open browser DevTools → Redux tab
 4. Watch actions and state updates in real-time
 
@@ -241,16 +238,14 @@ counter/Increment { step: 1 }
 counter/[Task] ValidateCount/success
 ```
 
-**Note:** Time travel is disabled by design since pure-ui-actions' functional architecture makes action replay more appropriate than state snapshots.
-
 **Logging controls:**
 - Redux DevTools logging is automatic when the extension is installed
 - Add `?debug=console` to enable console logging
-- Add `?logRenders=true` to include render events in both outputs (can be verbose)
+- Add `?logRenders=true` to include render events in both outputs
 
 ## Efficient List Rendering
 
-Use `withKey` to add unique identifiers to list items for efficient updates
+Use `withKey` to add unique identifiers to list items for efficient updates when items can be reordered, added, or removed
 
 ```JavaScript
 import { component, html, withKey } from "pure-ui-actions";
@@ -259,9 +254,9 @@ const { div, ul, li } = html;
 export default component(() => ({
   state: () => ({
     items: [
-      { id: '1', name: 'Alice' },
-      { id: '2', name: 'Bob' },
-      { id: '3', name: 'Charlie' }
+      { id: '1', label: 'A' },
+      { id: '2', label: 'B' },
+      { id: '3', label: 'C' }
     ]
   }),
 
@@ -270,15 +265,13 @@ export default component(() => ({
       ul([
         // Keys help the VDOM library efficiently track changes
         ...state.items.map(item =>
-          withKey(item.id, li(item.name))
+          withKey(item.id, li(item.label))
         )
       ])
     ]);
   }
 }));
 ```
-
-Keys are essential when items can be reordered, added, or removed
 
 ## Component Memoization
 
@@ -290,7 +283,6 @@ Use `memo` to skip re-rendering expensive components that **don't access `rootSt
 import { component, html, memo } from "pure-ui-actions";
 const { div, ul, li } = html;
 
-// This component doesn't use rootState - safe to memoize
 const listComponent = (id, { items }) => 
   div(`#${id}`, [
     ul(items.map(item => li(item.name)))
@@ -330,10 +322,10 @@ Components that need `rootState` should be rendered normally or receive it as ex
 
 ## Additional APIs
 
-pure-ui-actions provides additional utilities for advanced use cases:
+PUA provides additional utilities for advanced use cases:
 
-- **`subscribe(event, handler)`** / **`unsubscribe(event, handler)`** - React to framework lifecycle events (like `"patch"`)
+- **`subscribe(event, handler)`** / **`unsubscribe(event, handler)`** - Subscribe to framework lifecycle events (like `"patch"`)
 - **`publish(event, detail?)`** - Emit custom application events
-- **`setHook(vnode, hookName, callback)`** - Access Snabbdom VDOM lifecycle hooks for third-party integrations
+- **`setHook(vnode, hookName, callback)`** - Access VDOM lifecycle hooks
 
 See [AGENTS.md](./AGENTS.md) for complete documentation on these APIs and when to use them.

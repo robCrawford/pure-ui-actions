@@ -1,7 +1,7 @@
 {
   "name": "pure-ui-actions",
   "version": "0.3.0",
-  "description": "Pure actions with deferred effects for building type-safe UI components",
+  "description": "Build type-safe UI components with declarative actions from pure functions",
   "main": "dist/pua.js",
   "types": "dist/pua.d.ts",
   "scripts": {
@@ -9,7 +9,7 @@
     "ts:build": "rm -rf ./dist && tsc",
     "test": "vitest run"
   },
-  "author": "Rob Crawford",
+  "author": "Robert Crawford",
   "repository": {
     "type": "git",
     "url": "https://github.com/robCrawford/pure-ui-actions"
