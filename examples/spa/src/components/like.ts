@@ -1,4 +1,4 @@
-import { component, html, Config, VNode, Next } from "jetix";
+import { component, html, Config, VNode, Next } from "pure-ui-actions";
 import { Page, RootState, RootActions, RootTasks } from "../app";
 const { button } = html;
 

@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "jetix": ["../../src/jetix.ts"]
+      "pua": ["../../src/pua.ts"]
     }
   },
   "include": [

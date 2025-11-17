@@ -1,7 +1,7 @@
 {
-  "name": "jetix-example-spa",
+  "name": "pure-ui-actions-example-spa",
   "version": "0.1.0",
-  "description": "Jetix example single page app",
+  "description": "pure-ui-actions example single page app",
   "type": "module",
   "scripts": {
     "dev": "node ./scripts/dev-watch.js",
@@ -13,7 +13,7 @@
   "author": "Rob Crawford",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robCrawford/jetix"
+    "url": "https://github.com/robCrawford/pure-ui-actions"
   },
   "license": "MIT",
   "devDependencies": {

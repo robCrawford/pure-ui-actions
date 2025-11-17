@@ -1,5 +1,5 @@
 
-# Example Jetix app
+# Example PUA app
 
 > Install: `yarn`  
 > Run:     `yarn dev`  

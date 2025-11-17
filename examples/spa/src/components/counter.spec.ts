@@ -1,4 +1,4 @@
-import { testComponent, NextData } from "jetix";
+import { testComponent, NextData } from "pure-ui-actions";
 import counter, { State } from "./counter";
 
 describe("Counter component", () => {

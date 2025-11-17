@@ -1,11 +1,11 @@
-# AGENTS.md - Jetix Development Guide for AI Agents
+# AGENTS.md - pure-ui-actions Development Guide for AI Agents
 
 ## Purpose
-This document provides comprehensive guidance for AI agents working with the Jetix framework. It contains architectural patterns, best practices, testing conventions, and code organization principles.
+This document provides comprehensive guidance for AI agents working with the pure-ui-actions framework. It contains architectural patterns, best practices, testing conventions, and code organization principles.
 
 ## Framework Overview
 
-**Jetix** is a TypeScript component framework based on the Elm Architecture pattern with the following characteristics:
+**pure-ui-actions** is a TypeScript component framework based on the Elm Architecture pattern with the following characteristics:
 
 - **Pure functional architecture**: Actions are pure functions, effects are isolated in Tasks
 - **Unidirectional data flow**: State changes flow through actions → state updates → view rendering
@@ -101,14 +101,14 @@ mount({
 
 ### 3. Framework Events (Pub/Sub)
 
-Jetix provides a pub/sub system for reacting to lifecycle events and creating custom application events.
+pure-ui-actions provides a pub/sub system for reacting to lifecycle events and creating custom application events.
 
 #### Built-in Events
 
 **`"patch"` event** - Fires after every VDOM patch (DOM update)
 
 ```typescript
-import { subscribe } from "jetix";
+import { subscribe } from "pure-ui-actions";
 
 subscribe("patch", () => {
   // React to DOM updates
@@ -124,7 +124,7 @@ subscribe("patch", () => {
 Publish custom application events for cross-cutting concerns:
 
 ```typescript
-import { publish, subscribe } from "jetix";
+import { publish, subscribe } from "pure-ui-actions";
 
 // In a task - publish an event
 tasks: {
@@ -156,7 +156,7 @@ mount({
 Always clean up subscriptions when they're no longer needed:
 
 ```typescript
-import { subscribe, unsubscribe } from "jetix";
+import { subscribe, unsubscribe } from "pure-ui-actions";
 
 const handler = () => { /* ... */ };
 subscribe("patch", handler);
@@ -1056,7 +1056,7 @@ actions: {
 Tests use `testComponent` to get pure data representations of actions and tasks:
 
 ```typescript
-import { testComponent, NextData } from "jetix";
+import { testComponent, NextData } from "pure-ui-actions";
 import app, { State } from "./app";
 
 describe("App", () => {
@@ -1141,7 +1141,7 @@ describe("API Service", () => {
 
 ### Thunks vs Data: Runtime and Testing
 
-Understanding the difference between runtime and test behavior is key to Jetix's architecture.
+Understanding the difference between runtime and test behavior is key to pure-ui-actions' architecture.
 
 #### In Runtime:
 
@@ -1191,7 +1191,7 @@ This substitution pattern is what enables testing without mocks. Actions are wri
 1. **Run normally** in the app (returns thunks, framework executes)
 2. **Test easily** with `testComponent` (returns data, inspect without executing)
 
-The decoupling of declaration (what effect to run) from execution (actually running it) is what makes Jetix testable and predictable.
+The decoupling of declaration (what effect to run) from execution (actually running it) is what makes pure-ui-actions testable and predictable.
 
 ## Project Structure
 
@@ -1240,7 +1240,7 @@ your-project/
 
 ### Component File Structure (app.ts)
 ```typescript
-import { component, html, Config, VNode, Next, Task } from "jetix";
+import { component, html, Config, VNode, Next, Task } from "pure-ui-actions";
 import homePage from "./pages/homePage";
 import aboutPage from "./pages/aboutPage";
 const { div } = html;
@@ -1273,7 +1273,7 @@ export default component<Component>(
 
 ### Router File Structure (router.ts)
 ```typescript
-import { mount, subscribe, RunAction } from "jetix";
+import { mount, subscribe, RunAction } from "pure-ui-actions";
 import Navigo from "navigo";
 import app, { RootActions, RootProps } from "./app";
 
@@ -1356,7 +1356,7 @@ actions: {
 Use imported helpers from `html` constant:
 
 ```typescript
-import { component, html } from "jetix";
+import { component, html } from "pure-ui-actions";
 const { div, span, button, input, form, h1, h2, p, ul, li } = html;
 ```
 
@@ -1389,7 +1389,7 @@ div(`#${id}`, [
 Use `withKey` for lists to enable efficient VDOM updates:
 
 ```typescript
-import { withKey } from "jetix";
+import { withKey } from "pure-ui-actions";
 
 view(id, { state }) {
   return ul([
@@ -1404,14 +1404,14 @@ Keys are essential when items can be reordered, added, or removed.
 
 ### Component Memoization
 
-Jetix exports Snabbdom's `thunk` as both `thunk` and `memo` for optimizing expensive components.
+pure-ui-actions exports Snabbdom's `thunk` as both `thunk` and `memo` for optimizing expensive components.
 
 **CRITICAL CONSTRAINT**: Only use `memo` for components that **DO NOT access `rootState`**.
 
 #### Why This Matters
 
-Memoized components bypass Jetix's normal render flow. When `rootState` changes:
-1. Jetix re-renders from the root component
+Memoized components bypass pure-ui-actions' normal render flow. When `rootState` changes:
+1. pure-ui-actions re-renders from the root component
 2. Memoized components check their comparison key
 3. If key unchanged → skip re-render
 4. Component never receives the new `rootState`
@@ -1421,7 +1421,7 @@ This creates stale state bugs that are difficult to debug.
 #### Safe Usage Pattern
 
 ```typescript
-import { memo } from "jetix";
+import { memo } from "pure-ui-actions";
 
 // Component that ONLY uses props - safe to memoize
 const listComponent = (id, { items }) => 
@@ -1528,7 +1528,7 @@ This approach avoids both the performance cost of excessive rootState re-renders
 For advanced use cases, you can hook into Snabbdom's Virtual DOM lifecycle using `setHook`. This is useful for third-party integrations or special DOM manipulation needs.
 
 ```typescript
-import { setHook } from "jetix";
+import { setHook } from "pure-ui-actions";
 
 view(id, { state }): VNode {
   const vnode = div(`#${id}`, "Content");
@@ -1648,10 +1648,10 @@ For most component lifecycle needs, use `init` actions and tasks instead.
 
 **Redux DevTools Integration:**
 
-Jetix automatically integrates with [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension:
+pure-ui-actions automatically integrates with [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension:
 
 ```
-Install Redux DevTools Extension → Open your Jetix app → Open DevTools → Redux tab
+Install Redux DevTools Extension → Open your pure-ui-actions app → Open DevTools → Redux tab
 ```
 
 **What you get:**
@@ -1662,12 +1662,12 @@ Install Redux DevTools Extension → Open your Jetix app → Open DevTools → R
 - **Export/Import** - Save sessions for bug reports
 
 **Limitations:**
-- Time travel is disabled (not compatible with Jetix's functional architecture)
+- Time travel is disabled (not compatible with pure-ui-actions' functional architecture)
 - Read-only monitoring (can't dispatch actions from DevTools)
 
 **Logging Controls:**
 
-Jetix provides flexible logging via URL query parameters:
+pure-ui-actions provides flexible logging via URL query parameters:
 
 - **Redux DevTools** - Automatic when extension is installed
 - **Console logging** - Add `?debug=console` to URL
@@ -1731,8 +1731,8 @@ yarn dev
 
 ## Dependencies
 
-Core dependencies for a Jetix project:
-- `jetix` - The framework
+Core dependencies for a pure-ui-actions project:
+- `pure-ui-actions` - The framework
 - `snabbdom` - Virtual DOM (peer dependency)
 - `typescript` - Type checking
 - `vitest` - Testing framework

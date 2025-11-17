@@ -1,12 +1,12 @@
 import { vi } from "vitest";
-import { renderComponent, withKey, _setTestKey, html, GetActionThunk, VNode, Context } from "./jetix";
+import { renderComponent, withKey, _setTestKey, html, GetActionThunk, VNode, Context } from "./pua";
 import * as vdom from "./vdom";
 const { div } = html;
 
 const patchSpy = vi.spyOn(vdom, "patch");
 const testKey = _setTestKey({});
 
-describe("Jetix", () => {
+describe("pure-ui-actions", () => {
   let state: { count: number };
   let action: GetActionThunk<Record<string, unknown>>;
   let componentId = 0;

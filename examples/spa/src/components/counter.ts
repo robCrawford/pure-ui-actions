@@ -1,4 +1,4 @@
-import { component, html, Config, VNode, Next, Task } from "jetix";
+import { component, html, Config, VNode, Next, Task } from "pure-ui-actions";
 import notification from "./notification";
 import { validateCount } from "../services/validation";
 const { div, button } = html;

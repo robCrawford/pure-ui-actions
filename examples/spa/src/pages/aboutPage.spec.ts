@@ -1,4 +1,4 @@
-import { testComponent } from "jetix";
+import { testComponent } from "pure-ui-actions";
 import aboutPage from "./aboutPage";
 
 describe("About Page component", () => {

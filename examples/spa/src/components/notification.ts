@@ -1,4 +1,4 @@
-import { ActionThunk, component, html, Config, VNode, Next } from "jetix";
+import { ActionThunk, component, html, Config, VNode, Next } from "pure-ui-actions";
 const { div, button } = html;
 
 export type Props = Readonly<{

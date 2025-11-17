@@ -1,7 +1,7 @@
 {
-  "name": "jetix-example-app",
+  "name": "pure-ui-actions-example-app",
   "version": "0.1.0",
-  "description": "Jetix example app",
+  "description": "pure-ui-actions example app",
   "scripts": {
     "dev": "parcel --no-cache ./index.html",
     "ts:check": "tsc --noEmit",
@@ -12,7 +12,7 @@
   "author": "Rob Crawford",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robCrawford/jetix"
+    "url": "https://github.com/robCrawford/pure-ui-actions"
   },
   "license": "MIT",
   "devDependencies": {

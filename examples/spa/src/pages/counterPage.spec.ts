@@ -1,4 +1,4 @@
-import { testComponent } from "jetix";
+import { testComponent } from "pure-ui-actions";
 import counterPage from "./counterPage";
 
 describe("Counter Page component", () => {

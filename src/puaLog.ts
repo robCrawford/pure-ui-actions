@@ -1,5 +1,5 @@
 /*
-Logging for Jetix lifecycle with Redux DevTools integration
+Logging for pure-ui-actions lifecycle with Redux DevTools integration
 */
 let groupId = '';
 
@@ -23,7 +23,7 @@ if (typeof window !== 'undefined') {
   const devToolsExtension = (window as any).__REDUX_DEVTOOLS_EXTENSION__;
   if (devToolsExtension) {
     devToolsConnection = devToolsExtension.connect({
-      name: 'Jetix App',
+      name: 'pure-ui-actions App',
       features: {
         jump: false,      // Disable time travel
         skip: false,      // Disable skip
@@ -252,3 +252,4 @@ window.addEventListener('error', (): void => {
     groupId = '';
   });
 });
+

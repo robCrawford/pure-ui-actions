@@ -1,4 +1,4 @@
-import { testComponent, NextData } from "jetix";
+import { testComponent, NextData } from "pure-ui-actions";
 import app, { State } from "./app";
 
 describe("App", () => {

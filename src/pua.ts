@@ -1,7 +1,7 @@
 import { patch, setHook, VNode } from "./vdom";
 export { html, VNode } from "./vdom";
-import { log } from "./jetixLog";
-export * from './jetixTest';
+import { log } from "./puaLog";
+export * from './puaTest';
 
 type ValueOf<TType> = TType[keyof TType];
 
@@ -569,3 +569,4 @@ export function unsubscribe(type: string, listener: EventListener): void {
 export function publish(type: string, detail?: Record<string, unknown>): void {
   document.dispatchEvent(new CustomEvent(type, detail ? { detail } : undefined));
 }
+

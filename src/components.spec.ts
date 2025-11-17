@@ -1,6 +1,6 @@
 import { vi, type Mock } from "vitest";
-import { _setTestKey, component, html, mount, getComponentRegistry } from "../src/jetix";
-import { log } from "../src/jetixLog";
+import { _setTestKey, component, html, mount, getComponentRegistry } from "../src/pua";
+import { log } from "../src/puaLog";
 import * as vdom from "../src/vdom";
 const { div } = html;
 const testKey = _setTestKey({});
@@ -10,7 +10,7 @@ const renderSpy = vi.spyOn(log, "render");
 const ctx = { rootState: { theme: "a" }, props: { test: "x" }, state: { count: 0 } };
 
 
-describe("Jetix components", () => {
+describe("PUA components", () => {
   let rootAction: Function = () => {};
   let parentAction: Function = () => {};
   let parentTask: Function = () => {};

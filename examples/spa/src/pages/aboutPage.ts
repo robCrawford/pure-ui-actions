@@ -1,4 +1,4 @@
-import { component, html, Config, VNode } from "jetix";
+import { component, html, Config, VNode } from "pure-ui-actions";
 import themeMenu from "../components/themeMenu";
 import like from "../components/like";
 import { RootState, RootTasks } from "../app";

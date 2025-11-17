@@ -1,4 +1,4 @@
-import { component, html, Config, VNode, Task } from "jetix";
+import { component, html, Config, VNode, Task } from "pure-ui-actions";
 import counterPage from "./pages/counterPage";
 import aboutPage from "./pages/aboutPage";
 import "./router";

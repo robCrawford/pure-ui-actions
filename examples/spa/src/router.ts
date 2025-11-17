@@ -1,4 +1,4 @@
-import { mount, subscribe, RunAction } from "jetix";
+import { mount, subscribe, RunAction } from "pure-ui-actions";
 import Navigo from "navigo";
 import app, { RootActions, RootProps } from "./app";
 

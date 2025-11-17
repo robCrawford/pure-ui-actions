@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { _setTestKey, component, html, mount } from "./jetix";
+import { _setTestKey, component, html, mount } from "./pua";
 import * as vdom from "./vdom";
 const { div } = html;
 const testKey = _setTestKey({});

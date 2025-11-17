@@ -1,4 +1,4 @@
-import { component, html, mount, Config, Next, Task, VNode } from "jetix";
+import { component, html, mount, Config, Next, Task, VNode } from "pure-ui-actions";
 import { setDocTitle} from "./services/browser";
 const { div } = html;
 

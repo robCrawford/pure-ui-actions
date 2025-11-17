@@ -1,11 +1,11 @@
-# Jetix
+# pure-ui-actions (PUA)
 
 Minimal wiring for TypeScript components made of pure functions.
 
 - Pure actions with [deferred effects](https://www.youtube.com/watch?v=6EdXaWfoslc) for separation and testability
 - [Snabbdom VDOM](https://github.com/snabbdom/snabbdom) for a [unidirectional data flow](https://guide.elm-lang.org/architecture/)
 - [hyperscript-helpers](https://github.com/ohanhi/hyperscript-helpers) means the view is just functions
-- [Optimized](https://github.com/robCrawford/jetix/blob/master/src/jetix.spec.ts) for fewer renders/patches
+- [Optimized](https://github.com/robCrawford/pure-ui-actions/blob/master/src/pua.spec.ts) for fewer renders/patches
 - High type coverage
 
 Also contains lightweight prevention of anti-patterns like state mutation and manually calling declarative actions.
@@ -13,8 +13,8 @@ Also contains lightweight prevention of anti-patterns like state mutation and ma
 **For developers and AI agents:** See [AGENTS.md](./AGENTS.md) for comprehensive architectural patterns, best practices, and development guidelines.
 
 ### Examples:
-- [Single page app demo](http://robcrawford.github.io/demos/jetix/spa?debug=console) *[[ source ]](https://github.com/robCrawford/jetix/tree/master/examples/spa)*
-- Hello World *[[ source ]](https://github.com/robCrawford/jetix/tree/master/examples/hello-world)*
+- [Single page app demo](http://robcrawford.github.io/demos/pure-ui-actions/spa?debug=console) *[[ source ]](https://github.com/robCrawford/pure-ui-actions/tree/master/examples/spa)*
+- Hello World *[[ source ]](https://github.com/robCrawford/pure-ui-actions/tree/master/examples/hello-world)*
 
 ------------------------
 
@@ -66,7 +66,7 @@ If a DOM event is available, an `event` prop will also be populated on `Context`
 ## Hello World!
 
 ```JavaScript
-import { component, html, mount, Config, Next, Task, VNode } from "jetix";
+import { component, html, mount, Config, Next, Task, VNode } from "pure-ui-actions";
 import { setDocTitle} from "../services/browser";
 const { div } = html;
 
@@ -159,7 +159,7 @@ export default app;
 For tests, `action` and `task` calls are substituted to return plain data, so component logic can be tested without mocks or executing actual effects.
 
 ```JavaScript
-import { testComponent, NextData } from "jetix";
+import { testComponent, NextData } from "pure-ui-actions";
 import app, { State } from "./app";
 
 describe("App", () => {
@@ -219,7 +219,7 @@ describe("App", () => {
 
 ## Redux DevTools Integration
 
-Jetix automatically integrates with [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension for enhanced debugging:
+pure-ui-actions automatically integrates with [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension for enhanced debugging:
 
 - **Action History** - See all actions fired with their payloads
 - **State Inspector** - View component states in a tree structure
@@ -228,7 +228,7 @@ Jetix automatically integrates with [Redux DevTools](https://github.com/reduxjs/
 
 **Setup:**
 1. Install the [Redux DevTools Extension](https://github.com/reduxjs/redux-devtools/tree/main/extension) for your browser
-2. Open your Jetix app
+2. Open your pure-ui-actions app
 3. Open browser DevTools → Redux tab
 4. Watch actions and state updates in real-time
 
@@ -241,7 +241,7 @@ counter/Increment { step: 1 }
 counter/[Task] ValidateCount/success
 ```
 
-**Note:** Time travel is disabled by design since Jetix's functional architecture makes action replay more appropriate than state snapshots.
+**Note:** Time travel is disabled by design since pure-ui-actions' functional architecture makes action replay more appropriate than state snapshots.
 
 **Logging controls:**
 - Redux DevTools logging is automatic when the extension is installed
@@ -253,7 +253,7 @@ counter/[Task] ValidateCount/success
 Use `withKey` to add unique identifiers to list items for efficient updates
 
 ```JavaScript
-import { component, html, withKey } from "jetix";
+import { component, html, withKey } from "pure-ui-actions";
 const { div, ul, li } = html;
 
 export default component(() => ({
@@ -287,7 +287,7 @@ Use `memo` to skip re-rendering expensive components that **don't access `rootSt
 **⚠️ Only use for components that don't read `rootState`** — memoized components bypass the normal render flow when rootState changes, so they won't see updates. Prefer local state or props (see [AGENTS.md](./AGENTS.md) for state management guidance).
 
 ```JavaScript
-import { component, html, memo } from "jetix";
+import { component, html, memo } from "pure-ui-actions";
 const { div, ul, li } = html;
 
 // This component doesn't use rootState - safe to memoize
@@ -330,7 +330,7 @@ Components that need `rootState` should be rendered normally or receive it as ex
 
 ## Additional APIs
 
-Jetix provides additional utilities for advanced use cases:
+pure-ui-actions provides additional utilities for advanced use cases:
 
 - **`subscribe(event, handler)`** / **`unsubscribe(event, handler)`** - React to framework lifecycle events (like `"patch"`)
 - **`publish(event, detail?)`** - Emit custom application events

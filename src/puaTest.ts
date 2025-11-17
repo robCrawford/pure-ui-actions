@@ -1,5 +1,5 @@
 /*
-API for unit testing Jetix components
+API for unit testing pure-ui-actions components
 
 - Initialise component test API
 import counter from "./counter";
@@ -12,7 +12,7 @@ const { state, next } = action("Increment", { step: 1 });
 const { perform, success, failure } = task("ValidateCount", { count: 0 });
 const { name, data } = success({ text: "Test" });
 */
-import { Context, Next } from "./jetix";
+import { Context, Next } from "./pua";
 
 type ComponentTestApi = {
   config: {
@@ -71,3 +71,4 @@ export function testComponent(component: { getConfig: Function }, props?: object
     }
   };
 }
+
