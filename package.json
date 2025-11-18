@@ -1,7 +1,7 @@
 {
   "name": "pure-ui-actions",
   "version": "0.3.0",
-  "description": "Build type-safe UI components with declarative actions from pure functions",
+  "description": "Type-safe components made with pure declarative actions",
   "main": "dist/pua.js",
   "types": "dist/pua.d.ts",
   "scripts": {

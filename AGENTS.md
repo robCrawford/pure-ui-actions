@@ -374,7 +374,7 @@ actions: {
 **Task handler:**
 ```typescript
 tasks: {
-  FetchData: ({ id }): Task<Data, State> => ({
+  FetchData: ({ id }): Task<Data> => ({
     perform: (): Promise<Data> => fetch(`/api/${id}`).then(r => r.json()),
     success: (data: Data): Next => action("DataLoaded", { data }),
     failure: (error: Error): Next => action("DataFailed", { error: error.message })

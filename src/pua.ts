@@ -1,5 +1,5 @@
 import { patch, setHook, VNode } from "./vdom";
-export { html, VNode } from "./vdom";
+export { html, VNode, memo, setHook } from "./vdom";
 import { log } from "./puaLog";
 export * from './puaTest';
 
@@ -500,7 +500,7 @@ export function withKey(key: string, vnode: VNode): VNode {
   return vnode;
 }
 
-function isDomEvent(e?: Record<string, unknown> | Event): boolean {
+function isDomEvent(e?: Record<string, unknown> | Event): e is Event {
   return Boolean(e && "eventPhase" in e && "target" in e && "type" in e);
 }
 
@@ -545,7 +545,7 @@ function deepFreeze<TObject extends Record<string, unknown>>(o?: TObject): TObje
   if (o) {
     Object.freeze(o);
     Object.getOwnPropertyNames(o).forEach((p: string): void => {
-      if (o.hasOwnProperty(p) &&
+      if (Object.prototype.hasOwnProperty.call(o, p) &&
           o[p] !== null &&
           (typeof o[p] === "object" || typeof o[p] === "function") &&
           !Object.isFrozen(o[p])

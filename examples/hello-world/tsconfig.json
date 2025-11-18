@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "pua": ["../../src/pua.ts"]
+      "pure-ui-actions": ["../../src/pua.ts"]
     }
   },
   "include": [

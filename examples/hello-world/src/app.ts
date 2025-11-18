@@ -60,7 +60,7 @@ const app = component<Component>(
 
     // Task handlers provide callbacks for effects and async operations that may fail
     tasks: {
-      SetDocTitle: ({ title }) => ({
+      SetDocTitle: ({ title }): Task<void> => ({
         perform: (): Promise<void> => setDocTitle(title),
         success: (): Next => action("PageReady", { done: true }),
         failure: (): Next => action("PageReady", { done: false })

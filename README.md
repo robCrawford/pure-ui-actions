@@ -1,11 +1,11 @@
-# pure-ui-actions (PUA /pjʊə/)
+# pure-ui-actions
 
-Build type-safe UI components with declarative actions from pure functions
+Type-safe components made with pure declarative actions
 
-- Pure actions with deferred effects for easier debug and [testing without mocks](https://www.youtube.com/watch?v=6EdXaWfoslc)
+- Actions with deferred effects for [testing without mocks](https://www.youtube.com/watch?v=6EdXaWfoslc), works with redux dev tools
+- Data flow inspired by [The Elm Architecture](https://guide.elm-lang.org/architecture/)
+- Uses [Snabbdom VDOM](https://github.com/snabbdom/snabbdom) and is [optimized for minimal renders](https://github.com/robCrawford/pure-ui-actions/blob/master/src/pua.spec.ts)
 - Designed for AI agents to generate explicit, semantic code that’s easy for humans and LLMs to read and maintain
-- [VDOM](https://github.com/snabbdom/snabbdom) for a [unidirectional data flow](https://guide.elm-lang.org/architecture/)
-- [Highly optimized](https://github.com/robCrawford/pure-ui-actions/blob/master/src/pua.spec.ts) for fewer renders
 
 **For developers and AI agents:** See [AGENTS.md](./AGENTS.md) for comprehensive architectural patterns, best practices, and development guidelines.
 
@@ -39,26 +39,6 @@ view(id, { props, state, rootState }) {
   ]);
 }
 ```
-
-### Context: DOM Events
-If a DOM event is available, an `event` prop will also be populated on `Context`.
-
-```JavaScript
-    actions: {
-      Input: (_, { props, state, event }) => ({
-        state: { 
-          ...state, 
-          text: event?.target?.value ?? "" 
-        }
-      })
-    },
-    view: (id, { state }) =>
-      html.input(`#${id}-input`, {
-        props: { value: state.text },
-        on: { input: action("Input") }
-      })
-```
-
 
 ## Hello World!
 
@@ -125,7 +105,7 @@ const app = component<Component>(
 
     // Task handlers provide callbacks for effects and async operations that may fail
     tasks: {
-      SetDocTitle: ({ title }): Task<null, State> => ({
+      SetDocTitle: ({ title }): Task<void> => ({
         perform: (): Promise<void> => setDocTitle(title),
         success: (): Next => action("PageReady", { done: true }),
         failure: (): Next => action("PageReady", { done: false })
@@ -149,6 +129,25 @@ document.addEventListener(
 );
 
 export default app;
+```
+
+### Context: DOM Events
+An `event` prop is also passed via `Context` when actions are invoked from the DOM.
+
+```JavaScript
+    actions: {
+      Input: (_, { props, state, event }) => ({
+        state: { 
+          ...state, 
+          text: event?.target?.value ?? "" 
+        }
+      })
+    },
+    view: (id, { state }) =>
+      html.input(`#${id}-input`, {
+        props: { value: state.text },
+        on: { input: action("Input") }
+      })
 ```
 
 ## Unit tests
@@ -216,7 +215,7 @@ describe("App", () => {
 
 ## Redux DevTools Integration
 
-PUA automatically integrates with [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension for enhanced debugging:
+`pure-ui-actions` automatically integrates with [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension for enhanced debugging:
 
 - **Action History** - See all actions fired with their payloads
 - **State Inspector** - View component states in a tree structure
@@ -225,7 +224,7 @@ PUA automatically integrates with [Redux DevTools](https://github.com/reduxjs/re
 
 **Setup:**
 1. Install the [Redux DevTools Extension](https://github.com/reduxjs/redux-devtools/tree/main/extension) for your browser
-2. Open your PUA app
+2. Open your app
 3. Open browser DevTools → Redux tab
 4. Watch actions and state updates in real-time
 
@@ -322,7 +321,7 @@ Components that need `rootState` should be rendered normally or receive it as ex
 
 ## Additional APIs
 
-PUA provides additional utilities for advanced use cases:
+`pure-ui-actions` provides additional utilities for advanced use cases:
 
 - **`subscribe(event, handler)`** / **`unsubscribe(event, handler)`** - Subscribe to framework lifecycle events (like `"patch"`)
 - **`publish(event, detail?)`** - Emit custom application events
