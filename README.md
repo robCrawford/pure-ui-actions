@@ -4,7 +4,7 @@ Type-safe components made with pure declarative actions
 
 - Actions with deferred effects for [testing without mocks](https://www.youtube.com/watch?v=6EdXaWfoslc), works with redux dev tools
 - Data flow inspired by [The Elm Architecture](https://guide.elm-lang.org/architecture/), see also [Redux comparison](#redux-comparison) below
-- Uses [Snabbdom VDOM](https://github.com/snabbdom/snabbdom) and is [optimized for minimal renders](https://github.com/robCrawford/pure-ui-actions/blob/master/src/pua.spec.ts)
+- Uses [Snabbdom VDOM](https://github.com/snabbdom/snabbdom) and is [optimized for minimal renders](https://github.com/robCrawford/pure-ui-actions/blob/master/src/pure-ui-actions.spec.ts)
 - Designed for AI agents to generate explicit, semantic code that’s easy for humans and LLMs to read and maintain
 
 **For developers and AI agents:** See [AGENTS.md](./AGENTS.md) for comprehensive architectural patterns, best practices, and development guidelines.

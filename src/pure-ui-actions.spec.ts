@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { renderComponent, withKey, _setTestKey, html, GetActionThunk, VNode, Context } from "./pua";
+import { renderComponent, withKey, _setTestKey, html, GetActionThunk, VNode, Context } from "./pure-ui-actions";
 import * as vdom from "./vdom";
 const { div } = html;
 

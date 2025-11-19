@@ -2,8 +2,8 @@
   "name": "pure-ui-actions",
   "version": "0.3.0",
   "description": "Type-safe components made with pure declarative actions",
-  "main": "dist/pua.js",
-  "types": "dist/pua.d.ts",
+  "main": "dist/pure-ui-actions.js",
+  "types": "dist/pure-ui-actions.d.ts",
   "scripts": {
     "ts:check": "tsc --noEmit",
     "ts:build": "rm -rf ./dist && tsc",
@@ -17,14 +17,12 @@
   "license": "MIT",
   "keywords": [
     "pure-functions",
-    "ui",
     "actions",
     "deferred-effects",
     "unidirectional",
     "hyperscript",
     "typescript",
-    "virtual-dom",
-    "pua"
+    "virtual-dom"
   ],
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.46.2",

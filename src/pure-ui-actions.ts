@@ -1,7 +1,7 @@
 import { patch, setHook, VNode } from "./vdom";
 export { html, VNode, memo, setHook } from "./vdom";
-import { log } from "./puaLog";
-export * from './puaTest';
+import { log } from "./pure-ui-actions-log";
+export * from './pure-ui-actions-test';
 
 type ValueOf<TType> = TType[keyof TType];
 
