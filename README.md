@@ -3,7 +3,7 @@
 Type-safe components made with pure declarative actions
 
 - Actions with deferred effects for [testing without mocks](https://www.youtube.com/watch?v=6EdXaWfoslc), works with redux dev tools
-- Data flow inspired by [The Elm Architecture](https://guide.elm-lang.org/architecture/)
+- Data flow inspired by [The Elm Architecture](https://guide.elm-lang.org/architecture/), see also [Redux comparison](#redux-comparison) below
 - Uses [Snabbdom VDOM](https://github.com/snabbdom/snabbdom) and is [optimized for minimal renders](https://github.com/robCrawford/pure-ui-actions/blob/master/src/pua.spec.ts)
 - Designed for AI agents to generate explicit, semantic code that’s easy for humans and LLMs to read and maintain
 
@@ -328,3 +328,55 @@ Components that need `rootState` should be rendered normally or receive it as ex
 - **`setHook(vnode, hookName, callback)`** - Access VDOM lifecycle hooks
 
 See [AGENTS.md](./AGENTS.md) for complete documentation on these APIs and when to use them.
+
+---
+
+## <a id="redux-comparison"></a>Redux Comparison
+
+Both Redux and pure-ui-actions emphasize **pure functions for state transformations**, but with different patterns:
+
+### Redux: Actions as Data
+
+```javascript
+// 1. Action creator returns plain object
+const increment = (step) => ({ 
+  type: 'INCREMENT', 
+  payload: { step } 
+});
+
+// 2. Dispatch the action
+dispatch(increment(5));
+
+// 3. Reducer handles the action (pure function)
+function counterReducer(state, action) {
+  switch (action.type) {
+    case 'INCREMENT':
+      return { ...state, count: state.count + action.payload.step };
+    default:
+      return state;
+  }
+}
+```
+
+### pure-ui-actions: Actions as Functions
+
+```javascript
+// 1. action() creates a thunk
+const incrementThunk = action("Increment", { step: 5 });
+
+// 2. Framework invokes handler (pure function)
+actions: {
+  Increment: ({ step }, { state }) => ({
+    state: { ...state, count: state.count + step }
+  })
+}
+```
+
+### Key Insight
+
+In pure-ui-actions, **`action()` combines both action creator and dispatch** into a single deferred function. The action handler (equivalent to a Redux reducer) is still a pure function called by the framework.
+
+**Differences:**
+- Redux actions are plain data; pure-ui-actions actions are functions
+- pure-ui-actions has built-in async handling (Tasks)
+- Automatic action thunk memoization vs manual selector memoization

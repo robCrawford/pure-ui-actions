@@ -1,5 +1,5 @@
 
-# Example PUA app
+# Example `pure-ui-actions` app
 
 > Install: `yarn`  
 > Run:     `yarn dev`  

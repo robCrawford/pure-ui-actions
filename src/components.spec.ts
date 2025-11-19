@@ -10,7 +10,7 @@ const renderSpy = vi.spyOn(log, "render");
 const ctx = { rootState: { theme: "a" }, props: { test: "x" }, state: { count: 0 } };
 
 
-describe("PUA components", () => {
+describe("pure-ui-actions components", () => {
   let rootAction: Function = () => {};
   let parentAction: Function = () => {};
   let parentTask: Function = () => {};
