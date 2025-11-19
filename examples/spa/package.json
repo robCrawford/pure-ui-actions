@@ -8,7 +8,9 @@
     "ts:check": "tsc --noEmit",
     "ts:build": "tsc && rm -rf ./dist && cross-env NODE_ENV=production parcel build ./index.html --public-url ./",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix"
   },
   "author": "Rob Crawford",
   "repository": {
@@ -17,12 +19,13 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@parcel/transformer-typescript-tsc": "^2.13.3",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
     "@vitest/ui": "^2.1.8",
     "cross-env": "^10.1.0",
-    "eslint": "^9.38.0",
+    "eslint": "^9.39.1",
     "jsdom": "^25.0.1",
     "parcel": "^2.13.3",
     "typescript": "^5.9.3",

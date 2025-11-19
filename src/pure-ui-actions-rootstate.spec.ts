@@ -26,7 +26,7 @@ describe("RootState with Memoization", () => {
     document.body.appendChild(appEl);
 
     const child = component<{
-      Props: {};
+      Props: Record<string, never>;
       State: { count: number };
       Actions: {
         Increment: { step: number };
@@ -51,7 +51,7 @@ describe("RootState with Memoization", () => {
     });
 
     const app = component<{
-      Props: {};
+      Props: Record<string, never>;
       State: { theme: string };
       Actions: {
         SetTheme: { theme: string };
@@ -105,7 +105,7 @@ describe("RootState with Memoization", () => {
     let childTask: Function = () => {};
 
     const child = component<{
-      Props: {};
+      Props: Record<string, never>;
       State: { count: number };
       Tasks: {
         DelayedIncrement: { step: number };
@@ -129,7 +129,7 @@ describe("RootState with Memoization", () => {
     });
 
     const app = component<{
-      Props: {};
+      Props: Record<string, never>;
       State: { theme: string };
       Actions: {
         SetTheme: { theme: string };

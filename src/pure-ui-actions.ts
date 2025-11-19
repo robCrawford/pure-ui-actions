@@ -3,6 +3,7 @@ export { html, VNode, memo, setHook } from "./vdom";
 import { log } from "./pure-ui-actions-log";
 import { ActionHandler, ActionThunk, Component, ComponentInstance, Config, GetActionThunk, GetConfig, GetTaskThunk, Next, RunAction, Task, TaskThunk, ThunkType } from "./pure-ui-actions.types";
 export * from './pure-ui-actions-test';
+export type { ActionHandler, ActionThunk, Component, ComponentInstance, Config, Context, GetActionThunk, GetConfig, GetTaskThunk, Next, RunAction, Task, TaskHandler, TaskThunk, ThunkType } from "./pure-ui-actions.types";
 
 const componentRegistry = new Map<string, ComponentInstance>();
 export const getComponentRegistry = (): Map<string, ComponentInstance> => componentRegistry;
@@ -138,7 +139,7 @@ function executeAction(
 
   const currStateChanged = instance.state !== prevState;
   stateChanged = stateChanged || currStateChanged;
-  log.updateStart(id, currStateChanged && prevState, actionName, data as Record<string, unknown>, instance.state);
+  log.updateStart(id, currStateChanged ? prevState : undefined, actionName, data as Record<string, unknown>, instance.state);
 
   if (isRoot) {
     rootState = instance.state;

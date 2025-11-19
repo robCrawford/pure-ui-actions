@@ -50,10 +50,11 @@ describe("App", () => {
     const { state, next } = action<RootState>("Like", { page: "aboutPage" });
 
     it("should update state", () => {
+
       expect(state).toEqual({
         ...initialState,
         likes: {
-          ...initialState.likes,
+          ...(initialState.likes as Record<string, number>),
           aboutPage: 1
         }
       });

@@ -454,7 +454,7 @@ describe("pure-ui-actions", () => {
       Object.defineProperty(mockEvent, 'type', { value: 'click' });
 
       // Trigger action with event (simulating DOM click)
-      // @ts-ignore test data
+      // @ts-expect-error test data
       action("Click")(mockEvent);
 
       // Verify event was passed to context

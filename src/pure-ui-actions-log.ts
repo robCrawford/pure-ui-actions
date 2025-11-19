@@ -62,7 +62,7 @@ export const log = ({
     // Don't send to DevTools here - updateStart and noInitialAction handle all updates
     // DevTools will naturally show only components that exist in window.state
   },
-  noInitialAction(id: string, state?: {}): void {
+  noInitialAction(id: string, state?: Record<string, unknown>): void {
     // Send initial mount to Redux DevTools
     if (devToolsConnection && state) {
       // Build aggregated state with the initial state for this component
@@ -87,7 +87,7 @@ export const log = ({
       groupId = id;
     }
   },
-  updateStart(id: string, state: {} | undefined, label: string, data?: {}, newState?: {}): void {
+  updateStart(id: string, state: Record<string, unknown> | undefined, label: string, data?: Record<string, unknown>, newState?: Record<string, unknown>): void {
     // Send to Redux DevTools with current state
     if (devToolsConnection && newState !== undefined) {
       // Build aggregated state with the NEW state for this component
@@ -122,7 +122,7 @@ export const log = ({
       }
     }
   },
-  updateEnd(state: {}, id?: string): void {
+  updateEnd(state: Record<string, unknown>, id?: string): void {
     // Note: updateEnd is informational only - state already sent in updateStart
     // Only send if we have both state and id, and logRenders is enabled (can be noisy)
     if (devToolsConnection && state && id && logRenders) {
@@ -193,7 +193,7 @@ export const log = ({
       if (err) console.error(JSON.stringify(err));
     }
   },
-  render(id: string, props?: {}): void {
+  render(id: string, props?: Record<string, unknown>): void {
     // Send render event to Redux DevTools (controlled by logRenders flag)
     if (devToolsConnection && logRenders) {
       devToolsConnection.send(

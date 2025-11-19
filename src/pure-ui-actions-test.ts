@@ -23,8 +23,8 @@ type ComponentTestApi = {
     view: Function;
   };
   initialState: Record<string, unknown>;
-  action: <TState>(name: string, data?: {}) => { state: TState; next?: NextData | NextData[] };
-  task: (name: string, data?: {}) => TestTaskSpec;
+  action: <TState>(name: string, data?: Record<string, unknown>) => { state: TState; next?: NextData | NextData[] };
+  task: (name: string, data?: Record<string, unknown>) => TestTaskSpec;
 };
 
 export type NextData = {
@@ -33,13 +33,13 @@ export type NextData = {
 };
 
 type TestTaskSpec<TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = {
-  perform: () => Promise<{}> | void;
-  success?: (result?: {}, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[];
-  failure?: (error?: {}, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[];
+  perform: () => Promise<unknown> | void;
+  success?: (result?: unknown, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[];
+  failure?: (error?: unknown, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[];
 };
 
 // Returns next action/task inputs as data
-const nextToData = (name: string, data?: {}): NextData => ({ name, data });
+const nextToData = (name: string, data?: Record<string, unknown>): NextData => ({ name, data });
 
 export function testComponent(component: { getConfig: Function }, props?: object): ComponentTestApi {
   // Initialise component passing in `nextToData()` instead of `action()` and `task()` functions
@@ -59,13 +59,13 @@ export function testComponent(component: { getConfig: Function }, props?: object
     initialState,
 
     // Run an action
-    action<TState>(name: string, data?: {}): { state: TState; next?: NextData } {
+    action<TState>(name: string, data?: Record<string, unknown>): { state: TState; next?: NextData } {
       // Returns any next operations as data
       return config.actions[name](data, { props, state: initialState });
     },
 
     // Get task spec for manually testing `success` and `failure` output
-    task(name: string, data?: {}): TestTaskSpec {
+    task(name: string, data?: Record<string, unknown>): TestTaskSpec {
       // Returns task spec
       return config.tasks[name](data);
     }
