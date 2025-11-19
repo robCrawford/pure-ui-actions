@@ -2,6 +2,7 @@
   "name": "pure-ui-actions-example-app",
   "version": "0.1.0",
   "description": "pure-ui-actions example app",
+  "type": "module",
   "scripts": {
     "dev": "parcel --no-cache ./index.html",
     "ts:check": "tsc --noEmit",

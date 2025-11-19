@@ -4,7 +4,7 @@ import aboutPage from "./pages/aboutPage";
 import "./router";
 const { div } = html;
 
-export type RootProps = Readonly<{}>;
+export type RootProps = Readonly<Record<string, never>>;
 
 export type RootState = Readonly<{
   theme: Theme;
@@ -42,7 +42,7 @@ export default component<Component>(
 
     state: (): RootState => ({
       theme: "light",
-      page: null,
+      page: undefined,
       likes: {
         counterPage: 0,
         aboutPage: 0
@@ -92,11 +92,11 @@ export default component<Component>(
       return div(`#${id}.page.${state.theme}`,
         ((): VNode => {
           switch (state.page) {
-            case "aboutPage":
-              return aboutPage("#about-page");
+          case "aboutPage":
+            return aboutPage("#about-page");
 
-            case "counterPage":
-              return counterPage("#counter-page");
+          case "counterPage":
+            return counterPage("#counter-page");
           }
         })()
       );

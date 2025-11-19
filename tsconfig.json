@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "es2017"],
-    "target": "es5",
-    "module": "commonjs",
+    "lib": [
+      "dom",
+      "es2022"
+    ],
+    "target": "es2022",
+    "module": "esnext",
     "moduleResolution": "node",
     "strict": true,
     "declaration": true,
@@ -18,5 +21,5 @@
   "exclude": [
     ".git",
     "node_modules"
-  ],
+  ]
 }
