@@ -12,7 +12,7 @@ const { state, next } = action("Increment", { step: 1 });
 const { perform, success, failure } = task("ValidateCount", { count: 0 });
 const { name, data } = success({ text: "Test" });
 */
-import { Context, Next } from "./pure-ui-actions";
+import { Context, Next } from "./pure-ui-actions.types";
 
 type ComponentTestApi = {
   config: {

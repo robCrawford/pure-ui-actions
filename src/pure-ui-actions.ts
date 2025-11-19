@@ -1,106 +1,14 @@
 import { patch, setHook, VNode } from "./vdom";
 export { html, VNode, memo, setHook } from "./vdom";
 import { log } from "./pure-ui-actions-log";
+import { ActionHandler, ActionThunk, Component, ComponentInstance, Config, GetActionThunk, GetConfig, GetTaskThunk, Next, RunAction, Task, TaskThunk, ThunkType } from "./pure-ui-actions.types";
 export * from './pure-ui-actions-test';
 
-type ValueOf<TType> = TType[keyof TType];
-
-enum ThunkType {
-  Action,
-  Task
-};
-
-export type ActionThunk = {
-  (data?: Record<string, unknown>): void;
-  type: ThunkType.Action;
-}
-
-export type GetActionThunk<TActions> = <TKey extends keyof TActions>(actionName: TKey, data?: TActions[TKey]) => ActionThunk;
-
-export type RunAction<TActions> = (actionName: keyof TActions, data?: ValueOf<TActions>) => void;
-
-export type TaskThunk = {
-  (data?: Record<string, unknown> | Event): Promise<Next | void> | void;
-  type: ThunkType.Task;
-  taskName: string;
-  taskData?: unknown;
-};
-
-export type GetTaskThunk<TTasks> = (taskName: keyof TTasks, data?: ValueOf<TTasks>) => TaskThunk;
-
-export type Next = undefined | ActionThunk | TaskThunk | (ActionThunk | TaskThunk)[];
-
-export type Context<TProps, TState, TRootState> = {
-  props?: TProps;
-  state?: TState;
-  rootState?: TRootState;
-  event?: Event;
-};
-
-export type ActionHandler<TData = Record<string, unknown>, TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = (
-  data?: TData,
-  ctx?: Context<TProps, TState, TRootState>
-) => { state: TState; next?: Next };
-
-type TaskHandler<TData = Record<string, unknown>, TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = (data?: TData) => Task<any, TProps, TState, TRootState>;
-
-export type Task<TResult = unknown, TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = {
-  perform: () => Promise<TResult | void> | TResult | void;
-  success?: (result: TResult, ctx: Context<TProps, TState, TRootState>) => Next;
-  failure?: (error: unknown, ctx: Context<TProps, TState, TRootState>) => Next;
-};
-
-type Component = {
-  Props?: Record<string, unknown>;
-  State?: Record<string, unknown>;
-  Actions?: Record<string, unknown>;
-  Tasks?: Record<string, unknown>;
-  RootState?: Record<string, unknown>;
-  RootActions?: Record<string, unknown>;
-  RootTasks?: Record<string, unknown>;
-};
-
-export type Config<TComponent extends Component = Component> = {
-  state?: (props?: TComponent['Props']) => TComponent['State'];
-  init?: Next;
-  actions?: {[TKey in keyof TComponent['Actions']]: ActionHandler<TComponent['Actions'][TKey], TComponent['Props'], TComponent['State'], TComponent['RootState']>};
-  tasks?: {[TKey in keyof TComponent['Tasks']]: TaskHandler<TComponent['Tasks'][TKey], TComponent['Props'], TComponent['State'], TComponent['RootState']>};
-  view: (
-    id: string,
-    ctx: Context<TComponent['Props'], TComponent['State'], TComponent['RootState']>
-  ) => VNode;
-};
-
-export type GetConfig<TComponent extends Component> = (fns: {
-  action: GetActionThunk<TComponent['Actions']>;
-  task: GetTaskThunk<TComponent['Tasks']>;
-  rootAction: GetActionThunk<TComponent['RootActions']>;
-  rootTask: GetTaskThunk<TComponent['RootTasks']>;
-}) => Config<TComponent>;
-
-type RenderFn<TProps> = (props?: TProps) => VNode | void;
-
-// Internal type for component registry
-type ComponentInstance = {
-  id: string;
-  config: Config<any>;
-  state: Record<string, unknown> | undefined;
-  props: Record<string, unknown> | undefined;
-  prevProps: Record<string, unknown> | undefined;
-  render: RenderFn<Record<string, unknown>>;
-  vnode: VNode | undefined;
-  isRoot: boolean;
-  inCurrentRender: boolean;
-};
-
 const componentRegistry = new Map<string, ComponentInstance>();
+export const getComponentRegistry = (): Map<string, ComponentInstance> => componentRegistry;
 
-// Thunk caches for memoization
 const actionThunkCache = new Map<string, ActionThunk>();
 const taskThunkCache = new Map<string, TaskThunk>();
-
-// Export for testing
-export const getComponentRegistry = (): Map<string, ComponentInstance> => componentRegistry;
 
 let rootAction: GetActionThunk<any> | undefined;
 let rootTask: GetTaskThunk<any> | undefined;

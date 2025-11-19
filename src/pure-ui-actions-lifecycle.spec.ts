@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { _setTestKey, component, html, mount, getComponentRegistry, renderComponent, Next } from "./pure-ui-actions";
+import { _setTestKey, component, html, mount, getComponentRegistry, renderComponent } from "./pure-ui-actions";
 import { log } from "./pure-ui-actions-log";
 import * as vdom from "./vdom";
 const { div } = html;
@@ -448,7 +448,7 @@ describe("Component Lifecycle & State Management", () => {
                 performCalled = true;
                 return Promise.resolve("loaded data");
               },
-              success: (result: string): Next => {
+              success: (result: string) => {
                 return a("SetData", { value: result });
               }
             })

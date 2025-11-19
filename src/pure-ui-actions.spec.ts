@@ -1,6 +1,7 @@
 import { vi } from "vitest";
-import { renderComponent, withKey, _setTestKey, html, GetActionThunk, VNode, Context } from "./pure-ui-actions";
+import { renderComponent, withKey, _setTestKey, html, VNode } from "./pure-ui-actions";
 import * as vdom from "./vdom";
+import { Context, GetActionThunk } from "./pure-ui-actions.types";
 const { div } = html;
 
 const patchSpy = vi.spyOn(vdom, "patch");
