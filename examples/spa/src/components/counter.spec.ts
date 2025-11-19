@@ -2,7 +2,7 @@ import { testComponent, NextData } from "pure-ui-actions";
 import counter, { State } from "./counter";
 
 describe("Counter component", () => {
-  const { initialState, action, task, config } = testComponent(counter, { start: 0 });
+  const { initialState, testAction, testTask, config } = testComponent(counter, { start: 0 });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({ counter: 0, feedback: "" });
@@ -13,7 +13,7 @@ describe("Counter component", () => {
   });
 
   describe("'Increment' action", () => {
-    const { state, next } = action<State>("Increment", { step: 1 });
+    const { state, next } = testAction<State>("Increment", { step: 1 });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -30,7 +30,7 @@ describe("Counter component", () => {
   });
 
   describe("'Decrement' action", () => {
-    const { state, next } = action<State>("Decrement", { step: 1 });
+    const { state, next } = testAction<State>("Decrement", { step: 1 });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -47,7 +47,7 @@ describe("Counter component", () => {
   });
 
   describe("'Validate' action", () => {
-    const { state, next } = action<State>("Validate");
+    const { state, next } = testAction<State>("Validate");
 
     it("should not update state", () => {
       expect(state).toEqual(initialState);
@@ -69,7 +69,7 @@ describe("Counter component", () => {
   });
 
   describe("'SetFeedback' action", () => {
-    const { state, next } = action<State>("SetFeedback", { text: 'test' });
+    const { state, next } = testAction<State>("SetFeedback", { text: 'test' });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -84,7 +84,7 @@ describe("Counter component", () => {
   });
 
   describe("'ValidateCount' task", () => {
-    const { perform, success, failure } = task("ValidateCount", { count: 0 });
+    const { perform, success, failure } = testTask("ValidateCount", { count: 0 });
 
     it("should provide perform", () => {
       expect(perform).toBeDefined();

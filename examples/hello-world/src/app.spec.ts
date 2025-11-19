@@ -3,7 +3,7 @@ import app, { State } from "./app";
 
 describe("App", () => {
 
-  const { action, task, config, initialState } = testComponent(app, { placeholder: "placeholder" });
+  const { testAction, testTask, config, initialState } = testComponent(app, { placeholder: "placeholder" });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({ text: "placeholder", done: false });
@@ -17,7 +17,7 @@ describe("App", () => {
   });
 
   describe("'ShowMessage' action", () => {
-    const { state, next } = action<State>("ShowMessage", { text: "Hello World!"});
+    const { state, next } = testAction<State>("ShowMessage", { text: "Hello World!"});
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -34,7 +34,7 @@ describe("App", () => {
   });
 
   describe("'SetDocTitle' task", () => {
-    const { perform, success, failure } = task("SetDocTitle", { title: "test" });
+    const { perform, success, failure } = testTask("SetDocTitle", { title: "test" });
 
     it("should provide perform", () => {
       expect(perform).toBeDefined();

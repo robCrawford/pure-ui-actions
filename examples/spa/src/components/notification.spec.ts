@@ -2,7 +2,7 @@ import { testComponent, NextData } from "pure-ui-actions";
 import notification, { State } from "./notification";
 
 describe("Notification component", () => {
-  const { initialState, action } = testComponent(notification, {
+  const { initialState, testAction } = testComponent(notification, {
     text: "test",
     onDismiss: "passedInAction"
   });
@@ -12,7 +12,7 @@ describe("Notification component", () => {
   });
 
   describe("'Dismiss' action", () => {
-    const { state, next } = action<State>("Dismiss");
+    const { state, next } = testAction<State>("Dismiss");
 
     it("should update state", () => {
       expect(state).toEqual({

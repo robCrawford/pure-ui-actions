@@ -1,15 +1,15 @@
 /*
-API for unit testing pure-ui-actions components
+API for unit testing components
 
 - Initialise component test API
 import counter from "./counter";
 const { initialState, action, task, config } = testComponent(counter, { start: 0 });
 
-- Run an action to inspect result `state` and `next` as data
-const { state, next } = action("Increment", { step: 1 });
+- Test an action: outputs `state` and `next` results as data
+const { state, next } = testAction("Increment", { step: 1 });
 
-- Get a task to invoke `success` and `failure` callbacks
-const { perform, success, failure } = task("ValidateCount", { count: 0 });
+- Test a task: returns `success` and `failure` callbacks for tests to invoke
+const { perform, success, failure } = testTask("ValidateCount", { count: 0 });
 const { name, data } = success({ text: "Test" });
 */
 import { Context, Next } from "./pure-ui-actions.types";
@@ -23,8 +23,8 @@ type ComponentTestApi = {
     view: Function;
   };
   initialState: Record<string, unknown>;
-  action: <TState>(name: string, data?: Record<string, unknown>) => { state: TState; next?: NextData | NextData[] };
-  task: (name: string, data?: Record<string, unknown>) => TestTaskSpec;
+  testAction: <TState>(name: string, data?: Record<string, unknown>) => { state: TState; next?: NextData | NextData[] };
+  testTask: (name: string, data?: Record<string, unknown>) => TestTaskSpec;
 };
 
 export type NextData = {
@@ -58,14 +58,14 @@ export function testComponent(component: { getConfig: Function }, props?: object
     // For comparing state changes
     initialState,
 
-    // Run an action
-    action<TState>(name: string, data?: Record<string, unknown>): { state: TState; next?: NextData } {
+    // Test an action
+    testAction<TState>(name: string, data?: Record<string, unknown>): { state: TState; next?: NextData } {
       // Returns any next operations as data
       return config.actions[name](data, { props, state: initialState });
     },
 
     // Get task spec for manually testing `success` and `failure` output
-    task(name: string, data?: Record<string, unknown>): TestTaskSpec {
+    testTask(name: string, data?: Record<string, unknown>): TestTaskSpec {
       // Returns task spec
       return config.tasks[name](data);
     }

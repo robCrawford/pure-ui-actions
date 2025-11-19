@@ -3,10 +3,10 @@ import like from "./like";
 import { RootState } from "../app";
 
 describe("Like component", () => {
-  const { initialState, action } = testComponent(like, { page: "test" });
+  const { initialState, testAction } = testComponent(like, { page: "test" });
 
   describe("'Like' action", () => {
-    const { state, next } = action<RootState>("Like");
+    const { state, next } = testAction<RootState>("Like");
 
     it("should not update state", () => {
       expect(state).toEqual(initialState);
