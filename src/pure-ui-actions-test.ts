@@ -12,16 +12,10 @@ const { state, next } = testAction("Increment", { step: 1 });
 const { perform, success, failure } = testTask("ValidateCount", { count: 0 });
 const { name, data } = success({ text: "Test" });
 */
-import { Context, Next } from "./pure-ui-actions.types";
+import { Config, Context, Next } from "./pure-ui-actions.types";
 
 type ComponentTestApi = {
-  config: {
-    state?: Function;
-    init?: Next;
-    actions?: Record<string, unknown>;
-    tasks?: Record<string, unknown>;
-    view: Function;
-  };
+  config: Config;
   initialState: Record<string, unknown>;
   testAction: <TState>(name: string, data?: Record<string, unknown>) => { state: TState; next?: NextData | NextData[] };
   testTask: (name: string, data?: Record<string, unknown>) => TestTaskSpec;

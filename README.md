@@ -152,7 +152,7 @@ An `event` prop is also passed via `Context` when actions are invoked from the D
 
 ## Unit tests
 
-For tests, `action` and `task` calls are substituted to return plain data, so component logic can be tested without mocks or executing actual effects.
+For tests, `testAction` and `testTask` functions return plain data, so component logic can be tested without mocks or executing actual effects.
 
 ```JavaScript
 import { testComponent, NextData } from "pure-ui-actions";
@@ -160,7 +160,7 @@ import app, { State } from "./app";
 
 describe("App", () => {
 
-  const { action, task, config, initialState } = testComponent(app, { placeholder: "placeholder" });
+  const { testAction, testTask, config, initialState } = testComponent(app, { placeholder: "placeholder" });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({ text: "placeholder", done: false });
@@ -174,7 +174,7 @@ describe("App", () => {
   });
 
   describe("'ShowMessage' action", () => {
-    const { state, next } = action<State>("ShowMessage", { text: "Hello World!"});
+    const { state, next } = testAction<State>("ShowMessage", { text: "Hello World!"});
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -191,7 +191,7 @@ describe("App", () => {
   });
 
   describe("'SetDocTitle' task", () => {
-    const { perform, success, failure } = task("SetDocTitle", { title: "test" });
+    const { perform, success, failure } = testTask("SetDocTitle", { title: "test" });
 
     it("should provide perform", () => {
       expect(perform).toBeDefined();

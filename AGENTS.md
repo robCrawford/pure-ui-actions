@@ -1060,7 +1060,7 @@ import { testComponent, NextData } from "pure-ui-actions";
 import app, { State } from "./app";
 
 describe("App", () => {
-  const { action, task, config, initialState } = testComponent(app, { placeholder: "test" });
+  const { testAction, testTask, config, initialState } = testComponent(app, { placeholder: "test" });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({ text: "test", done: false });
@@ -1074,7 +1074,7 @@ describe("App", () => {
   });
 
   describe("'ShowMessage' action", () => {
-    const { state, next } = action<State>("ShowMessage", { text: "Test" });
+    const { state, next } = testAction<State>("ShowMessage", { text: "Test" });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -1091,7 +1091,7 @@ describe("App", () => {
   });
 
   describe("'SetDocTitle' task", () => {
-    const { perform, success, failure } = task("SetDocTitle", { title: "test" });
+    const { perform, success, failure } = testTask("SetDocTitle", { title: "test" });
 
     it("should provide perform", () => {
       expect(perform).toBeDefined();
@@ -1171,10 +1171,10 @@ const nextThunk = action("DoSomething", { value: 1 });
 
 ```typescript
 // Test behavior with testComponent
-const { action, task } = testComponent(app, props);
+const { testAction, testTask } = testComponent(app, props);
 
-// action() and task() now return plain objects:
-const { state, next } = action("DoSomething", { value: 1 });
+// testAction() and testTask() now return plain objects:
+const { state, next } = testAction("DoSomething", { value: 1 });
 // next = { name: "DoSomething", data: { value: 1 } }  // Plain data!
 ```
 
