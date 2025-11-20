@@ -1106,6 +1106,62 @@ describe("App", () => {
 });
 ```
 
+### Testing Actions with Custom Context
+
+Use the optional third parameter to test actions with specific state, rootState, or events:
+
+```typescript
+describe("Action with custom context", () => {
+  // Test with custom state (not initialState)
+  const { state, next } = testAction<State>(
+    "ProcessData",
+    { value: 10 },
+    { state: { count: 5, data: [] } }
+  );
+
+  it("should process from custom state", () => {
+    expect(state.count).toBe(15);
+  });
+});
+
+describe("Action accessing rootState", () => {
+  // Test action that reads rootState
+  const { state } = testAction<State, RootState>(
+    "ApplyTheme",
+    {},
+    { 
+      state: initialState,
+      rootState: { theme: "dark", user: null }
+    }
+  );
+
+  it("should apply theme from rootState", () => {
+    expect(state.themed).toBe(true);
+  });
+});
+
+describe("Action accessing DOM event", () => {
+  // Test action that reads event context
+  const mockEvent = { 
+    target: { value: "input text" },
+    preventDefault: jest.fn()
+  } as unknown as Event;
+
+  const { state } = testAction<State>(
+    "HandleInput",
+    {},
+    { 
+      state: initialState,
+      event: mockEvent
+    }
+  );
+
+  it("should extract value from event", () => {
+    expect(state.text).toBe("input text");
+  });
+});
+```
+
 ### Testing Service Functions
 
 Service functions are pure I/O and can be tested independently:

@@ -213,6 +213,30 @@ describe("App", () => {
 });
 ```
 
+### Testing with Custom Context
+
+Pass an optional third parameter to test actions with specific state, rootState, or events:
+
+```JavaScript
+// Test with custom state
+const { state } = testAction("ProcessData", { value: 10 }, {
+  state: { count: 5, data: [] }
+});
+
+// Test action that accesses rootState
+const { state } = testAction("ApplyTheme", {}, {
+  state: initialState,
+  rootState: { theme: "dark" }
+});
+
+// Test action that accesses DOM event
+const mockEvent = { target: { value: "test input" } };
+const { state } = testAction("HandleInput", {}, {
+  state: initialState,
+  event: mockEvent
+});
+```
+
 ## Redux DevTools Integration
 
 `pure-ui-actions` automatically integrates with [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension for enhanced debugging:
