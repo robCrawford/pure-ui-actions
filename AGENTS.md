@@ -1053,14 +1053,16 @@ actions: {
 
 ### Testing Component Logic
 
-Tests use `testComponent` to get pure data representations of actions and tasks:
+Tests use `testComponent` to get pure data representations of actions and tasks.
+
+**IMPORTANT:** Export the Component type from your component and pass it to `testComponent<Component>()` for proper type inference:
 
 ```typescript
 import { testComponent, NextData } from "pure-ui-actions";
-import app, { State } from "./app";
+import app, { State, Component } from "./app";
 
 describe("App", () => {
-  const { testAction, testTask, config, initialState } = testComponent(app, { placeholder: "test" });
+  const { testAction, testTask, config, initialState } = testComponent<Component>(app, { placeholder: "test" });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({ text: "test", done: false });
@@ -1307,8 +1309,8 @@ export type RootState = Readonly<{ /* ... */ }>;
 export type RootActions = Readonly<{ /* ... */ }>;
 export type RootTasks = Readonly<{ /* ... */ }>;
 
-// 2. Define Component type
-type Component = {
+// 2. Export Component type (needed for tests)
+export type Component = {
   Props: RootProps;
   State: RootState;
   Actions: RootActions;
@@ -1754,8 +1756,8 @@ Both console and DevTools logging can run simultaneously for maximum insight.
 7. **External events in mount init** - Wire routing and browser events there
 8. **Use pub/sub sparingly** - Subscribe to "patch" events; publish custom events for cross-cutting concerns
 9. **Service functions for reusable I/O** - Called from task perform
-10. **Test with testComponent** - Test helper substitutes thunks with plain data
-11. **Components are default exports** - Root types are named exports
+10. **Test with testComponent** - Export Component type and pass to testComponent<Component>() for proper type inference
+11. **Components are default exports** - Component type and root types are named exports
 12. **Co-locate tests** - `*.spec.ts` files next to implementation
 13. **Use withKey for lists** - Enable efficient VDOM updates
 14. **Context provides event in actions** - Access DOM events via context.event in action handlers

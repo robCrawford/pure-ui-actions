@@ -5,7 +5,7 @@ import like from "../components/like";
 import { RootState, RootTasks } from "../app";
 const { div, h1, a } = html;
 
-type Component = {
+export type Component = {
   RootState: RootState;
   RootTasks: RootTasks;
 };

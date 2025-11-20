@@ -40,14 +40,21 @@ export type NextData = {
   data?: Record<string, unknown>;
 };
 
-export type ComponentTestApi = {
+// Type helper to extract component type structure
+export type ComponentType<TProps = unknown, TState = unknown, TRootState = unknown> = {
+  Props: TProps;
+  State: TState;
+  RootState?: TRootState;
+};
+
+export type ComponentTestApi<TState = Record<string, unknown>, TRootState = Record<string, unknown>> = {
   config: Config;
-  initialState: Record<string, unknown>;
-  testAction: <TState, TRootState = Record<string, unknown>>(
+  initialState: TState;
+  testAction: <TActionState = TState>(
     name: string,
     data?: Record<string, unknown>,
-    options?: TestActionOptions<TState, TRootState>
-  ) => { state: TState; next?: NextData | NextData[] };
+    options?: TestActionOptions<TActionState, TRootState>
+  ) => { state: TActionState; next?: NextData | NextData[] };
   testTask: (name: string, data?: Record<string, unknown>) => TestTaskSpec;
 };
 
@@ -60,7 +67,12 @@ export type TestTaskSpec<TProps = Record<string, unknown>, TState = Record<strin
 // Returns next action/task inputs as data
 const nextToData = (name: string, data?: Record<string, unknown>): NextData => ({ name, data });
 
-export function testComponent(component: { getConfig: Function }, props?: object): ComponentTestApi {
+export function testComponent<
+  TComponent extends ComponentType
+>(
+  component: { getConfig: Function },
+  props?: TComponent['Props']
+): ComponentTestApi<TComponent['State'], TComponent['RootState']> {
   // Initialise component passing in `nextToData()` instead of `action()` and `task()` functions
   const config = component.getConfig({
     action: nextToData,

@@ -29,7 +29,7 @@ export type Page = "counterPage" | "aboutPage";
 
 export type Theme = "light" | "dark";
 
-type Component = {
+export type Component = {
   Props: RootProps;
   State: RootState;
   Actions: RootActions;

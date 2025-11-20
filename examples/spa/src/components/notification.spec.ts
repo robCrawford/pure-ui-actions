@@ -1,8 +1,8 @@
 import { testComponent, NextData } from "pure-ui-actions";
-import notification, { State } from "./notification";
+import notification, { State, Component } from "./notification";
 
 describe("Notification component", () => {
-  const { initialState, testAction } = testComponent(notification, {
+  const { initialState, testAction } = testComponent<Component>(notification, {
     text: "test",
     onDismiss: "passedInAction"
   });

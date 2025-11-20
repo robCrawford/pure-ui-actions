@@ -1,9 +1,9 @@
-import { testComponent, NextData } from "pure-ui-actions";
-import app, { RootState } from "./app";
+import { testComponent } from "pure-ui-actions";
+import app, { RootState, Component } from "./app";
 
 describe("App", () => {
 
-  const { testAction, testTask, initialState } = testComponent(app);
+  const { testAction, testTask, initialState } = testComponent<Component>(app, {});
 
   it("should set initial state", () => {
     expect(initialState).toEqual({
@@ -54,7 +54,7 @@ describe("App", () => {
       expect(state).toEqual({
         ...initialState,
         likes: {
-          ...(initialState.likes as Record<string, number>),
+          ...initialState.likes,
           aboutPage: 1
         }
       });

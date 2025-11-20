@@ -10,7 +10,7 @@ type Actions = Readonly<{
   Like: null;
 }>;
 
-type Component = {
+export type Component = {
   Props: Props;
   State: null;
   Actions: Actions;

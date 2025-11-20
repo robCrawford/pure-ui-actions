@@ -1,8 +1,8 @@
 import { testComponent, NextData } from "pure-ui-actions";
-import counter, { State } from "./counter";
+import counter, { State, Component } from "./counter";
 
 describe("Counter component", () => {
-  const { initialState, testAction, testTask, config } = testComponent(counter, { start: 0 });
+  const { initialState, testAction, testTask, config } = testComponent<Component>(counter, { start: 0 });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({ counter: 0, feedback: "" });

@@ -14,7 +14,7 @@ type Actions = Readonly<{
   Dismiss: null;
 }>;
 
-type Component = {
+export type Component = {
   Props: Props;
   State: State;
   Actions: Actions;

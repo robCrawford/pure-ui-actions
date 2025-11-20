@@ -1,9 +1,9 @@
 import { testComponent, NextData } from "pure-ui-actions";
-import like from "./like";
+import like, { Component } from "./like";
 import { RootState } from "../app";
 
 describe("Like component", () => {
-  const { initialState, testAction } = testComponent(like, { page: "test" });
+  const { initialState, testAction } = testComponent<Component>(like, { page: "test" });
 
   describe("'Like' action", () => {
     const { state, next } = testAction<RootState>("Like");

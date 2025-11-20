@@ -1,9 +1,9 @@
 import { testComponent, NextData } from "pure-ui-actions";
-import app, { State } from "./app";
+import app, { State, Component } from "./app";
 
 describe("App", () => {
 
-  const { testAction, testTask, config, initialState } = testComponent(app, { placeholder: "placeholder" });
+  const { testAction, testTask, config, initialState } = testComponent<Component>(app, { placeholder: "placeholder" });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({ text: "placeholder", done: false });

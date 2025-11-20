@@ -20,7 +20,7 @@ export type Tasks = Readonly<{
   SetDocTitle: { title: string };
 }>;
 
-type Component = {
+export type Component = {
   Props: Props;
   State: State;
   Actions: Actions;
