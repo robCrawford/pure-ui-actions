@@ -1,13 +1,12 @@
 # pure-ui-actions
 
-Type-safe components made with pure declarative actions
+Co-authored with an AI agent to produce clean, predictable state flows that humans and AI can follow.
 
-- Actions with deferred effects for [testing without mocks](https://www.youtube.com/watch?v=6EdXaWfoslc), works with redux dev tools
+- Emphasis on pure functions
+- Named actions with deferred effects, allows [testing without mocks](https://www.youtube.com/watch?v=6EdXaWfoslc) and works with redux dev tools
 - Data flow inspired by [The Elm Architecture](https://guide.elm-lang.org/architecture/), see also [Redux comparison](#redux-comparison) below
 - Uses [Snabbdom VDOM](https://github.com/snabbdom/snabbdom) and is [optimized for minimal renders](https://github.com/robCrawford/pure-ui-actions/blob/master/src/pure-ui-actions.spec.ts)
-- Designed for AI agents to generate explicit, semantic code that’s easy for humans and LLMs to read and maintain
-
-**For developers and AI agents:** See [AGENTS.md](./AGENTS.md) for comprehensive architectural patterns, best practices, and development guidelines.
+- [AGENTS.md](./AGENTS.md) (written by AI)
 
 ### Examples:
 - [Single page app demo](http://robcrawford.github.io/demos/pure-ui-actions/spa?debug=console) *[[ source ]](https://github.com/robCrawford/pure-ui-actions/tree/master/examples/spa)*
