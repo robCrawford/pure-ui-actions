@@ -43,7 +43,7 @@ view(id, { props, state, rootState }) {
 
 ```JavaScript
 import { component, html, mount, Config, Next, Task, VNode } from "pure-ui-actions";
-import { setDocTitle} from "../services/browser";
+import { setDocTitle} from "./services/browser";
 const { div } = html;
 
 export type Props = Readonly<{
@@ -64,7 +64,7 @@ export type Tasks = Readonly<{
   SetDocTitle: { title: string };
 }>;
 
-type Component = {
+export type Component = {
   Props: Props;
   State: State;
   Actions: Actions;
@@ -76,46 +76,49 @@ const app = component<Component>(
   ({ action, task }): Config<Component> => ({
 
     // Initial state
-    state: ({ placeholder }): State => ({
-      text: placeholder,
+    state: (props): State => ({
+      text: props.placeholder,
       done: false
     }),
 
     // Initial action
-    init: action(
-      "ShowMessage",
-      { text: "Hello World!" }
-    ),
+    init: action("ShowMessage", { text: "Hello World!" }),
 
     // Action handlers return new state, and any next actions/tasks
     actions: {
-      ShowMessage: ({ text }, { state }): { state: State; next: Next } => {
+      ShowMessage: (data, context): { state: State; next: Next } => {
         return {
-          state: { ...state, text },
-          next: task("SetDocTitle", { title: text })
+          state: {
+            ...context.state,
+            text: data.text
+          },
+          next: task("SetDocTitle", { title: data.text })
         };
       },
-      PageReady: ({ done }, { state }): { state: State } => {
+      PageReady: (data, context): { state: State } => {
         return {
-          state: { ...state, done }
+          state: {
+            ...context.state,
+            done: data.done
+          }
         };
       },
     },
 
     // Task handlers provide callbacks for effects and async operations that may fail
     tasks: {
-      SetDocTitle: ({ title }): Task<void> => ({
-        perform: (): Promise<void> => setDocTitle(title),
+      SetDocTitle: (data): Task<void> => ({
+        perform: (): Promise<void> => setDocTitle(data.title),
         success: (): Next => action("PageReady", { done: true }),
         failure: (): Next => action("PageReady", { done: false })
       })
     },
 
     // View renders from props & state
-    view(id, { state }): VNode {
+    view(id, context): VNode {
       return div(`#${id}-message`, [
-        div(state.text),
-        div(state.done ? '✅' : '❎')
+        div(context.state.text),
+        div(context.state.done ? '✅' : '❎')
       ]);
     }
 
@@ -212,7 +215,7 @@ describe("App", () => {
 });
 ```
 
-### Testing with Custom Context
+### Testing Actions with Custom Context
 
 Pass an optional third parameter to test actions with specific state, rootState, or events:
 
@@ -250,15 +253,6 @@ const { state } = testAction("HandleInput", {}, {
 2. Open your app
 3. Open browser DevTools → Redux tab
 4. Watch actions and state updates in real-time
-
-**Example DevTools output:**
-```
-app/Initialize
-app/ShowMessage { text: "Hello World!" }
-app/[Task] SetDocTitle/success
-counter/Increment { step: 1 }
-counter/[Task] ValidateCount/success
-```
 
 **Logging controls:**
 - Redux DevTools logging is automatic when the extension is installed
@@ -356,7 +350,7 @@ See [AGENTS.md](./AGENTS.md) for complete documentation on these APIs and when t
 
 ## <a id="redux-comparison"></a>Redux Comparison
 
-Both Redux and pure-ui-actions emphasize **pure functions for state transformations**, but with different patterns:
+Both Redux and pure-ui-actions emphasize **pure functions for state updates**, but with different patterns:
 
 ### Redux: Actions as Data
 
