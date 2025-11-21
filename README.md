@@ -44,13 +44,14 @@ view(id, { props, state, rootState }) {
 ```JavaScript
 import { component, html, mount, Config, Next, Task, VNode } from "pure-ui-actions";
 import { setDocTitle} from "./services/browser";
-const { div } = html;
+const { h3, div } = html;
 
 export type Props = Readonly<{
-  placeholder: string;
+  date: string;
 }>;
 
 export type State = Readonly<{
+  title: string;
   text: string;
   done: boolean;
 }>;
@@ -77,7 +78,8 @@ const app = component<Component>(
 
     // Initial state
     state: (props): State => ({
-      text: props.placeholder,
+      title: `Welcome! ${props.date}`,
+      text: '',
       done: false
     }),
 
@@ -117,6 +119,7 @@ const app = component<Component>(
     // View renders from props & state
     view(id, context): VNode {
       return div(`#${id}-message`, [
+        h3(context.state.title),
         div(context.state.text),
         div(context.state.done ? '✅' : '❎')
       ]);
@@ -127,7 +130,7 @@ const app = component<Component>(
 
 document.addEventListener(
   "DOMContentLoaded",
-  (): void => mount({ app, props: { placeholder: "Loading" } })
+  (): void => mount({ app, props: { date: new Date().toDateString() } })
 );
 
 export default app;

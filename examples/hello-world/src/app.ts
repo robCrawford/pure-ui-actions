@@ -1,12 +1,13 @@
 import { component, html, mount, Config, Next, Task, VNode } from "pure-ui-actions";
 import { setDocTitle} from "./services/browser";
-const { div } = html;
+const { h3, div } = html;
 
 export type Props = Readonly<{
-  placeholder: string;
+  date: string;
 }>;
 
 export type State = Readonly<{
+  title: string;
   text: string;
   done: boolean;
 }>;
@@ -32,46 +33,51 @@ const app = component<Component>(
   ({ action, task }): Config<Component> => ({
 
     // Initial state
-    state: ({ placeholder }): State => ({
-      text: placeholder,
+    state: (props): State => ({
+      title: `Welcome! ${props.date}`,
+      text: '',
       done: false
     }),
 
     // Initial action
-    init: action(
-      "ShowMessage",
-      { text: "Hello World!" }
-    ),
+    init: action("ShowMessage", { text: "Hello World!" }),
 
     // Action handlers return new state, and any next actions/tasks
     actions: {
-      ShowMessage: ({ text }, { state }): { state: State; next: Next } => {
+      ShowMessage: (data, context): { state: State; next: Next } => {
         return {
-          state: { ...state, text },
-          next: task("SetDocTitle", { title: text })
+          state: {
+            ...context.state,
+            text: data.text
+          },
+          next: task("SetDocTitle", { title: data.text })
         };
       },
-      PageReady: ({ done }, { state }): { state: State } => {
+      PageReady: (data, context): { state: State } => {
         return {
-          state: { ...state, done }
+          state: {
+            ...context.state,
+            done: data.done
+          }
         };
       },
     },
 
     // Task handlers provide callbacks for effects and async operations that may fail
     tasks: {
-      SetDocTitle: ({ title }): Task<void> => ({
-        perform: (): Promise<void> => setDocTitle(title),
+      SetDocTitle: (data): Task<void> => ({
+        perform: (): Promise<void> => setDocTitle(data.title),
         success: (): Next => action("PageReady", { done: true }),
         failure: (): Next => action("PageReady", { done: false })
       })
     },
 
     // View renders from props & state
-    view(id, { state }): VNode {
+    view(id, context): VNode {
       return div(`#${id}-message`, [
-        div(state.text),
-        div(state.done ? '✅' : '❎')
+        h3(context.state.title),
+        div(context.state.text),
+        div(context.state.done ? '✅' : '❎')
       ]);
     }
 
@@ -80,7 +86,7 @@ const app = component<Component>(
 
 document.addEventListener(
   "DOMContentLoaded",
-  (): void => mount({ app, props: { placeholder: "Loading" } })
+  (): void => mount({ app, props: { date: new Date().toDateString() } })
 );
 
 export default app;
