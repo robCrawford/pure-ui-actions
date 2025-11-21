@@ -1,8 +1,8 @@
 import { patch, setHook, VNode } from "./vdom";
 export { html, VNode, memo, setHook } from "./vdom";
-import { log } from "./pure-ui-actions-log";
+import { log } from "./log";
 import { ActionHandler, ActionThunk, Component, ComponentInstance, Config, GetActionThunk, GetConfig, GetTaskThunk, Next, RunAction, Task, TaskThunk, ThunkType } from "./pure-ui-actions.types";
-export * from './pure-ui-actions-test';
+export * from './test-component';
 export type { ActionHandler, ActionThunk, Component, ComponentInstance, Config, Context, GetActionThunk, GetConfig, GetTaskThunk, Next, RunAction, Task, TaskHandler, TaskThunk, ThunkType } from "./pure-ui-actions.types";
 
 const componentRegistry = new Map<string, ComponentInstance>();

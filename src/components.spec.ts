@@ -1,7 +1,7 @@
 import { vi, type Mock } from "vitest";
-import { _setTestKey, component, html, mount, getComponentRegistry } from "../src/pure-ui-actions";
-import { log } from "../src/pure-ui-actions-log";
-import * as vdom from "../src/vdom";
+import { _setTestKey, component, html, mount, getComponentRegistry } from "./pure-ui-actions";
+import { log } from "./log";
+import * as vdom from "./vdom";
 const { div } = html;
 const testKey = _setTestKey({});
 

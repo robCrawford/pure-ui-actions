@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import { _setTestKey, component, html, mount, getComponentRegistry, renderComponent } from "./pure-ui-actions";
-import { log } from "./pure-ui-actions-log";
+import { log } from "./log";
 import * as vdom from "./vdom";
 const { div } = html;
 const testKey = _setTestKey({});

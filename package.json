@@ -1,6 +1,6 @@
 {
   "name": "pure-ui-actions",
-  "version": "0.3.0",
+  "version": "0.1.0",
   "description": "Pure type-safe actions that humans and AI can follow",
   "type": "module",
   "main": "dist/pure-ui-actions.js",
