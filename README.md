@@ -259,8 +259,8 @@ const { state } = testAction("HandleInput", {}, {
 
 **Logging controls:**
 - Redux DevTools logging is automatic when the extension is installed
-- Add `?debug=console` to enable console logging
-- Add `?logRenders=true` to include render events in both outputs
+- Add `?logRenders=true` to include render events
+- Add `?debug=console` to enable console logging (includes renders)
 
 ## Efficient List Rendering
 

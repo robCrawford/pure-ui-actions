@@ -49,7 +49,8 @@ function getAggregatedState(): Record<string, any> {
 
 export const log = ({
   setStateGlobal(id: string, state: object | undefined): void {
-    // Always maintain state (DevTools needs it even if console logging disabled)
+    // Maintain global state registry (DevTools and logging rely on this)
+    // Called after actions update state and during render lifecycle
     const win = window as unknown as { state: Record<string, object | undefined> };
     const stateGlobal = win.state || (win.state = {});
 
@@ -59,8 +60,8 @@ export const log = ({
       stateGlobal[id] = state;
     }
 
-    // Don't send to DevTools here - updateStart and noInitialAction handle all updates
-    // DevTools will naturally show only components that exist in window.state
+    // Note: State updates are sent to DevTools by updateStart, not here
+    // This just maintains window.state for getAggregatedState() to read
   },
   noInitialAction(id: string, state?: Record<string, unknown>): void {
     // Send initial mount to Redux DevTools
@@ -90,9 +91,13 @@ export const log = ({
   updateStart(id: string, state: Record<string, unknown> | undefined, label: string, data?: Record<string, unknown>, newState?: Record<string, unknown>): void {
     // Send to Redux DevTools with current state
     if (devToolsConnection && newState !== undefined) {
+      // Update window.state FIRST so subsequent getAggregatedState() calls are accurate
+      const win = window as unknown as { state: Record<string, object | undefined> };
+      const stateGlobal = win.state || (win.state = {});
+      stateGlobal[id] = newState;
+
       // Build aggregated state with the NEW state for this component
       const aggregatedState = getAggregatedState();
-      aggregatedState[id] = newState;
 
       devToolsConnection.send(
         {

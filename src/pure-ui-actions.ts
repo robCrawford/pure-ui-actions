@@ -240,6 +240,9 @@ function renderComponentInstance(instance: ComponentInstance): VNode | undefined
       });
       log.render(instance.id, instance.props);
 
+      // Update global state BEFORE patch so DevTools has accurate state
+      log.setStateGlobal(instance.id, instance.state);
+
       if (isRenderRoot && prevVNode) {
         patch(prevVNode, instance.vnode);
         log.patch();
@@ -251,8 +254,6 @@ function renderComponentInstance(instance: ComponentInstance): VNode | undefined
           inst.inCurrentRender = false;
         });
       }
-
-      log.setStateGlobal(instance.id, instance.state);
 
       if (isRenderRoot) {
         publish("patch");
@@ -361,7 +362,7 @@ export function renderComponent<TComponent extends Component>(
   if (isRoot) {
     rootAction = action;
     rootTask = task;
-    rootState = state;
+    rootState = instance.state;
   }
 
   log.render(id, props);
@@ -369,7 +370,7 @@ export function renderComponent<TComponent extends Component>(
   instance.prevProps = props;
 
   setRenderRef(instance);
-  log.setStateGlobal(id, state);
+  log.setStateGlobal(id, instance.state);
 
   return instance.vnode;
 }
