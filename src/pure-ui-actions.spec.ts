@@ -36,14 +36,14 @@ describe("pure-ui-actions", () => {
 
       for (let i = 1; i < numTestActions; i++) {
         actions["Increment" + i] =
-        (_: any, { props, state }: { props: any; state: { count: number } }) => {
+        (_: any, { state }: { state: { count: number } }) => {
           return {
             state: { ...state, count: state.count + 1 }, next: action("Increment" + (i+1))
           };
         };
       }
       actions["Increment" + numTestActions] =
-      (_: any, { props, state }: { props: any; state: { count: number } }) => {
+      (_: any, { state }: { state: { count: number } }) => {
         return {
           state: { ...state, count: state.count + 1 }
         };
@@ -79,7 +79,7 @@ describe("pure-ui-actions", () => {
 
       for (let i = 1; i <= numTestActions; i++) {
         actions["Increment" + i] =
-        (_: any, { props, state }: { props: any; state: { count: number } }) => {
+        (_: any, { state }: { state: { count: number } }) => {
           return {
             state: { ...state, count: state.count + 1 }
           };
@@ -87,7 +87,7 @@ describe("pure-ui-actions", () => {
         incrementRetActions.push(action("Increment" + i));
       }
       actions["Increment"] =
-      (_: any, { props, state }: { props: any; state: { count: number } }) => ({ state, next: incrementRetActions });
+      (_: any, { state }: { state: { count: number } }) => ({ state, next: incrementRetActions });
 
       return {
         state: () => ({ count: 0 }),
@@ -133,7 +133,7 @@ describe("pure-ui-actions", () => {
 
       for (let i = 1; i < numTestActions; i++) {
         actions["Increment" + i] =
-        (_: any, { props, state }: { props: any; state: { count: number } }) => {
+        (_: any, { state }: { state: { count: number } }) => {
           return {
             state: { ...state, count: state.count + 1 },
             next: action("Increment" + (i+1))
@@ -141,7 +141,7 @@ describe("pure-ui-actions", () => {
         };
       }
       actions["Increment" + numTestActions] =
-      (_: any, { props, state }: { props: any; state: { count: number } }) => {
+      (_: any, { state }: { state: { count: number } }) => {
         const newState = { ...state, count: state.count + 1 };
         setTimeout(() => {
           // After last action has been processed
@@ -158,7 +158,7 @@ describe("pure-ui-actions", () => {
       // Overwrite middle action with task
       const midIndex = numTestActions/2;
       actions["Increment" + midIndex] =
-      (_: any, { props, state }: { props: any; state: { count: number } }) => {
+      (_: any, { state }: { state: { count: number } }) => {
         return {
           state: { ...state, count: state.count + 1 },
           next: (task as any)("TestAsync")

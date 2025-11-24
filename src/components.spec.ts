@@ -22,13 +22,13 @@ describe("pure-ui-actions components", () => {
     Decrement: vi.fn( ({ step }, { state }) => ({ state: { ...state, count: state.count - step } }) )
   };
   const validateSuccess = vi.fn(
-    (result, { props, state, rootState }) => parentAction("Increment", { step: result })
+    (result) => parentAction("Increment", { step: result })
   );
   const validateFailure = vi.fn(
-    (err, { props, state, rootState }) => parentAction("Decrement", { step: err })
+    (err) => parentAction("Decrement", { step: err })
   );
   const parentTasks = {
-    Validate: (data: { count: number } | undefined) => {
+    Validate: () => {
       return {
         perform: () => validatePerform(),
         success: validateSuccess,

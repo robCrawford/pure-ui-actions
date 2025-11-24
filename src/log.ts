@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
 Logging for pure-ui-actions lifecycle with Redux DevTools integration
 */

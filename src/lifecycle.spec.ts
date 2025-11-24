@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { vi } from "vitest";
 import { _setTestKey, component, html, mount, getComponentRegistry, renderComponent } from "./pure-ui-actions";
 import { log } from "./log";
@@ -67,7 +68,7 @@ describe("Component Lifecycle & State Management", () => {
           tasks: {
             FetchData: (data) => ({
               perform: () => Promise.resolve((data?.id ?? 0) * 2),
-              success: (result, ctx) => undefined
+              success: () => undefined
             })
           },
           view: (id, ctx) => div(`#${id}`, `${ctx.state?.result ?? 0}`)
@@ -197,7 +198,7 @@ describe("Component Lifecycle & State Management", () => {
         Props: { value: number };
         State: Record<string, never>;
         Actions: Record<string, never>;
-      }>(({ action: a }) => {
+      }>(() => {
         return {
           state: () => ({}),
           actions: {},
@@ -247,7 +248,7 @@ describe("Component Lifecycle & State Management", () => {
         Props: Record<string, never>;
         State: Record<string, never>;
         Actions: Record<string, never>;
-      }>(({ action: a }) => {
+      }>(() => {
         return {
           state: () => ({}),
           actions: {},
@@ -259,7 +260,7 @@ describe("Component Lifecycle & State Management", () => {
         Props: Record<string, never>;
         State: Record<string, never>;
         Actions: Record<string, never>;
-      }>(({ action: a }) => {
+      }>(() => {
         return {
           state: () => ({}),
           actions: {},
@@ -405,7 +406,7 @@ describe("Component Lifecycle & State Management", () => {
           state: () => ({ initialized: false }),
           init: a("Init"),
           actions: {
-            Init: (_, ctx) => {
+            Init: () => {
               initExecuted = true;
               return { state: { initialized: true } };
             }
@@ -437,7 +438,7 @@ describe("Component Lifecycle & State Management", () => {
           state: () => ({ data: "" }),
           init: t("LoadData"),
           actions: {
-            SetData: (payload, ctx) => {
+            SetData: (payload) => {
               successCalled = true;
               return { state: { data: payload?.value ?? "" } };
             }
@@ -515,7 +516,7 @@ describe("Component Lifecycle & State Management", () => {
         Props: { message: string };
         State: Record<string, never>;
         Actions: Record<string, never>;
-      }>(({ action: a }) => {
+      }>(() => {
         return {
           state: () => ({}),
           actions: {},
@@ -565,11 +566,11 @@ describe("Component Lifecycle & State Management", () => {
         Props: { onAction: any };
         State: Record<string, never>;
         Actions: Record<string, never>;
-      }>(({ action: a }) => {
+      }>(() => {
         return {
           state: () => ({}),
           actions: {},
-          view: (id, { props }) => {
+          view: (id) => {
             return div(`#${id}.child`, "child");
           }
         };
@@ -589,7 +590,7 @@ describe("Component Lifecycle & State Management", () => {
               return { state: ctx?.state ?? { value: 0 } };
             }
           },
-          view: (id, { state }) => {
+          view: (id) => {
             return div(`#${id}.parent`, [
               child("#child", {
                 onAction: parentAction("ParentAction", { value: "from-child" })
@@ -693,7 +694,7 @@ describe("Component Lifecycle & State Management", () => {
         Props: { value: string };
         State: Record<string, never>;
         Actions: Record<string, never>;
-      }>(({ action: a }) => {
+      }>(() => {
         return {
           state: () => ({}),
           actions: {},
@@ -744,7 +745,7 @@ describe("Component Lifecycle & State Management", () => {
         Props: { value?: string };
         State: Record<string, never>;
         Actions: Record<string, never>;
-      }>(({ action: a }) => {
+      }>(() => {
         return {
           state: () => ({}),
           actions: {},
@@ -821,7 +822,7 @@ describe("Component Lifecycle & State Management", () => {
         Props: Record<string, never>;
         State: Record<string, never>;
         Actions: Record<string, never>;
-      }>(({ action: a }) => {
+      }>(() => {
         return {
           state: () => ({}),
           actions: {},

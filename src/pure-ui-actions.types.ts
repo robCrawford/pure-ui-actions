@@ -61,6 +61,7 @@ export type Component = {
 
 export type ComponentInstance = {
   id: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: Config<any>;
   state?: Record<string, unknown>;
   props?: Record<string, unknown>;
