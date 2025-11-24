@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { patch, setHook, VNode } from "./vdom";
 export { html, VNode, memo, setHook } from "./vdom";
 import { log } from "./log";
@@ -11,6 +12,7 @@ export const getComponentRegistry = (): Map<string, ComponentInstance> => compon
 const actionThunkCache = new Map<string, ActionThunk>();
 const taskThunkCache = new Map<string, TaskThunk>();
 
+// Module-level refs to root component's creators, typed via cast when passed to components
 let rootAction: GetActionThunk<any> | undefined;
 let rootTask: GetTaskThunk<any> | undefined;
 let rootState: Record<string, unknown> | undefined;
@@ -240,7 +242,7 @@ function renderComponentInstance(instance: ComponentInstance): VNode | undefined
       });
       log.render(instance.id, instance.props);
 
-      // Update global state BEFORE patch so DevTools has accurate state
+      // Update global state before patch so DevTools has accurate state
       log.setStateGlobal(instance.id, instance.state);
 
       if (isRenderRoot && prevVNode) {

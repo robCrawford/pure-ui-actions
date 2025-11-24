@@ -296,9 +296,9 @@ type Component = {
   State: State;          // Component state (or null if stateless)
   Actions: Actions;      // Available actions (or empty object)
   Tasks: Tasks;          // Available tasks (or empty object)
-  RootState: RootState;      // Optional - access to root state
-  RootActions: RootActions;  // Optional - access to root actions
-  RootTasks: RootTasks;      // Optional - access to root tasks
+  RootState: RootState;      // Optional - access to root app state
+  RootActions: RootActions;  // Optional - access to root app actions
+  RootTasks: RootTasks;      // Optional - access to root app tasks
 };
 ```
 
@@ -780,8 +780,15 @@ view(id, { state }) {
 
 ### Root Actions and Tasks
 
-**Define root types in parent (app.ts):**
+The root app component can export `RootState`, `RootActions`, and `RootTasks` types that any child component can access. This is intended for application-wide concerns only (theme, auth, global settings), not for parent-child communication.
+
+**Root app component (app.ts) - Define and export root types:**
 ```typescript
+import { component, html } from "pure-ui-actions";
+import likeButton from "./components/likeButton";
+const { div } = html;
+
+// Export types for child components to import
 export type RootState = Readonly<{
   theme: string;
   likes: Record<string, number>;
@@ -795,19 +802,79 @@ export type RootActions = Readonly<{
 export type RootTasks = Readonly<{
   SetDocTitle: { title: string };
 }>;
+
+export type Component = {
+  Props: null;
+  State: RootState;
+  Actions: RootActions;
+  Tasks: RootTasks;
+};
+
+export default component<Component>(
+  ({ action, task }) => ({
+    state: () => ({
+      theme: "light",
+      likes: { home: 0, about: 0 }
+    }),
+    
+    // Root action handlers
+    actions: {
+      SetTheme: ({ theme }, { state }) => ({
+        state: { ...state, theme }
+      }),
+      
+      Like: ({ page }, { state }) => ({
+        state: {
+          ...state,
+          likes: {
+            ...state.likes,
+            [page]: state.likes[page] + 1
+          }
+        },
+        next: task("SetDocTitle", { title: `Liked ${page}!` })
+      })
+    },
+    
+    // Root task handlers
+    tasks: {
+      SetDocTitle: ({ title }) => ({
+        perform: () => {
+          document.title = title;
+        }
+      })
+    },
+    
+    view(id, { state }) {
+      return div(`#${id}.${state.theme}`, [
+        likeButton(`#${id}-like-home`, { page: "home" }),
+        likeButton(`#${id}-like-about`, { page: "about" })
+      ]);
+    }
+  })
+);
 ```
 
-**Child component using root types:**
+**Child component (likeButton.ts) - Import and use root types:**
 ```typescript
+import { component, html } from "pure-ui-actions";
 import { RootState, RootActions, RootTasks } from "../app";
+const { button } = html;
+
+type Props = Readonly<{
+  page: string;
+}>;
+
+type Actions = Readonly<{
+  Like: null;
+}>;
 
 type Component = {
   Props: Props;
   State: null;
   Actions: Actions;
-  RootState: RootState;
-  RootActions: RootActions;
-  RootTasks: RootTasks;
+  RootState: RootState;      // Import from parent
+  RootActions: RootActions;  // Import from parent
+  RootTasks: RootTasks;      // Import from parent
 };
 
 export default component<Component>(
@@ -816,19 +883,32 @@ export default component<Component>(
       Like: (_, { props }) => ({
         state: null,
         next: [
+          // Invoke parent's action
           rootAction("Like", { page: props.page }),
+          // Invoke parent's task
           rootTask("SetDocTitle", { title: "Liked!" })
         ]
       })
     },
-    view: (id, { rootState }) =>
-      button(
+    
+    view(id, { props, rootState }) {
+      return button(
         { on: { click: action("Like") } },
-        `👍${rootState.likes[props.page]}`
-      )
+        // Access parent's state
+        `👍 ${rootState.likes[props.page]}`
+      );
+    }
   })
 );
 ```
+
+**Key points:**
+- Only the root app component should export `RootState`, `RootActions`, `RootTasks`
+- Any child component can import these types and include them in its Component type definition
+- Child components access `rootAction`, `rootTask`, `rootState` via the component callback and context
+- Use this pattern for truly application-wide concerns (theme, auth, global settings)
+- For parent-child communication, use props and action callbacks instead (see "State Lifting Pattern" below)
+- Changes to rootState cause all components accessing it to re-render (prefer local state when possible)
 
 ## Task Patterns
 
@@ -1757,7 +1837,7 @@ Both console and DevTools logging can run simultaneously for maximum insight.
 8. **Use pub/sub sparingly** - Subscribe to "patch" events; publish custom events for cross-cutting concerns
 9. **Service functions for reusable I/O** - Called from task perform
 10. **Test with testComponent** - Export Component type and pass to testComponent<Component>() for proper type inference
-11. **Components are default exports** - Component type and root types are named exports
+11. **Components are default exports** - Component type is a named export; only root app exports RootState/RootActions/RootTasks
 12. **Co-locate tests** - `*.spec.ts` files next to implementation
 13. **Use withKey for lists** - Enable efficient VDOM updates
 14. **Context provides event in actions** - Access DOM events via context.event in action handlers
