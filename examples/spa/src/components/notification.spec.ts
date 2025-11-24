@@ -2,7 +2,7 @@ import { testComponent, ThunkType, ActionThunk } from "pure-ui-actions";
 import notification, { State, Component } from "./notification";
 
 const passedInActionThunk: ActionThunk = () => {};
-passedInActionThunk.type = ThunkType.Action
+passedInActionThunk.type = ThunkType.Action;
 
 describe("Notification component", () => {
   const { initialState, testAction } = testComponent<Component>(notification, {
@@ -28,5 +28,4 @@ describe("Notification component", () => {
       expect(next).toBe(passedInActionThunk);
     });
   });
-
 });

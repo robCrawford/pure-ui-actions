@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { component, mount, html, subscribe, unsubscribe, Config, Next, VNode } from "./pure-ui-actions";
+import {
+  component,
+  mount,
+  html,
+  subscribe,
+  unsubscribe,
+  Config,
+  Next,
+  VNode
+} from "./pure-ui-actions";
 import { log } from "./log";
 import { JSDOM } from "jsdom";
 
@@ -96,7 +105,6 @@ let patchEventState: Record<string, RootState> | null = null;
 const createRootComponent = () => {
   return component<RootComponent>(
     ({ action, task }): Config<RootComponent> => ({
-
       // State initializer - tests props → state flow
       state: (props?: RootProps): RootState => ({
         value: props?.initialValue ?? "",
@@ -195,10 +203,7 @@ const createRootComponent = () => {
               executionOrder: [...currentState.executionOrder, "step4"],
               step4Done: true
             },
-            next: [
-              action("Step5a_ArrayItem", null),
-              action("Step5b_ArrayItem", null)
-            ]
+            next: [action("Step5a_ArrayItem", null), action("Step5b_ArrayItem", null)]
           };
         },
 
@@ -374,12 +379,13 @@ const createRootComponent = () => {
 const createChildComponent = () => {
   return component<ChildComponent>(
     ({ action, rootAction }): Config<ChildComponent> => ({
-
       actions: {
         TriggerIncrement: (_, context) => {
           contextTracker.actions.ChildTriggerIncrement = {
-            hasProps: context?.props === undefined || Object.keys(context?.props ?? {}).length === 0,
-            hasState: context?.state === undefined || Object.keys(context?.state ?? {}).length === 0,
+            hasProps:
+              context?.props === undefined || Object.keys(context?.props ?? {}).length === 0,
+            hasState:
+              context?.state === undefined || Object.keys(context?.state ?? {}).length === 0,
             hasRootState: !!context?.rootState,
             hasEvent: !!context?.event
           };
@@ -455,7 +461,7 @@ describe("Lifecycle and Data Flow", () => {
   afterEach(() => {
     // Cleanup
     unsubscribe("patch", patchHandler);
-    Object.values(logSpies).forEach(spy => spy.mockRestore());
+    Object.values(logSpies).forEach((spy) => spy.mockRestore());
     globalThis.window = originalWindow;
     globalThis.document = originalDocument;
   });
@@ -471,7 +477,7 @@ describe("Lifecycle and Data Flow", () => {
       });
 
       // Wait for async tasks to complete
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Get final state from window
       const finalState = getWindowState()?.app;
@@ -503,7 +509,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       const finalState = getWindowState()?.app;
 
@@ -562,39 +568,40 @@ describe("Lifecycle and Data Flow", () => {
         Actions: TestActions;
       };
 
-      const testComponent = component<TestComponent>(
-        ({ action }) => ({
-          state: (props?: TestProps): TestState => ({ value: props?.value ?? "default", modified: false }),
-          init: action("TestMutation", null),
-          actions: {
-            TestMutation: (_, context): { state: TestState } => {
-              if (!context?.state) throw new Error("Context state is required");
-              const state = context.state;
-              stateInAction = state;
-              mutationAttempted = true;
+      const testComponent = component<TestComponent>(({ action }) => ({
+        state: (props?: TestProps): TestState => ({
+          value: props?.value ?? "default",
+          modified: false
+        }),
+        init: action("TestMutation", null),
+        actions: {
+          TestMutation: (_, context): { state: TestState } => {
+            if (!context?.state) throw new Error("Context state is required");
+            const state = context.state;
+            stateInAction = state;
+            mutationAttempted = true;
 
-              // Try to mutate the frozen state
-              try {
-                (state as unknown as Record<string, unknown>).value = "mutated";
-              } catch {
-                // Expected to fail - mutation should be blocked by frozen object
-              }
-
-              return {
-                state: { ...state, modified: true }
-              };
+            // Try to mutate the frozen state
+            try {
+              (state as unknown as Record<string, unknown>).value = "mutated";
+            } catch {
+              // Expected to fail - mutation should be blocked by frozen object
             }
-          },
-          view: (id) => div(`#${id}`)
-        })
-      );
+
+            return {
+              state: { ...state, modified: true }
+            };
+          }
+        },
+        view: (id) => div(`#${id}`)
+      }));
 
       mount({
         app: testComponent,
         props: { value: "original" }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Verify state was frozen when passed to action
       expect(mutationAttempted).toBe(true);
@@ -636,7 +643,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Check init action context
       expect(contextTracker.actions.Step1_InitAction.hasProps).toBe(true);
@@ -652,7 +659,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Note: Full child integration would require rendering child and triggering action
       // For this basic test, we verify the root component structure is correct
@@ -670,7 +677,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Simulate button click
       const button = document.querySelector("#test-button");
@@ -679,7 +686,7 @@ describe("Lifecycle and Data Flow", () => {
       const clickEvent = new dom.window.Event("click");
       button?.dispatchEvent(clickEvent);
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Verify DOM event was passed to action
       expect(contextTracker.actions.Step6_HandleDomEvent.hasEvent).toBe(true);
@@ -696,7 +703,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Verify sync task success callback received context
       expect(contextTracker.tasks.SyncTask.hasProps).toBe(true);
@@ -712,7 +719,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Verify async task success callback received result and context
       expect(contextTracker.tasks.AsyncTask.receivedResult).toEqual({ data: "async-result" });
@@ -729,7 +736,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Verify failing task failure callback received error and context
       expect(contextTracker.tasks.FailingTask.receivedError).toBe("task-failure");
@@ -746,7 +753,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // All task callbacks should have context
       expect(contextTracker.tasks.SyncTask.hasProps).toBe(true);
@@ -767,7 +774,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       const finalState = getWindowState()?.app;
 
@@ -789,7 +796,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       const finalState = getWindowState()?.app;
 
@@ -811,7 +818,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 5 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Root state should be accessible via window.state
       const rootState = getWindowState()?.app;
@@ -830,14 +837,14 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Simulate DOM event first to get to step6
       const button = document.querySelector("#test-button");
       const clickEvent = new dom.window.Event("click");
       button?.dispatchEvent(clickEvent);
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Get child button (would be rendered by parent view in real scenario)
       // For this test, we verify the action exists and would work
@@ -856,7 +863,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 10 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       const initialState = getWindowState()?.app;
       const initialCounter = initialState?.counter;
@@ -867,7 +874,7 @@ describe("Lifecycle and Data Flow", () => {
       const clickEvent = new dom.window.Event("click");
       button?.dispatchEvent(clickEvent);
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // After IncrementCounter action, counter should change
       // This would trigger child re-render in real scenario
@@ -885,7 +892,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // log.updateStart should be called for each action
       expect(logSpies.updateStart).toHaveBeenCalled();
@@ -906,7 +913,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // log.taskPerform should be called for each task
       expect(logSpies.taskPerform).toHaveBeenCalled();
@@ -927,7 +934,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(logSpies.taskSuccess).toHaveBeenCalled();
 
@@ -946,7 +953,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(logSpies.taskFailure).toHaveBeenCalled();
 
@@ -964,7 +971,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // log.render should be called
       expect(logSpies.render).toHaveBeenCalled();
@@ -983,7 +990,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // log.patch should be called
       expect(logSpies.patch).toHaveBeenCalled();
@@ -997,7 +1004,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // window.state should contain app state
       const windowState = getWindowState();
@@ -1017,7 +1024,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Patch event should have fired
       expect(patchEventFired).toBe(true);
@@ -1031,7 +1038,7 @@ describe("Lifecycle and Data Flow", () => {
         props: { initialValue: "test", startAt: 0 }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // State should be observable in patch handler
       expect(patchEventState).toBeDefined();
@@ -1055,7 +1062,7 @@ describe("Lifecycle and Data Flow", () => {
       });
 
       // Wait for initial async tasks
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Verify state after init flow
       let currentState = getWindowState()?.app;
@@ -1075,7 +1082,7 @@ describe("Lifecycle and Data Flow", () => {
       const clickEvent = new dom.window.Event("click");
       button?.dispatchEvent(clickEvent);
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Verify DOM event was handled
       currentState = getWindowState()?.app;
@@ -1095,4 +1102,3 @@ describe("Lifecycle and Data Flow", () => {
     });
   });
 });
-

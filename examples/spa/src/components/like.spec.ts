@@ -26,5 +26,4 @@ describe("Like component", () => {
       }
     });
   });
-
 });

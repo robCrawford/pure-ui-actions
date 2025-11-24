@@ -9,24 +9,20 @@ export type Component = {
   RootTasks: RootTasks;
 };
 
+export default component<Component>(({ rootTask }) => ({
+  init: rootTask("SetDocTitle", { title: "About" }),
 
-export default component<Component>(
-  ({ rootTask }) => ({
-
-    init: rootTask("SetDocTitle", { title: "About" }),
-
-    view(id, { rootState }) {
-      return div(`#${id}`,
-        div(".content", [
-          themeMenu("#theme-menu"),
-          a({ attrs: {href: "/counter" + location.search, "data-navigo": true} }, "Counter page"),
-          div(".visits", ["Likes: ", rootState.likes.aboutPage]),
-          h1("About"),
-          like('#about-like', { page: 'aboutPage'}),
-          div(".intro", "Lorem ipsum dolor sit amet.")
-        ])
-      );
-    }
-
-  }))
-;
+  view(id, { rootState }) {
+    return div(
+      `#${id}`,
+      div(".content", [
+        themeMenu("#theme-menu"),
+        a({ attrs: { href: "/counter" + location.search, "data-navigo": true } }, "Counter page"),
+        div(".visits", ["Likes: ", rootState.likes.aboutPage]),
+        h1("About"),
+        like("#about-like", { page: "aboutPage" }),
+        div(".intro", "Lorem ipsum dolor sit amet.")
+      ])
+    );
+  }
+}));

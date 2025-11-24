@@ -1,6 +1,8 @@
 import js from "@eslint/js";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
+import prettierConfig from "eslint-config-prettier";
+import prettierPlugin from "eslint-plugin-prettier";
 
 export default [
   {
@@ -40,11 +42,13 @@ export default [
       }
     },
     plugins: {
-      "@typescript-eslint": tseslint
+      "@typescript-eslint": tseslint,
+      "prettier": prettierPlugin
     },
     rules: {
       // Extend recommended rules
       ...tseslint.configs.recommended.rules,
+      ...prettierConfig.rules,
 
       // Disable base ESLint rules that are superseded by TypeScript rules
       "no-unused-vars": "off",
@@ -61,8 +65,11 @@ export default [
         allowHigherOrderFunctions: true
       }],
 
-      // Style rules
-      "indent": ["error", 2]
+      // Prettier integration
+      "prettier/prettier": "error",
+
+      // Disable style rules that conflict with Prettier
+      "indent": "off"
     }
   },
   {

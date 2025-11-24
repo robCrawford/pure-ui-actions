@@ -9,7 +9,6 @@ const patchSpy = vi.spyOn(vdom, "patch");
 const renderSpy = vi.spyOn(log, "render");
 const ctx = { rootState: { theme: "a" }, props: { test: "x" }, state: { count: 0 } };
 
-
 describe("pure-ui-actions components", () => {
   let rootAction: Function = () => {};
   let parentAction: Function = () => {};
@@ -18,21 +17,17 @@ describe("pure-ui-actions components", () => {
   let validatePerform: Function = () => {};
 
   const parentActions = {
-    Increment: vi.fn( ({ step }, { state }) => ({ state: { ...state, count: state.count + step } }) ),
-    Decrement: vi.fn( ({ step }, { state }) => ({ state: { ...state, count: state.count - step } }) )
+    Increment: vi.fn(({ step }, { state }) => ({ state: { ...state, count: state.count + step } })),
+    Decrement: vi.fn(({ step }, { state }) => ({ state: { ...state, count: state.count - step } }))
   };
-  const validateSuccess = vi.fn(
-    (result) => parentAction("Increment", { step: result })
-  );
-  const validateFailure = vi.fn(
-    (err) => parentAction("Decrement", { step: err })
-  );
+  const validateSuccess = vi.fn((result) => parentAction("Increment", { step: result }));
+  const validateFailure = vi.fn((err) => parentAction("Decrement", { step: err }));
   const parentTasks = {
     Validate: () => {
       return {
         perform: () => validatePerform(),
         success: validateSuccess,
-        failure: validateFailure,
+        failure: validateFailure
       };
     }
   };
@@ -42,8 +37,8 @@ describe("pure-ui-actions components", () => {
     renderSpy.mockClear();
     validateSuccess.mockClear();
     validateFailure.mockClear();
-    Object.keys(parentActions).forEach(
-      (k) => (parentActions as Record<string, Mock>)[k].mockClear()
+    Object.keys(parentActions).forEach((k) =>
+      (parentActions as Record<string, Mock>)[k].mockClear()
     );
   };
 
@@ -61,7 +56,7 @@ describe("pure-ui-actions components", () => {
         NoOp: null;
         Mutate: { k: string };
       };
-    }>(({ action: a })  => {
+    }>(({ action: a }) => {
       childAction = a;
       return {
         state: () => ({ count: 0 }),
@@ -79,12 +74,12 @@ describe("pure-ui-actions components", () => {
             const k = data?.k;
             const state = ctx?.state ?? { count: 0 };
             const props = ctx?.props ?? { test: "" };
-            if (k === 'state') state.count = 999;
-            if (k === 'props') props.test = '999';
+            if (k === "state") state.count = 999;
+            if (k === "props") props.test = "999";
             return { state };
           }
         },
-        view: id => div(`#${id}`, "test")
+        view: (id) => div(`#${id}`, "test")
       };
     });
 
@@ -107,15 +102,16 @@ describe("pure-ui-actions components", () => {
         tasks: parentTasks,
         view: (id, { state }) => {
           const count = state?.count ?? 0;
-          return div(`#${id}`,
+          return div(
+            `#${id}`,
             count < 100
-              // < 100 renders child component
-              ? child(`#child`, { test: "x" })
+              ? // < 100 renders child component
+                child(`#child`, { test: "x" })
               : count < 1000
-                // 100 to 999 renders with no child component
-                ? "-"
-                // 1000+ renders child component but with a duplicate id
-                : child(`#parent`, { test: "x" })
+                ? // 100 to 999 renders with no child component
+                  "-"
+                : // 1000+ renders child component but with a duplicate id
+                  child(`#parent`, { test: "x" })
           );
         }
       };
@@ -123,9 +119,9 @@ describe("pure-ui-actions components", () => {
 
     const app = component<{
       Props: { test: string };
-      State: { theme: string; };
+      State: { theme: string };
       Actions: {
-        SetTheme: { theme: string; };
+        SetTheme: { theme: string };
         NoOp: null;
       };
     }>(({ action: a }) => {
@@ -143,8 +139,8 @@ describe("pure-ui-actions components", () => {
             return { state };
           }
         },
-        view: id => div(`#${id}`, [ parent(`#parent`, { test: "x" }) ])
-      }
+        view: (id) => div(`#${id}`, [parent(`#parent`, { test: "x" })])
+      };
     });
 
     mount({ app, props: { test: "x" } });
@@ -189,29 +185,31 @@ describe("pure-ui-actions components", () => {
       expect(parentActions.Increment).toHaveBeenCalledWith({ step: 5 }, ctx);
       expect(renderSpy).toHaveBeenCalledTimes(2);
       expect(patchSpy).toHaveBeenCalledTimes(1);
-    })
+    });
   });
 
   it("should run the failure action of a synchronous task", () => {
-    validatePerform = () => { throw 3 };
+    validatePerform = () => {
+      throw 3;
+    };
     return parentTask("Validate", { count: 1 })(testKey).then(() => {
       expect(validateSuccess).not.toHaveBeenCalled();
       expect(validateFailure).toHaveBeenCalled();
       expect(parentActions.Decrement).toHaveBeenCalledWith({ step: 3 }, ctx);
       expect(renderSpy).toHaveBeenCalledTimes(2);
       expect(patchSpy).toHaveBeenCalledTimes(1);
-    })
+    });
   });
 
   it("should run the success action of an asynchronous task", () => {
-    validatePerform = () => new Promise(res => setTimeout(() => res(5), 100));
+    validatePerform = () => new Promise((res) => setTimeout(() => res(5), 100));
     return parentTask("Validate", { count: 1 })(testKey).then(() => {
       expect(validateSuccess).toHaveBeenCalled();
       expect(validateFailure).not.toHaveBeenCalled();
       expect(parentActions.Increment).toHaveBeenCalledWith({ step: 5 }, ctx);
       expect(renderSpy).toHaveBeenCalledTimes(2);
       expect(patchSpy).toHaveBeenCalledTimes(1);
-    })
+    });
   });
 
   it("should run the failure action of an asynchronous task", () => {
@@ -222,44 +220,49 @@ describe("pure-ui-actions components", () => {
       expect(parentActions.Decrement).toHaveBeenCalledWith({ step: 3 }, ctx);
       expect(renderSpy).toHaveBeenCalledTimes(2);
       expect(patchSpy).toHaveBeenCalledTimes(1);
-    })
+    });
   });
 
   it("should throw when state is mutated", () => {
-    expect(() => childAction("Mutate", { k: 'state' })(testKey))
-      .toThrow("Cannot assign to read only property 'count' of object");
+    expect(() => childAction("Mutate", { k: "state" })(testKey)).toThrow(
+      "Cannot assign to read only property 'count' of object"
+    );
   });
 
   it("should throw when props is mutated", () => {
-    expect(() => childAction("Mutate", { k: 'props' })(testKey))
-      .toThrow("Cannot assign to read only property 'test' of object");
+    expect(() => childAction("Mutate", { k: "props" })(testKey)).toThrow(
+      "Cannot assign to read only property 'test' of object"
+    );
   });
 
   it("should throw when a duplicate id is found", () => {
-    expect(() => parentAction("Increment", { step: 1000 })(testKey))
-      .toThrow('Component "parent" must have a unique id!');
+    expect(() => parentAction("Increment", { step: 1000 })(testKey)).toThrow(
+      'Component "parent" must have a unique id!'
+    );
   });
 
   it("should throw when an action is called manually", () => {
-    expect(() => parentAction("Increment", { step: 1 })())
-      .toThrow('#parent "Increment" cannot be invoked manually');
+    expect(() => parentAction("Increment", { step: 1 })()).toThrow(
+      '#parent "Increment" cannot be invoked manually'
+    );
   });
 
   it("should allow action calls with a DOM event input", () => {
-    expect(() => parentAction("Increment", { step: 1 })({ eventPhase: 1, target: null, type: 'test' }))
-      .not.toThrow();
+    expect(() =>
+      parentAction("Increment", { step: 1 })({ eventPhase: 1, target: null, type: "test" })
+    ).not.toThrow();
   });
 
   it("should throw when a task is called manually", () => {
-    expect(() => parentTask("Validate", { count: 1 })())
-      .toThrow('#parent "Validate" cannot be invoked manually');
+    expect(() => parentTask("Validate", { count: 1 })()).toThrow(
+      '#parent "Validate" cannot be invoked manually'
+    );
   });
 
   it("should allow task calls with a DOM event input", () => {
-    const mockEvent = { eventPhase: 1, target: null, type: 'test' };
+    const mockEvent = { eventPhase: 1, target: null, type: "test" };
 
-    expect(() => parentTask("Validate", { count: 1 })(mockEvent))
-      .not.toThrow();
+    expect(() => parentTask("Validate", { count: 1 })(mockEvent)).not.toThrow();
   });
 
   it("should remove references when an existing component is not rendered", () => {
@@ -269,17 +272,17 @@ describe("pure-ui-actions components", () => {
       expect(refIds).toEqual(expectedIds.sort());
 
       // Verify all components have prevProps set
-      refIds.forEach(id => {
+      refIds.forEach((id) => {
         const instance = registry.get(id);
         expect(instance?.prevProps).toBeDefined();
       });
 
       // Verify no components are marked as inCurrentRender after render completes
-      refIds.forEach(id => {
+      refIds.forEach((id) => {
         const instance = registry.get(id);
         expect(instance?.inCurrentRender).toBe(false);
       });
-    }
+    };
 
     parentAction("Increment", { step: 1 })(testKey);
     expect(renderSpy).toHaveBeenCalledTimes(2);
@@ -297,4 +300,3 @@ describe("pure-ui-actions components", () => {
     testRefs(["parent", "app", "child"]);
   });
 });
-

@@ -7,5 +7,4 @@ describe("Counter Page component", () => {
   it("should run initial action", () => {
     expect(config.init).toEqual({ name: "SetDocTitle", data: { title: "Counter" } });
   });
-
 });

@@ -2,7 +2,9 @@ import { testComponent, NextData } from "pure-ui-actions";
 import counter, { State, Component } from "./counter";
 
 describe("Counter component", () => {
-  const { initialState, testAction, testTask, config } = testComponent<Component>(counter, { start: 0 });
+  const { initialState, testAction, testTask, config } = testComponent<Component>(counter, {
+    start: 0
+  });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({ counter: 0, feedback: "" });
@@ -69,7 +71,7 @@ describe("Counter component", () => {
   });
 
   describe("'SetFeedback' action", () => {
-    const { state, next } = testAction<State>("SetFeedback", { text: 'test' });
+    const { state, next } = testAction<State>("SetFeedback", { text: "test" });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -98,9 +100,8 @@ describe("Counter component", () => {
 
     it("should handle failure", () => {
       const { name, data } = failure("", {}) as NextData;
-      expect(name).toBe('SetFeedback');
-      expect(data).toEqual({ text: 'Unavailable' });
+      expect(name).toBe("SetFeedback");
+      expect(data).toEqual({ text: "Unavailable" });
     });
   });
-
 });

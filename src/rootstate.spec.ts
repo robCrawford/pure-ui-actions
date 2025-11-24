@@ -22,7 +22,7 @@ describe("RootState with Memoization", () => {
     // Initialise app
     const appEl = document.createElement("div");
     appEl.setAttribute("id", "app");
-    document.body.innerHTML = '';
+    document.body.innerHTML = "";
     document.body.appendChild(appEl);
 
     const child = component<{
@@ -32,7 +32,7 @@ describe("RootState with Memoization", () => {
         Increment: { step: number };
       };
       RootState: { theme: string };
-    }>(({ action: a })  => {
+    }>(({ action: a }) => {
       childAction = a;
       return {
         state: () => ({ count: 0 }),
@@ -67,8 +67,8 @@ describe("RootState with Memoization", () => {
             return { state: { ...state, theme } };
           }
         },
-        view: (id) => div(`#${id}`, [ child(`#child`, {}) ])
-      }
+        view: (id) => div(`#${id}`, [child(`#child`, {})])
+      };
     });
 
     mount({ app, props: {} });
@@ -145,14 +145,14 @@ describe("RootState with Memoization", () => {
             return { state: { ...state, theme } };
           }
         },
-        view: (id) => div(`#${id}`, [ child(`#child`, {}) ])
-      }
+        view: (id) => div(`#${id}`, [child(`#child`, {})])
+      };
     });
 
     // Reset app with task-based child
     const appEl = document.createElement("div");
     appEl.setAttribute("id", "app");
-    document.body.innerHTML = '';
+    document.body.innerHTML = "";
     document.body.appendChild(appEl);
     mount({ app, props: {} });
     patchSpy.mockClear();
@@ -178,4 +178,3 @@ describe("RootState with Memoization", () => {
     });
   });
 });
-

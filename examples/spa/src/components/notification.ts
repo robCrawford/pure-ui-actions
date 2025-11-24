@@ -20,36 +20,32 @@ export type Component = {
   Actions: Actions;
 };
 
+export default component<Component>(({ action }) => ({
+  state: () => ({
+    show: true
+  }),
 
-export default component<Component>(
-  ({ action }) => ({
+  actions: {
+    Dismiss: (_, { props, state }) => {
+      return {
+        state: {
+          ...state,
+          show: false
+        },
+        next: props.onDismiss
+      };
+    }
+  },
 
-    state: () => ({
-      show: true
-    }),
-
-    actions: {
-      Dismiss: (_, { props, state }) => {
-        return {
-          state: {
-            ...state,
-            show: false
-          },
-          next: props.onDismiss
-        };
-      }
-    },
-
-    view(id, { props, state }) {
-      return div(`#${id}.notification`, {
+  view(id, { props, state }) {
+    return div(
+      `#${id}.notification`,
+      {
         class: {
           show: state.show && props.text.length
         }
-      }, [
-        props.text,
-        button({ on: { click: action("Dismiss") } }, "Dismiss")
-      ]);
-    }
-
-  })
-);
+      },
+      [props.text, button({ on: { click: action("Dismiss") } }, "Dismiss")]
+    );
+  }
+}));

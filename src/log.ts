@@ -2,12 +2,13 @@
 /*
 Logging for pure-ui-actions lifecycle with Redux DevTools integration
 */
-let groupId = '';
+let groupId = "";
 
 // Logging controls based on URL query parameters
-const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-const logToConsole = searchParams?.get('debug') === 'console';  // Enable with ?debug=console
-const logRenders = searchParams?.get('logRenders') === 'true';  // Enable with ?logRenders=true
+const searchParams =
+  typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+const logToConsole = searchParams?.get("debug") === "console"; // Enable with ?debug=console
+const logRenders = searchParams?.get("logRenders") === "true"; // Enable with ?logRenders=true
 
 const logEnabled = logToConsole;
 
@@ -20,17 +21,17 @@ interface DevToolsConnection {
 let devToolsConnection: DevToolsConnection | null = null;
 
 // Initialize Redux DevTools connection (if extension is active)
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   const devToolsExtension = (window as any).__REDUX_DEVTOOLS_EXTENSION__;
   if (devToolsExtension) {
     devToolsConnection = devToolsExtension.connect({
-      name: 'pure-ui-actions App',
+      name: "pure-ui-actions App",
       features: {
-        jump: false,      // Disable time travel
-        skip: false,      // Disable skip
-        reorder: false,   // Disable reorder
-        dispatch: false,  // Disable dispatch
-        persist: false    // Disable persist
+        jump: false, // Disable time travel
+        skip: false, // Disable skip
+        reorder: false, // Disable reorder
+        dispatch: false, // Disable dispatch
+        persist: false // Disable persist
       }
     });
 
@@ -48,7 +49,7 @@ function getAggregatedState(): Record<string, any> {
   return { ...(win.state || {}) };
 }
 
-export const log = ({
+export const log = {
   setStateGlobal(id: string, state: object | undefined) {
     // Maintain global state registry (DevTools and logging rely on this)
     // Called after actions update state and during render lifecycle
@@ -89,7 +90,13 @@ export const log = ({
       groupId = id;
     }
   },
-  updateStart(id: string, state: Record<string, unknown> | undefined, label: string, data?: Record<string, unknown>, newState?: Record<string, unknown>) {
+  updateStart(
+    id: string,
+    state: Record<string, unknown> | undefined,
+    label: string,
+    data?: Record<string, unknown>,
+    newState?: Record<string, unknown>
+  ) {
     // Send to Redux DevTools with current state
     if (devToolsConnection && newState !== undefined) {
       // Update window.state FIRST so subsequent getAggregatedState() calls are accurate
@@ -152,7 +159,7 @@ export const log = ({
       devToolsConnection.send(
         {
           type: `${id}/[Task] ${label}/start`,
-          meta: { isTask: true, status: 'start', isPromise }
+          meta: { isTask: true, status: "start", isPromise }
         },
         getAggregatedState()
       );
@@ -160,7 +167,7 @@ export const log = ({
 
     // Console logging
     if (logEnabled) {
-      console.log(`%cTask "${label}" perform${isPromise ? '...': 'ed'}`, "color: #dd8");
+      console.log(`%cTask "${label}" perform${isPromise ? "..." : "ed"}`, "color: #dd8");
     }
   },
   taskSuccess(id: string, label: string) {
@@ -169,7 +176,7 @@ export const log = ({
       devToolsConnection.send(
         {
           type: `${id}/[Task] ${label}/success`,
-          meta: { isTask: true, status: 'success' }
+          meta: { isTask: true, status: "success" }
         },
         getAggregatedState()
       );
@@ -187,7 +194,7 @@ export const log = ({
         {
           type: `${id}/[Task] ${label}/failure`,
           payload: { error: err.message },
-          meta: { isTask: true, status: 'failure' }
+          meta: { isTask: true, status: "failure" }
         },
         getAggregatedState()
       );
@@ -220,7 +227,7 @@ export const log = ({
         msg += `, props: ${JSON.stringify(props, replacer)}`;
       }
       console.log(`%c${msg}`, "color: #888");
-      groupId = '';
+      groupId = "";
     }
   },
   patch() {
@@ -230,7 +237,7 @@ export const log = ({
     if (devToolsConnection) {
       devToolsConnection.send(
         {
-          type: '[PATCH]',
+          type: "[PATCH]",
           meta: { isPatch: true }
         },
         getAggregatedState()
@@ -246,16 +253,15 @@ export const log = ({
   manualError(id: string, name: string) {
     throw Error(`#${id} "${name}" cannot be invoked manually`);
   }
-});
+};
 
 function replacer(k: string, v: string | Function): string {
-  return (typeof v === 'function') ? '[fn]' : v;
+  return typeof v === "function" ? "[fn]" : v;
 }
 
-window.addEventListener('error', () => {
+window.addEventListener("error", () => {
   setTimeout(() => {
     console.groupEnd();
-    groupId = '';
+    groupId = "";
   });
 });
-

@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { vi } from "vitest";
-import { _setTestKey, component, html, mount, getComponentRegistry, renderComponent } from "./pure-ui-actions";
+import {
+  _setTestKey,
+  component,
+  html,
+  mount,
+  getComponentRegistry,
+  renderComponent
+} from "./pure-ui-actions";
 import { log } from "./log";
 import * as vdom from "./vdom";
 const { div } = html;
@@ -17,7 +24,7 @@ describe("Component Lifecycle & State Management", () => {
     // Initialize app
     const appEl = document.createElement("div");
     appEl.setAttribute("id", "app");
-    document.body.innerHTML = '';
+    document.body.innerHTML = "";
     document.body.appendChild(appEl);
   });
 
@@ -122,7 +129,8 @@ describe("Component Lifecycle & State Management", () => {
               return { state: { showChild: !state.showChild } };
             }
           },
-          view: (id, ctx) => div(`#${id}`, (ctx.state?.showChild ?? true) ? [child("#child", {})] : [])
+          view: (id, ctx) =>
+            div(`#${id}`, (ctx.state?.showChild ?? true) ? [child("#child", {})] : [])
         };
       });
 
@@ -282,11 +290,11 @@ describe("Component Lifecycle & State Management", () => {
               return { state: { show } };
             }
           },
-          view: (id, ctx) => div(`#${id}`,
-            (ctx.state?.show ?? true)
-              ? [child("#child", {}), grandchild("#grandchild", {})]
-              : []
-          )
+          view: (id, ctx) =>
+            div(
+              `#${id}`,
+              (ctx.state?.show ?? true) ? [child("#child", {}), grandchild("#grandchild", {})] : []
+            )
         };
       });
 
@@ -464,7 +472,7 @@ describe("Component Lifecycle & State Management", () => {
       expect(performCalled).toBe(true);
 
       // Wait for async task to complete
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Success handler should have run and updated state
       expect(successCalled).toBe(true);
@@ -497,7 +505,7 @@ describe("Component Lifecycle & State Management", () => {
       expect(childViewCalls).toEqual(["initial"]);
 
       // Patch initial vnode to DOM
-      const container = document.createElement('div');
+      const container = document.createElement("div");
       document.body.appendChild(container);
       vdom.patch(container, initialVnode);
 
@@ -541,9 +549,7 @@ describe("Component Lifecycle & State Management", () => {
             })
           },
           view: (id, { state }) => {
-            return div(`#${id}.parent`, [
-              child("#child", { message: state?.message || "" })
-            ]);
+            return div(`#${id}.parent`, [child("#child", { message: state?.message || "" })]);
           }
         };
       });
@@ -609,7 +615,7 @@ describe("Component Lifecycle & State Management", () => {
 
       // Simulate child calling parent action
       const onAction = childInstance?.props?.onAction as any;
-      if (onAction && typeof onAction === 'function') {
+      if (onAction && typeof onAction === "function") {
         onAction(testKey);
       }
 
@@ -631,7 +637,7 @@ describe("Component Lifecycle & State Management", () => {
           state: () => ({ count: 0 }),
           actions: {
             Increment: (_, ctx) => ({
-              state: { ...(ctx?.state ?? { count: 0 }), count: ((ctx?.state?.count ?? 0) + 1) }
+              state: { ...(ctx?.state ?? { count: 0 }), count: (ctx?.state?.count ?? 0) + 1 }
             })
           },
           view: (id, { props, state }) => {
@@ -658,9 +664,7 @@ describe("Component Lifecycle & State Management", () => {
             })
           },
           view: (id, { state }) => {
-            return div(`#${id}.parent`, [
-              child("#child", { message: state?.message || "" })
-            ]);
+            return div(`#${id}.parent`, [child("#child", { message: state?.message || "" })]);
           }
         };
       });
@@ -719,9 +723,7 @@ describe("Component Lifecycle & State Management", () => {
             })
           },
           view: (id, { state }) => {
-            return div(`#${id}.parent`, [
-              child("#child", { value: state?.value || "" })
-            ]);
+            return div(`#${id}.parent`, [child("#child", { value: state?.value || "" })]);
           }
         };
       });
@@ -770,9 +772,7 @@ describe("Component Lifecycle & State Management", () => {
             })
           },
           view: (id, { state }) => {
-            return div(`#${id}.parent`, [
-              child("#child", state?.childProps)
-            ]);
+            return div(`#${id}.parent`, [child("#child", state?.childProps)]);
           }
         };
       });
@@ -805,7 +805,7 @@ describe("Component Lifecycle & State Management", () => {
           state: () => ({ count: 0 }),
           actions: {
             Increment: (_, ctx) => ({
-              state: { ...(ctx?.state ?? { count: 0 }), count: ((ctx?.state?.count ?? 0) + 1) }
+              state: { ...(ctx?.state ?? { count: 0 }), count: (ctx?.state?.count ?? 0) + 1 }
             })
           },
           view: (id, { props, state }) => {
@@ -827,9 +827,7 @@ describe("Component Lifecycle & State Management", () => {
           state: () => ({}),
           actions: {},
           view: (id) => {
-            return div(`#${id}.parent`, [
-              child("#child", { label: "Counter" })
-            ]);
+            return div(`#${id}.parent`, [child("#child", { label: "Counter" })]);
           }
         };
       });

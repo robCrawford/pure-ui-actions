@@ -47,7 +47,10 @@ export type ComponentType<TProps = unknown, TState = unknown, TRootState = unkno
   RootState?: TRootState;
 };
 
-export type ComponentTestApi<TState = Record<string, unknown>, TRootState = Record<string, unknown>> = {
+export type ComponentTestApi<
+  TState = Record<string, unknown>,
+  TRootState = Record<string, unknown>
+> = {
   config: Config;
   initialState: TState;
   testAction: <TActionState = TState>(
@@ -58,7 +61,11 @@ export type ComponentTestApi<TState = Record<string, unknown>, TRootState = Reco
   testTask: (name: string, data?: Record<string, unknown>) => TestTaskSpec;
 };
 
-export type TestTaskSpec<TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = {
+export type TestTaskSpec<
+  TProps = Record<string, unknown>,
+  TState = Record<string, unknown>,
+  TRootState = Record<string, unknown>
+> = {
   perform: () => Promise<unknown> | void;
   success?: (result?: unknown, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[];
   failure?: (error?: unknown, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[];
@@ -67,12 +74,10 @@ export type TestTaskSpec<TProps = Record<string, unknown>, TState = Record<strin
 // Returns next action/task inputs as data
 const nextToData = (name: string, data?: Record<string, unknown>): NextData => ({ name, data });
 
-export function testComponent<
-  TComponent extends Partial<ComponentType>
->(
+export function testComponent<TComponent extends Partial<ComponentType>>(
   component: { getConfig: Function },
-  props?: TComponent['Props']
-): ComponentTestApi<TComponent['State'], TComponent['RootState']> {
+  props?: TComponent["Props"]
+): ComponentTestApi<TComponent["State"], TComponent["RootState"]> {
   // Initialise component passing in `nextToData()` instead of `action()` and `task()` functions
   const config = component.getConfig({
     action: nextToData,
@@ -110,4 +115,3 @@ export function testComponent<
     }
   };
 }
-
