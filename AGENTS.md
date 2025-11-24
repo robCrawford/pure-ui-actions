@@ -31,7 +31,7 @@ This document provides comprehensive guidance for AI agents working with the pur
 **Example - Pure action:**
 ```typescript
 actions: {
-  Increment: ({ step }, { state }): { state: State; next: Next } => {
+  Increment: ({ step }, { state }) => {
     return {
       state: { ...state, count: state.count + step },
       next: action("Validate")
@@ -53,9 +53,9 @@ Tasks are the ONLY place for:
 ```typescript
 tasks: {
   FetchUser: ({ id }) => ({
-    perform: (): Promise<User> => fetch(`/api/users/${id}`).then(r => r.json()),
-    success: (user: User): Next => action("UserLoaded", { user }),
-    failure: (error: Error): Next => action("UserLoadFailed", { error: error.message })
+    perform: () => fetch(`/api/users/${id}`).then(r => r.json()),
+    success: (user: User) => action("UserLoaded", { user }),
+    failure: (error: Error) => action("UserLoadFailed", { error: error.message })
   })
 }
 ```
@@ -64,7 +64,7 @@ tasks: {
 ```typescript
 tasks: {
   SetDocTitle: ({ title }) => ({
-    perform: (): void => {
+    perform: () => {
       document.title = title;
     }
   })
@@ -238,7 +238,7 @@ myAction(); // WRONG - Will log error
 ### ✅ CORRECT: Actions via DOM events or Next
 ```typescript
 // In view
-view(id, { state }): VNode {
+view(id, { state }) {
   return button(
     { on: { click: action("DoSomething", { value: 1 }) } },
     "Click me"
@@ -344,7 +344,7 @@ type Component = {
 
 // Action handlers return null for state
 actions: {
-  DoSomething: (_, { props }): { state: null } => {
+  DoSomething: (_, { props }) => {
     return { state: null };
   }
 }
@@ -354,7 +354,7 @@ actions: {
 
 **State initializer:**
 ```typescript
-state: (props: Props): State => ({
+state: (props: Props) => ({
   count: props.initialCount
 })
 ```
@@ -362,7 +362,7 @@ state: (props: Props): State => ({
 **Action handler:**
 ```typescript
 actions: {
-  Increment: ({ step }, { state }): { state: State; next: Next } => {
+  Increment: ({ step }, { state }) => {
     return {
       state: { ...state, count: state.count + step },
       next: action("Validate")
@@ -374,17 +374,17 @@ actions: {
 **Task handler:**
 ```typescript
 tasks: {
-  FetchData: ({ id }): Task<Data> => ({
-    perform: (): Promise<Data> => fetch(`/api/${id}`).then(r => r.json()),
-    success: (data: Data): Next => action("DataLoaded", { data }),
-    failure: (error: Error): Next => action("DataFailed", { error: error.message })
+  FetchData: ({ id }) => ({
+    perform: () => fetch(`/api/${id}`).then(r => r.json()),
+    success: (data: Data) => action("DataLoaded", { data }),
+    failure: (error: Error) => action("DataFailed", { error: error.message })
   })
 }
 ```
 
 **View function:**
 ```typescript
-view(id: string, { props, state }: Context<Props, State, null>): VNode {
+view(id: string, { props, state }: Context<Props, State, null>) {
   return div(`#${id}`, state.count.toString());
 }
 ```
@@ -585,8 +585,8 @@ type ParentState = Readonly<{
 }>;
 
 export default component<ParentComponent>(
-  ({ action }): Config<ParentComponent> => ({
-    state: (): ParentState => ({
+  ({ action }) => ({
+    state: () => ({
       selectedUserId: null
     }),
     
@@ -596,7 +596,7 @@ export default component<ParentComponent>(
       })
     },
     
-    view(id, { state }): VNode {
+    view(id, { state }) {
       return div(`#${id}`, [
         // Pass action down to child
         userList(`#${id}-list`, {
@@ -624,7 +624,7 @@ export type ChildProps = Readonly<{
 }>;
 
 export default component<ChildComponent>(
-  ({ action }): Config<ChildComponent> => ({
+  ({ action }) => ({
     actions: {
       HandleInput: (_, { props, event }) => ({
         state: null,
@@ -633,7 +633,7 @@ export default component<ChildComponent>(
       })
     },
     
-    view(id, { props }): VNode {
+    view(id, { props }) {
       return input({
         props: { value: props.value },
         on: { input: action("HandleInput") }
@@ -644,8 +644,8 @@ export default component<ChildComponent>(
 
 // Parent component
 export default component<ParentComponent>(
-  ({ action }): Config<ParentComponent> => ({
-    state: (): ParentState => ({
+  ({ action }) => ({
+    state: () => ({
       inputValue: ""
     }),
     
@@ -655,7 +655,7 @@ export default component<ParentComponent>(
       })
     },
     
-    view(id, { state }): VNode {
+    view(id, { state }) {
       return div(`#${id}`, [
         // Pass action down as callback prop
         childInput(`#${id}-input`, {
@@ -749,7 +749,7 @@ export type Props = Readonly<{
 }>;
 
 export default component<Component>(
-  ({ action }): Config<Component> => ({
+  ({ action }) => ({
     actions: {
       Dismiss: (_, { props, state }) => ({
         state: { ...state, show: false },
@@ -768,7 +768,7 @@ export default component<Component>(
 
 **Parent rendering child:**
 ```typescript
-view(id, { state }): VNode {
+view(id, { state }) {
   return div(`#${id}`, [
     notification(`#${id}-feedback`, {
       text: state.feedback,
@@ -811,7 +811,7 @@ type Component = {
 };
 
 export default component<Component>(
-  ({ action, rootAction, rootTask }): Config<Component> => ({
+  ({ action, rootAction, rootTask }) => ({
     actions: {
       Like: (_, { props }) => ({
         state: null,
@@ -838,7 +838,7 @@ No success/failure handlers needed for synchronous side effects:
 ```typescript
 tasks: {
   SetDocTitle: ({ title }) => ({
-    perform: (): void => {
+    perform: () => {
       document.title = title;
     }
   })
@@ -849,14 +849,14 @@ tasks: {
 ```typescript
 tasks: {
   FetchData: ({ id }) => ({
-    perform: (): Promise<Data> => fetch(`/api/${id}`).then(r => r.json()),
+    perform: () => fetch(`/api/${id}`).then(r => r.json()),
     
     // Success and failure callbacks receive context
-    success: (data: Data, { props, state, rootState }): Next => {
+    success: (data: Data, { props, state, rootState }) => {
       return action("DataLoaded", { data });
     },
     
-    failure: (error: Error, { props, state, rootState }): Next => {
+    failure: (error: Error, { props, state, rootState }) => {
       return action("DataFailed", { error: error.message });
     }
   })
@@ -867,15 +867,15 @@ tasks: {
 ```typescript
 tasks: {
   ValidateInput: ({ value }) => ({
-    perform: (): Promise<ValidationResult> => validateAsync(value),
-    success: (result: ValidationResult): Next => {
+    perform: () => validateAsync(value),
+    success: (result: ValidationResult) => {
       if (result.valid) {
         return action("ValidationPassed");
       } else {
         return action("ValidationFailed", { errors: result.errors });
       }
     },
-    failure: (error: Error): Next => action("ValidationError", { message: error.message })
+    failure: (error: Error) => action("ValidationError", { message: error.message })
   })
 }
 ```
@@ -884,8 +884,8 @@ tasks: {
 ```typescript
 tasks: {
   Initialize: () => ({
-    perform: (): Promise<AppData> => loadAppData(),
-    success: (data: AppData): Next => {
+    perform: () => loadAppData(),
+    success: (data: AppData) => {
       return [
         action("SetData", data),
         action("LoadComplete"),
@@ -1319,12 +1319,12 @@ export type Component = {
 
 // 3. Create and export component
 export default component<Component>(
-  ({ action, task }): Config<Component> => ({
-    state: (): RootState => ({ /* ... */ }),
+  ({ action, task }) => ({
+    state: () => ({ /* ... */ }),
     init: action("Initialize"),
     actions: { /* ... */ },
     tasks: { /* ... */ },
-    view(id, { state }): VNode { /* ... */ }
+    view(id, { state }) { /* ... */ }
   })
 );
 ```
@@ -1337,11 +1337,11 @@ import app, { RootActions, RootProps } from "./app";
 
 const router = new Navigo("/");
 
-document.addEventListener("DOMContentLoaded", (): void => {
+document.addEventListener("DOMContentLoaded", () => {
   mount<RootActions, RootProps>({
     app,
     props: {},
-    init: (runRootAction: RunAction<RootActions>): void => {
+    init: (runRootAction: RunAction<RootActions>) => {
       // Wire routing
       router.on({
         home: () => runRootAction("SetPage", { page: "home" }),
@@ -1354,7 +1354,7 @@ document.addEventListener("DOMContentLoaded", (): void => {
       );
       
       // Subscribe to patch events
-      subscribe("patch", (): void => {
+      subscribe("patch", () => {
         router.updatePageLinks();
       });
     }
@@ -1588,7 +1588,7 @@ For advanced use cases, you can hook into Snabbdom's Virtual DOM lifecycle using
 ```typescript
 import { setHook } from "pure-ui-actions";
 
-view(id, { state }): VNode {
+view(id, { state }) {
   const vnode = div(`#${id}`, "Content");
   
   // Hook into VDOM lifecycle
@@ -1627,7 +1627,7 @@ See [Snabbdom hooks documentation](https://github.com/snabbdom/snabbdom#hooks) f
 
 **Integrating third-party libraries:**
 ```typescript
-view(id, { state }): VNode {
+view(id, { state }) {
   const chartContainer = div(`#${id}-chart`);
   
   setHook(chartContainer, "insert", () => {
@@ -1660,7 +1660,7 @@ view(id, { state }): VNode {
 
 **Managing focus:**
 ```typescript
-view(id, { state }): VNode {
+view(id, { state }) {
   const input = html.input({
     props: { value: state.value }
   });

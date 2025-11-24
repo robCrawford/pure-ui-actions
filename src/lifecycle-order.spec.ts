@@ -304,7 +304,7 @@ const createRootComponent = () => {
       // Task handlers
       tasks: {
         SyncTask: () => ({
-          perform: (): void => {
+          perform: () => {
             // Synchronous side effect (no Promise)
           },
           success: (_, ctx) => {

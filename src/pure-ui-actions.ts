@@ -102,7 +102,7 @@ function createTaskThunk(componentId: string, taskName: string, data: unknown): 
         throw Error(`Component ${componentId} not found in registry`);
       }
       const result = performTask(instance, taskName, data);
-      return result.then((next?: Next): void => runNext(instance, next));
+      return result.then((next?: Next) => runNext(instance, next));
     }
     else {
       log.manualError(componentId, taskName);
@@ -177,11 +177,11 @@ function performTask(
     if (isPromise(output)) {
       renderComponentInstance(instance); // Render pending state updates
       return output
-        .then((result: unknown): Next | undefined => {
+        .then((result: unknown) => {
           log.taskSuccess(id, String(taskName));
           return runSuccess(result);
         })
-        .catch((err: Error): Next | undefined => {
+        .catch((err: Error) => {
           log.taskFailure(id, String(taskName), err);
           return runFailure(err);
         });
@@ -209,7 +209,7 @@ function runNext(instance: ComponentInstance, next: Next | undefined): void {
   }
   else if (Array.isArray(next)) {
     noRender++;
-    next.forEach((n: Next): void => runNext(instance, n));
+    next.forEach((n: Next) => runNext(instance, n));
     noRender--;
     renderComponentInstance(instance);
   }
@@ -398,7 +398,7 @@ export function mount<TActions, TProps>({ app, props, init }: {
   // Manually invoking an action without `internalKey` is an error, so `runRootAction`
   // is provided by `mount` for wiring up events to root actions (e.g. routing)
   if (init) {
-    const runRootAction: RunAction<TActions> = (actionName, data): void => {
+    const runRootAction: RunAction<TActions> = (actionName, data) => {
       rootAction?.(actionName, data)(internalKey);
     };
     init(runRootAction);
@@ -417,7 +417,7 @@ function isDomEvent(e?: Record<string, unknown> | Event): e is Event {
 function setRenderRef(instance: ComponentInstance): void {
   if (!instance.vnode) return;
 
-  setHook(instance.vnode, "destroy", (): void => {
+  setHook(instance.vnode, "destroy", () => {
     const inst = componentRegistry.get(instance.id);
     if (inst && !inst.inCurrentRender && instance.id !== renderRootId) {
       // Clean up registry
@@ -454,7 +454,7 @@ function isPromise<TValue>(o: Promise<TValue> | unknown): o is Promise<TValue> {
 function deepFreeze<TObject extends Record<string, unknown>>(o?: TObject): TObject | undefined {
   if (o) {
     Object.freeze(o);
-    Object.getOwnPropertyNames(o).forEach((p: string): void => {
+    Object.getOwnPropertyNames(o).forEach((p: string) => {
       if (Object.prototype.hasOwnProperty.call(o, p) &&
           o[p] !== null &&
           (typeof o[p] === "object" || typeof o[p] === "function") &&

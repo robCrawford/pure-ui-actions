@@ -37,7 +37,7 @@ describe("pure-ui-actions components", () => {
     }
   };
 
-  const jestReset = (): void => {
+  const jestReset = () => {
     patchSpy.mockClear();
     renderSpy.mockClear();
     validateSuccess.mockClear();

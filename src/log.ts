@@ -49,7 +49,7 @@ function getAggregatedState(): Record<string, any> {
 }
 
 export const log = ({
-  setStateGlobal(id: string, state: object | undefined): void {
+  setStateGlobal(id: string, state: object | undefined) {
     // Maintain global state registry (DevTools and logging rely on this)
     // Called after actions update state and during render lifecycle
     const win = window as unknown as { state: Record<string, object | undefined> };
@@ -64,7 +64,7 @@ export const log = ({
     // Note: State updates are sent to DevTools by updateStart, not here
     // This just maintains window.state for getAggregatedState() to read
   },
-  noInitialAction(id: string, state?: Record<string, unknown>): void {
+  noInitialAction(id: string, state?: Record<string, unknown>) {
     // Send initial mount to Redux DevTools
     if (devToolsConnection && state) {
       // Build aggregated state with the initial state for this component
@@ -89,7 +89,7 @@ export const log = ({
       groupId = id;
     }
   },
-  updateStart(id: string, state: Record<string, unknown> | undefined, label: string, data?: Record<string, unknown>, newState?: Record<string, unknown>): void {
+  updateStart(id: string, state: Record<string, unknown> | undefined, label: string, data?: Record<string, unknown>, newState?: Record<string, unknown>) {
     // Send to Redux DevTools with current state
     if (devToolsConnection && newState !== undefined) {
       // Update window.state FIRST so subsequent getAggregatedState() calls are accurate
@@ -128,7 +128,7 @@ export const log = ({
       }
     }
   },
-  updateEnd(state: Record<string, unknown>, id?: string): void {
+  updateEnd(state: Record<string, unknown>, id?: string) {
     // Note: updateEnd is informational only - state already sent in updateStart
     // Only send if we have both state and id, and logRenders is enabled (can be noisy)
     if (devToolsConnection && state && id && logRenders) {
@@ -146,7 +146,7 @@ export const log = ({
       console.log(`${JSON.stringify(state)}`);
     }
   },
-  taskPerform(id: string, label: string, isPromise: boolean): void {
+  taskPerform(id: string, label: string, isPromise: boolean) {
     // Send task start to Redux DevTools
     if (devToolsConnection) {
       devToolsConnection.send(
@@ -163,7 +163,7 @@ export const log = ({
       console.log(`%cTask "${label}" perform${isPromise ? '...': 'ed'}`, "color: #dd8");
     }
   },
-  taskSuccess(id: string, label: string): void {
+  taskSuccess(id: string, label: string) {
     // Send to Redux DevTools
     if (devToolsConnection) {
       devToolsConnection.send(
@@ -180,7 +180,7 @@ export const log = ({
       console.log(`%c\n...#${id} task "${label}" success`, "color: #dd8");
     }
   },
-  taskFailure(id: string, label: string, err: Error): void {
+  taskFailure(id: string, label: string, err: Error) {
     // Send to Redux DevTools
     if (devToolsConnection) {
       devToolsConnection.send(
@@ -199,7 +199,7 @@ export const log = ({
       if (err) console.error(JSON.stringify(err));
     }
   },
-  render(id: string, props?: Record<string, unknown>): void {
+  render(id: string, props?: Record<string, unknown>) {
     // Send render event to Redux DevTools (controlled by logRenders flag)
     if (devToolsConnection && logRenders) {
       devToolsConnection.send(
@@ -223,7 +223,7 @@ export const log = ({
       groupId = '';
     }
   },
-  patch(): void {
+  patch() {
     // Send updated state to Redux DevTools after VDOM patch completes
     // At this point, destroy hooks have run and window.state is clean
     // ALWAYS sent - critical for state synchronization (shows component cleanup)
@@ -243,7 +243,7 @@ export const log = ({
       console.groupEnd();
     }
   },
-  manualError(id: string, name: string): void {
+  manualError(id: string, name: string) {
     throw Error(`#${id} "${name}" cannot be invoked manually`);
   }
 });
@@ -252,8 +252,8 @@ function replacer(k: string, v: string | Function): string {
   return (typeof v === 'function') ? '[fn]' : v;
 }
 
-window.addEventListener('error', (): void => {
-  setTimeout((): void => {
+window.addEventListener('error', () => {
+  setTimeout(() => {
     console.groupEnd();
     groupId = '';
   });

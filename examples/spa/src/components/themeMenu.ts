@@ -1,4 +1,4 @@
-import { component, html, Config, VNode } from "pure-ui-actions";
+import { component, html } from "pure-ui-actions";
 import { RootActions } from "../app";
 const { div, button } = html;
 
@@ -6,9 +6,9 @@ type Component = {
   RootActions: RootActions;
 };
 
-export default component<Component>(({ rootAction }): Config<Component> => ({
+export default component<Component>(({ rootAction }) => ({
 
-  view(id): VNode {
+  view(id) {
     return div(`#${id}`, [
       button(
         { on: { click: rootAction("SetTheme", { theme: "light" }) } },

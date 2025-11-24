@@ -86,7 +86,7 @@ const app = component<Component>(
 
 document.addEventListener(
   "DOMContentLoaded",
-  (): void => mount({ app, props: { date: new Date().toDateString() } })
+  () => mount({ app, props: { date: new Date().toDateString() } })
 );
 
 export default app;
