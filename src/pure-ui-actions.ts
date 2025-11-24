@@ -1,9 +1,9 @@
 import { patch, setHook, VNode } from "./vdom";
 export { html, VNode, memo, setHook } from "./vdom";
 import { log } from "./log";
-import { ActionHandler, ActionThunk, Component, ComponentInstance, Config, GetActionThunk, GetConfig, GetTaskThunk, Next, RunAction, Task, TaskThunk, ThunkType } from "./pure-ui-actions.types";
+import {  ActionThunk, Component, ComponentInstance, GetActionThunk, GetConfig, GetTaskThunk, Next, RunAction, TaskThunk, ThunkType } from "./pure-ui-actions.types";
 export * from './test-component';
-export type { ActionHandler, ActionThunk, Component, ComponentInstance, Config, Context, GetActionThunk, GetConfig, GetTaskThunk, Next, RunAction, Task, TaskHandler, TaskThunk, ThunkType } from "./pure-ui-actions.types";
+export { ActionHandler, ActionThunk, Component, ComponentInstance, Config, Context, GetActionThunk, GetConfig, GetTaskThunk, Next, RunAction, Task, TaskHandler, TaskThunk, ThunkType } from "./pure-ui-actions.types";
 
 const componentRegistry = new Map<string, ComponentInstance>();
 export const getComponentRegistry = (): Map<string, ComponentInstance> => componentRegistry;
@@ -132,7 +132,7 @@ function executeAction(
   let next: Next;
   const prevStateFrozen = deepFreeze(prevState);
 
-  ({ state: instance.state, next } = (actions[actionName] as ActionHandler)(
+  ({ state: instance.state, next } = (actions[actionName])(
     data as Record<string, unknown>,
     { props, state: prevStateFrozen, rootState, event }
   ));
@@ -164,7 +164,7 @@ function performTask(
     throw Error(`Task ${taskName} not found in component ${id}`);
   }
 
-  const { perform, success, failure }: Task = tasks[taskName](data);
+  const { perform, success, failure } = tasks[taskName](data);
   const runSuccess = (result: unknown): Next | undefined =>
     success && success(result, { props, state, rootState });
   const runFailure = (err: unknown): Next | undefined =>

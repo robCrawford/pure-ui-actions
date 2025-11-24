@@ -1,9 +1,9 @@
-import { testComponent, NextData } from "pure-ui-actions";
+import { testComponent } from "pure-ui-actions";
 import like, { Component } from "./like";
 import { RootState } from "../app";
 
 describe("Like component", () => {
-  const { initialState, testAction } = testComponent<Component>(like, { page: "test" });
+  const { initialState, testAction } = testComponent<Component>(like, { page: "counterPage" });
 
   describe("'Like' action", () => {
     const { state, next } = testAction<RootState>("Like");
@@ -19,7 +19,7 @@ describe("Like component", () => {
         expect(next.length).toBe(2);
 
         expect(next[0].name).toBe("Like");
-        expect(next[0].data).toEqual({ page: "test" });
+        expect(next[0].data).toEqual({ page: "counterPage" });
 
         expect(next[1].name).toBe("SetDocTitle");
         expect(next[1].data).toEqual({ title: "You like this!" });

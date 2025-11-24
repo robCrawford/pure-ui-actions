@@ -68,7 +68,7 @@ export type TestTaskSpec<TProps = Record<string, unknown>, TState = Record<strin
 const nextToData = (name: string, data?: Record<string, unknown>): NextData => ({ name, data });
 
 export function testComponent<
-  TComponent extends ComponentType
+  TComponent extends Partial<ComponentType>
 >(
   component: { getConfig: Function },
   props?: TComponent['Props']

@@ -34,14 +34,16 @@ export type Context<TProps, TState, TRootState> = {
   event?: Event;
 };
 
-export type ActionHandler<TData = Record<string, unknown>, TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = (
+export type ActionHandler<TData, TProps, TState, TRootState> = (
   data?: TData,
   ctx?: Context<TProps, TState, TRootState>
 ) => { state: TState; next?: Next };
 
-export type TaskHandler<TData = Record<string, unknown>, TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = (data?: TData) => Task<any, TProps, TState, TRootState>;
+export type TaskHandler<TData, TProps, TState, TRootState> = (
+  data?: TData
+) => Task<any, TProps, TState, TRootState>;
 
-export type Task<TResult = unknown, TProps = Record<string, unknown>, TState = Record<string, unknown>, TRootState = Record<string, unknown>> = {
+export type Task<TResult, TProps, TState, TRootState> = {
   perform: () => Promise<TResult | void> | TResult | void;
   success?: (result: TResult, ctx: Context<TProps, TState, TRootState>) => Next;
   failure?: (error: unknown, ctx: Context<TProps, TState, TRootState>) => Next;

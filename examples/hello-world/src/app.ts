@@ -1,4 +1,4 @@
-import { component, html, mount, Config, Next, Task, VNode } from "pure-ui-actions";
+import { component, html, mount, Config, Next, VNode } from "pure-ui-actions";
 import { setDocTitle} from "./services/browser";
 const { h3, div } = html;
 
@@ -65,7 +65,7 @@ const app = component<Component>(
 
     // Task handlers provide callbacks for effects and async operations that may fail
     tasks: {
-      SetDocTitle: (data): Task<void> => ({
+      SetDocTitle: (data) => ({
         perform: (): Promise<void> => setDocTitle(data.title),
         success: (): Next => action("PageReady", { done: true }),
         failure: (): Next => action("PageReady", { done: false })
