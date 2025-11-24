@@ -42,7 +42,7 @@ view(id, { props, state, rootState }) {
 ## Hello World!
 
 ```JavaScript
-import { component, html, mount, Config, Next, Task, VNode } from "pure-ui-actions";
+import { component, html, mount } from "pure-ui-actions";
 import { setDocTitle} from "./services/browser";
 const { h3, div } = html;
 
@@ -74,10 +74,10 @@ export type Component = {
 
 
 const app = component<Component>(
-  ({ action, task }): Config<Component> => ({
+  ({ action, task }) => ({
 
     // Initial state
-    state: (props): State => ({
+    state: (props) => ({
       title: `Welcome! ${props.date}`,
       text: '',
       done: false
@@ -88,7 +88,7 @@ const app = component<Component>(
 
     // Action handlers return new state, and any next actions/tasks
     actions: {
-      ShowMessage: (data, context): { state: State; next: Next } => {
+      ShowMessage: (data, context) => {
         return {
           state: {
             ...context.state,
@@ -97,7 +97,7 @@ const app = component<Component>(
           next: task("SetDocTitle", { title: data.text })
         };
       },
-      PageReady: (data, context): { state: State } => {
+      PageReady: (data, context) => {
         return {
           state: {
             ...context.state,
@@ -109,15 +109,15 @@ const app = component<Component>(
 
     // Task handlers provide callbacks for effects and async operations that may fail
     tasks: {
-      SetDocTitle: (data): Task<void> => ({
-        perform: (): Promise<void> => setDocTitle(data.title),
-        success: (): Next => action("PageReady", { done: true }),
-        failure: (): Next => action("PageReady", { done: false })
+      SetDocTitle: (data) => ({
+        perform: () => setDocTitle(data.title),
+        success: () => action("PageReady", { done: true }),
+        failure: () => action("PageReady", { done: false })
       })
     },
 
     // View renders from props & state
-    view(id, context): VNode {
+    view(id, context) {
       return div(`#${id}-message`, [
         h3(context.state.title),
         div(context.state.text),
