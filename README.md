@@ -9,12 +9,14 @@ Co-authored with an AI agent to produce clean, predictable state flows that huma
 - [AGENTS.md](./AGENTS.md) (written by AI)
 
 ### Examples:
-- [Single page app demo](http://robcrawford.github.io/demos/pure-ui-actions/spa?debug=console) *[[ source ]](https://github.com/robCrawford/pure-ui-actions/tree/master/examples/spa)*
-- Hello World *[[ source ]](https://github.com/robCrawford/pure-ui-actions/tree/master/examples/hello-world)*
 
-------------------------
+- [Single page app demo](http://robcrawford.github.io/demos/pure-ui-actions/spa?debug=console) _[[source]](https://github.com/robCrawford/pure-ui-actions/tree/master/examples/spa)_
+- Hello World _[[source]](https://github.com/robCrawford/pure-ui-actions/tree/master/examples/hello-world)_
+
+---
 
 ### Actions and tasks
+
 The `component` callback receives an object exposing `action`, `task`, `rootAction` and `rootTask` functions.
 
 ```JavaScript
@@ -29,6 +31,7 @@ export default component(
 **Root actions and tasks:** The root app component can export `RootState`, `RootActions`, and `RootTasks` types that child components import and access via `rootAction()`, `rootTask()`, and `rootState`. This enables application-wide state and actions accessible from any component. See [AGENTS.md](./AGENTS.md) for full examples.
 
 ### Context: Props and state
+
 All `action` handlers, `task` callbacks and `view` functions receive `props`, `state` and `rootState` via a `Context` input.
 
 ```JavaScript
@@ -45,7 +48,7 @@ view(id, { props, state, rootState }) {
 
 ```JavaScript
 import { component, html, mount } from "pure-ui-actions";
-import { setDocTitle} from "./services/browser";
+import { setDocTitle } from "./services/browser";
 const { h3, div } = html;
 
 export type Props = Readonly<{
@@ -74,79 +77,75 @@ export type Component = {
   Tasks: Tasks;
 };
 
+const app = component<Component>(({ action, task }) => ({
 
-const app = component<Component>(
-  ({ action, task }) => ({
+  // Initial state
+  state: (props) => ({
+    title: `Welcome! ${props.date}`,
+    text: "",
+    done: false
+  }),
 
-    // Initial state
-    state: (props) => ({
-      title: `Welcome! ${props.date}`,
-      text: '',
-      done: false
-    }),
+  // Initial action
+  init: action("ShowMessage", { text: "Hello World!" }),
 
-    // Initial action
-    init: action("ShowMessage", { text: "Hello World!" }),
-
-    // Action handlers return new state, and any next actions/tasks
-    actions: {
-      ShowMessage: (data, context) => {
-        return {
-          state: {
-            ...context.state,
-            text: data.text
-          },
-          next: task("SetDocTitle", { title: data.text })
-        };
-      },
-      PageReady: (data, context) => {
-        return {
-          state: {
-            ...context.state,
-            done: data.done
-          }
-        };
-      },
+  // Action handlers return new state, and any next actions/tasks
+  actions: {
+    ShowMessage: (data, context) => {
+      return {
+        state: {
+          ...context.state,
+          text: data.text
+        },
+        next: task("SetDocTitle", { title: data.text })
+      };
     },
-
-    // Task handlers provide callbacks for effects and async operations that may fail
-    tasks: {
-      SetDocTitle: (data) => ({
-        perform: () => setDocTitle(data.title),
-        success: () => action("PageReady", { done: true }),
-        failure: () => action("PageReady", { done: false })
-      })
-    },
-
-    // View renders from props & state
-    view(id, context) {
-      return div(`#${id}-message`, [
-        h3(context.state.title),
-        div(context.state.text),
-        div(context.state.done ? '✅' : '❎')
-      ]);
+    PageReady: (data, context) => {
+      return {
+        state: {
+          ...context.state,
+          done: data.done
+        }
+      };
     }
+  },
 
-  })
-);
+  // Task handlers provide callbacks for effects and async operations that may fail
+  tasks: {
+    SetDocTitle: (data) => ({
+      perform: () => setDocTitle(data.title),
+      success: () => action("PageReady", { done: true }),
+      failure: () => action("PageReady", { done: false })
+    })
+  },
 
-document.addEventListener(
-  "DOMContentLoaded",
-  (): void => mount({ app, props: { date: new Date().toDateString() } })
+  // View renders from props & state
+  view(id, context) {
+    return div(`#${id}-message`, [
+      h3(context.state.title),
+      div(context.state.text),
+      div(context.state.done ? "✅" : "❎")
+    ]);
+  }
+}));
+
+document.addEventListener("DOMContentLoaded", () =>
+  mount({ app, props: { date: new Date().toDateString() } })
 );
 
 export default app;
 ```
 
 ### Context: DOM Events
+
 An `event` prop is also passed via `Context` when actions are invoked from the DOM.
 
 ```JavaScript
     actions: {
       Input: (_, { props, state, event }) => ({
-        state: { 
-          ...state, 
-          text: event?.target?.value ?? "" 
+        state: {
+          ...state,
+          text: event?.target?.value ?? ""
         }
       })
     },
@@ -254,12 +253,14 @@ const { state } = testAction("HandleInput", {}, {
 - **Task Tracking** - Monitor async operations (success/failure)
 
 **Setup:**
+
 1. Install the [Redux DevTools Extension](https://github.com/reduxjs/redux-devtools/tree/main/extension) for your browser
 2. Open your app
 3. Open browser DevTools → Redux tab
 4. Watch actions and state updates in real-time
 
 **Logging controls:**
+
 - Redux DevTools logging is automatic when the extension is installed
 - Add `?logRenders=true` to include render events
 - Add `?debug=console` to enable console logging (includes renders)
@@ -304,7 +305,7 @@ Use `memo` to skip re-rendering expensive components that **don't access `rootSt
 import { component, html, memo } from "pure-ui-actions";
 const { div, ul, li } = html;
 
-const listComponent = (id, { items }) => 
+const listComponent = (id, { items }) =>
   div(`#${id}`, [
     ul(items.map(item => li(item.name)))
   ]);
@@ -324,7 +325,7 @@ export default component(() => ({
   view(id, { state }) {
     return div(`#${id}`, [
       div(`Counter: ${state.counter}`),
-      
+
       // Memoized: counter changes don't re-render the list
       memo(
         `#${id}-list`,
@@ -361,9 +362,9 @@ Both Redux and pure-ui-actions emphasize **pure functions for state updates**, b
 
 ```javascript
 // 1. Action creator returns plain object
-const increment = (step) => ({ 
-  type: 'INCREMENT', 
-  payload: { step } 
+const increment = (step) => ({
+  type: "INCREMENT",
+  payload: { step }
 });
 
 // 2. Dispatch the action
@@ -372,7 +373,7 @@ dispatch(increment(5));
 // 3. Reducer handles the action (pure function)
 function counterReducer(state, action) {
   switch (action.type) {
-    case 'INCREMENT':
+    case "INCREMENT":
       return { ...state, count: state.count + action.payload.step };
     default:
       return state;
@@ -390,7 +391,7 @@ const incrementThunk = action("Increment", { step: 5 });
 actions: {
   Increment: ({ step }, { state }) => ({
     state: { ...state, count: state.count + step }
-  })
+  });
 }
 ```
 
@@ -399,6 +400,7 @@ actions: {
 In pure-ui-actions, **`action()` combines both action creator and dispatch** into a single deferred function. The action handler (equivalent to a Redux reducer) is still a pure function called by the framework.
 
 **Differences:**
+
 - Redux actions are plain data; pure-ui-actions actions are functions
 - pure-ui-actions has built-in async handling (Tasks)
 - Automatic action thunk memoization vs manual selector memoization
