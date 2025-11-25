@@ -83,13 +83,9 @@ export default component<Component>(({ action, task }) => ({
   tasks: {
     ValidateCount: ({ count }) => {
       return {
-        perform: (): Promise<{ text: string }> => validateCount(count),
-        success: (result: { text: string }) => {
-          return action("SetFeedback", result);
-        },
-        failure: () => {
-          return action("SetFeedback", { text: "Unavailable" });
-        }
+        perform: () => validateCount(count),
+        success: (result: { text: string }) => action("SetFeedback", result),
+        failure: () => action("SetFeedback", { text: "Unavailable" })
       };
     }
   },

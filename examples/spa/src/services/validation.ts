@@ -1,10 +1,12 @@
-export function isNegative(n: number): boolean {
-  return n < 0;
-}
-
-export function validateCount(n: number): Promise<{ text: string }> {
-  // Mock async
+export function validateCount(num: number): Promise<{ text: string }> {
   return new Promise((resolve) => {
-    setTimeout(() => resolve({ text: isNegative(n) ? "x Invalid" : "✓ Valid" }), 500);
+    // Mock async
+    setTimeout(
+      () =>
+        resolve({
+          text: num % 2 === 0 ? "✓ Even" : "x Odd"
+        }),
+      500
+    );
   });
 }
