@@ -1,22 +1,22 @@
 import { component, html } from "pure-ui-actions";
-import { Page, RootState, RootActions, RootTasks } from "../app";
+import { Page, RootState, RootActionPayloads, RootTaskPayloads } from "../app";
 const { button } = html;
 
 export type Props = Readonly<{
   page: Page;
 }>;
 
-type Actions = Readonly<{
+type ActionPayloads = Readonly<{
   Like: null;
 }>;
 
 export type Component = {
   Props: Props;
   State: null;
-  Actions: Actions;
+  ActionPayloads: ActionPayloads;
   RootState: RootState;
-  RootActions: RootActions;
-  RootTasks: RootTasks;
+  RootActionPayloads: RootActionPayloads;
+  RootTaskPayloads: RootTaskPayloads;
 };
 
 export default component<Component>(({ action, rootAction, rootTask }) => ({

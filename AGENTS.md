@@ -292,13 +292,13 @@ All components must define a Component type with these fields:
 
 ```typescript
 type Component = {
-  Props: Props;          // Component props (or null if none)
-  State: State;          // Component state (or null if stateless)
-  Actions: Actions;      // Available actions (or empty object)
-  Tasks: Tasks;          // Available tasks (or empty object)
-  RootState: RootState;      // Optional - access to root app state
-  RootActions: RootActions;  // Optional - access to root app actions
-  RootTasks: RootTasks;      // Optional - access to root app tasks
+  Props: Props;                              // Component props (or null if none)
+  State: State;                              // Component state (or null if stateless)
+  ActionPayloads: ActionPayloads;            // Payload types for actions
+  TaskPayloads: TaskPayloads;                // Payload types for tasks
+  RootState: RootState;                      // Optional - access to root app state
+  RootActionPayloads: RootActionPayloads;    // Optional - payload types for root actions
+  RootTaskPayloads: RootTaskPayloads;        // Optional - payload types for root tasks
 };
 ```
 
@@ -317,18 +317,18 @@ export type State = Readonly<{
 }>;
 ```
 
-**Actions - Mapped payload types:**
+**ActionPayloads - Mapped payload types:**
 ```typescript
-export type Actions = Readonly<{
+export type ActionPayloads = Readonly<{
   ShowMessage: { text: string };
   PageReady: { done: boolean };
   Reset: null;  // No payload
 }>;
 ```
 
-**Tasks - Mapped payload types:**
+**TaskPayloads - Mapped payload types:**
 ```typescript
-export type Tasks = Readonly<{
+export type TaskPayloads = Readonly<{
   SetDocTitle: { title: string };
   FetchData: { id: string };
 }>;
@@ -339,7 +339,7 @@ export type Tasks = Readonly<{
 type Component = {
   Props: Props;
   State: null;  // No local state
-  Actions: Actions;
+  ActionPayloads: ActionPayloads;
 };
 
 // Action handlers return null for state
@@ -780,7 +780,7 @@ view(id, { state }) {
 
 ### Root Actions and Tasks
 
-The root app component can export `RootState`, `RootActions`, and `RootTasks` types that any child component can access. This is intended for application-wide concerns only (theme, auth, global settings), not for parent-child communication.
+The root app component can export `RootState`, `RootActionPayloads`, and `RootTaskPayloads` types that any child component can access. This is intended for application-wide concerns only (theme, auth, global settings), not for parent-child communication.
 
 **Root app component (app.ts) - Define and export root types:**
 ```typescript
@@ -794,20 +794,20 @@ export type RootState = Readonly<{
   likes: Record<string, number>;
 }>;
 
-export type RootActions = Readonly<{
+export type RootActionPayloads = Readonly<{
   SetTheme: { theme: string };
   Like: { page: string };
 }>;
 
-export type RootTasks = Readonly<{
+export type RootTaskPayloads = Readonly<{
   SetDocTitle: { title: string };
 }>;
 
 export type Component = {
   Props: null;
   State: RootState;
-  Actions: RootActions;
-  Tasks: RootTasks;
+  ActionPayloads: RootActionPayloads;
+  TaskPayloads: RootTaskPayloads;
 };
 
 export default component<Component>(
@@ -857,24 +857,24 @@ export default component<Component>(
 **Child component (likeButton.ts) - Import and use root types:**
 ```typescript
 import { component, html } from "pure-ui-actions";
-import { RootState, RootActions, RootTasks } from "../app";
+import { RootState, RootActionPayloads, RootTaskPayloads } from "../app";
 const { button } = html;
 
 type Props = Readonly<{
   page: string;
 }>;
 
-type Actions = Readonly<{
+type ActionPayloads = Readonly<{
   Like: null;
 }>;
 
 type Component = {
   Props: Props;
   State: null;
-  Actions: Actions;
-  RootState: RootState;      // Import from parent
-  RootActions: RootActions;  // Import from parent
-  RootTasks: RootTasks;      // Import from parent
+  ActionPayloads: ActionPayloads;
+  RootState: RootState;                          // Import from parent
+  RootActionPayloads: RootActionPayloads;        // Import from parent
+  RootTaskPayloads: RootTaskPayloads;            // Import from parent
 };
 
 export default component<Component>(
@@ -903,7 +903,7 @@ export default component<Component>(
 ```
 
 **Key points:**
-- Only the root app component should export `RootState`, `RootActions`, `RootTasks`
+- Only the root app component should export `RootState`, `RootActionPayloads`, `RootTaskPayloads`
 - Any child component can import these types and include them in its Component type definition
 - Child components access `rootAction`, `rootTask`, `rootState` via the component callback and context
 - Use this pattern for truly application-wide concerns (theme, auth, global settings)
@@ -1341,7 +1341,7 @@ your-project/
 ├── tsconfig.json
 ├── vitest.config.ts          # Testing configuration
 └── src/
-    ├── app.ts                # Root component (exports RootState, RootActions, RootTasks)
+    ├── app.ts                # Root component (exports RootState, RootActionPayloads, RootTaskPayloads)
     ├── router.ts             # External I/O wiring (routing, browser events)
     │
     ├── components/           # Reusable components
@@ -1386,15 +1386,15 @@ const { div } = html;
 // 1. Export types for child components
 export type RootProps = Readonly<{ /* ... */ }>;
 export type RootState = Readonly<{ /* ... */ }>;
-export type RootActions = Readonly<{ /* ... */ }>;
-export type RootTasks = Readonly<{ /* ... */ }>;
+export type RootActionPayloads = Readonly<{ /* ... */ }>;
+export type RootTaskPayloads = Readonly<{ /* ... */ }>;
 
 // 2. Export Component type (needed for tests)
 export type Component = {
   Props: RootProps;
   State: RootState;
-  Actions: RootActions;
-  Tasks: RootTasks;
+  ActionPayloads: RootActionPayloads;
+  TaskPayloads: RootTaskPayloads;
 };
 
 // 3. Create and export component
@@ -1413,15 +1413,15 @@ export default component<Component>(
 ```typescript
 import { mount, subscribe, RunAction } from "pure-ui-actions";
 import Navigo from "navigo";
-import app, { RootActions, RootProps } from "./app";
+import app, { RootActionPayloads, RootProps } from "./app";
 
 const router = new Navigo("/");
 
 document.addEventListener("DOMContentLoaded", () => {
-  mount<RootActions, RootProps>({
+  mount<RootActionPayloads, RootProps>({
     app,
     props: {},
-    init: (runRootAction: RunAction<RootActions>) => {
+    init: (runRootAction: RunAction<RootActionPayloads>) => {
       // Wire routing
       router.on({
         home: () => runRootAction("SetPage", { page: "home" }),
@@ -1837,7 +1837,7 @@ Both console and DevTools logging can run simultaneously for maximum insight.
 8. **Use pub/sub sparingly** - Subscribe to "patch" events; publish custom events for cross-cutting concerns
 9. **Service functions for reusable I/O** - Called from task perform
 10. **Test with testComponent** - Export Component type and pass to testComponent<Component>() for proper type inference
-11. **Components are default exports** - Component type is a named export; only root app exports RootState/RootActions/RootTasks
+11. **Components are default exports** - Component type is a named export; only root app exports RootState/RootActionPayloads/RootTaskPayloads
 12. **Co-locate tests** - `*.spec.ts` files next to implementation
 13. **Use withKey for lists** - Enable efficient VDOM updates
 14. **Context provides event in actions** - Access DOM events via context.event in action handlers

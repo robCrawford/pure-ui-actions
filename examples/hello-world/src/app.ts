@@ -12,20 +12,20 @@ export type State = Readonly<{
   done: boolean;
 }>;
 
-export type Actions = Readonly<{
+export type ActionPayloads = Readonly<{
   ShowMessage: { text: string };
   PageReady: { done: boolean };
 }>;
 
-export type Tasks = Readonly<{
+export type TaskPayloads = Readonly<{
   SetDocTitle: { title: string };
 }>;
 
 export type Component = {
   Props: Props;
   State: State;
-  Actions: Actions;
-  Tasks: Tasks;
+  ActionPayloads: ActionPayloads;
+  TaskPayloads: TaskPayloads;
 };
 
 const app = component<Component>(({ action, task }) => ({

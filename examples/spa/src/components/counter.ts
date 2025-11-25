@@ -12,22 +12,22 @@ export type State = Readonly<{
   feedback: string;
 }>;
 
-type Actions = Readonly<{
+type ActionPayloads = Readonly<{
   Increment: { step: number };
   Decrement: { step: number };
   Validate: null;
   SetFeedback: { text: string };
 }>;
 
-type Tasks = Readonly<{
+type TaskPayloads = Readonly<{
   ValidateCount: { count: number };
 }>;
 
 export type Component = {
   Props: Props;
   State: State;
-  Actions: Actions;
-  Tasks: Tasks;
+  ActionPayloads: ActionPayloads;
+  TaskPayloads: TaskPayloads;
 };
 
 export default component<Component>(({ action, task }) => ({

@@ -55,11 +55,11 @@ export type Task<TResult, TProps, TState, TRootState> = {
 export type Component = {
   Props?: Record<string, unknown>;
   State?: Record<string, unknown>;
-  Actions?: Record<string, unknown>;
-  Tasks?: Record<string, unknown>;
+  ActionPayloads?: Record<string, unknown>;
+  TaskPayloads?: Record<string, unknown>;
   RootState?: Record<string, unknown>;
-  RootActions?: Record<string, unknown>;
-  RootTasks?: Record<string, unknown>;
+  RootActionPayloads?: Record<string, unknown>;
+  RootTaskPayloads?: Record<string, unknown>;
 };
 
 export type ComponentInstance = {
@@ -79,16 +79,16 @@ export type Config<TComponent extends Component = Component> = {
   state?: (props?: TComponent["Props"]) => TComponent["State"];
   init?: Next;
   actions?: {
-    [TKey in keyof TComponent["Actions"]]: ActionHandler<
-      TComponent["Actions"][TKey],
+    [TKey in keyof TComponent["ActionPayloads"]]: ActionHandler<
+      TComponent["ActionPayloads"][TKey],
       TComponent["Props"],
       TComponent["State"],
       TComponent["RootState"]
     >;
   };
   tasks?: {
-    [TKey in keyof TComponent["Tasks"]]: TaskHandler<
-      TComponent["Tasks"][TKey],
+    [TKey in keyof TComponent["TaskPayloads"]]: TaskHandler<
+      TComponent["TaskPayloads"][TKey],
       TComponent["Props"],
       TComponent["State"],
       TComponent["RootState"]
@@ -101,10 +101,10 @@ export type Config<TComponent extends Component = Component> = {
 };
 
 export type GetConfig<TComponent extends Component> = (fns: {
-  action: GetActionThunk<TComponent["Actions"]>;
-  task: GetTaskThunk<TComponent["Tasks"]>;
-  rootAction: GetActionThunk<TComponent["RootActions"]>;
-  rootTask: GetTaskThunk<TComponent["RootTasks"]>;
+  action: GetActionThunk<TComponent["ActionPayloads"]>;
+  task: GetTaskThunk<TComponent["TaskPayloads"]>;
+  rootAction: GetActionThunk<TComponent["RootActionPayloads"]>;
+  rootTask: GetTaskThunk<TComponent["RootTaskPayloads"]>;
 }) => Config<TComponent>;
 
 export type RenderFn<TProps> = (props?: TProps) => VNode | void;

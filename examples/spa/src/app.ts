@@ -15,13 +15,13 @@ export type RootState = Readonly<{
   };
 }>;
 
-export type RootActions = Readonly<{
+export type RootActionPayloads = Readonly<{
   SetPage: { page: Page };
   SetTheme: { theme: Theme };
   Like: { page: Page };
 }>;
 
-export type RootTasks = Readonly<{
+export type RootTaskPayloads = Readonly<{
   SetDocTitle: { title: string };
 }>;
 
@@ -32,8 +32,8 @@ export type Theme = "light" | "dark";
 export type Component = {
   Props: RootProps;
   State: RootState;
-  Actions: RootActions;
-  Tasks: RootTasks;
+  ActionPayloads: RootActionPayloads;
+  TaskPayloads: RootTaskPayloads;
 };
 
 

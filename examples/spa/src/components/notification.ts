@@ -10,14 +10,14 @@ export type State = Readonly<{
   show: boolean;
 }>;
 
-type Actions = Readonly<{
+type ActionPayloads = Readonly<{
   Dismiss: null;
 }>;
 
 export type Component = {
   Props: Props;
   State: State;
-  Actions: Actions;
+  ActionPayloads: ActionPayloads;
 };
 
 export default component<Component>(({ action }) => ({
