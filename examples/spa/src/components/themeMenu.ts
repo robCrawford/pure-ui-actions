@@ -1,9 +1,9 @@
 import { component, html } from "pure-ui-actions";
-import { RootActions } from "../app";
+import { RootActionPayloads } from "../app";
 const { div, button } = html;
 
 type Component = {
-  RootActions: RootActions;
+  RootActionPayloads: RootActionPayloads;
 };
 
 export default component<Component>(({ rootAction }) => ({

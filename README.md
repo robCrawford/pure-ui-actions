@@ -28,7 +28,7 @@ export default component(
 );
 ```
 
-**Root actions and tasks:** The root app component can export `RootState`, `RootActions`, and `RootTasks` types that child components import and access via `rootAction()`, `rootTask()`, and `rootState`. This enables application-wide state and actions accessible from any component. See [AGENTS.md](./AGENTS.md) for full examples.
+**Root actions and tasks:** The root app component can export `RootState`, `RootActionPayloads`, and `RootTaskPayloads` types that child components import and access via `rootAction()`, `rootTask()`, and `rootState`. This enables application-wide state and actions accessible from any component. See [AGENTS.md](./AGENTS.md) for full examples.
 
 ### Context: Props and state
 

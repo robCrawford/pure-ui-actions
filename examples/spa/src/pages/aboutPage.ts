@@ -1,12 +1,12 @@
 import { component, html } from "pure-ui-actions";
 import themeMenu from "../components/themeMenu";
 import like from "../components/like";
-import { RootState, RootTasks } from "../app";
+import { RootState, RootTaskPayloads } from "../app";
 const { div, h1, a } = html;
 
 export type Component = {
   RootState: RootState;
-  RootTasks: RootTasks;
+  RootTaskPayloads: RootTaskPayloads;
 };
 
 export default component<Component>(({ rootTask }) => ({

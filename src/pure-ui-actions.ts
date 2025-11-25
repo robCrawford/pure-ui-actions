@@ -339,19 +339,19 @@ export function renderComponent<TComponent extends Component>(
     }
   }
 
-  const action: GetActionThunk<TComponent["Actions"]> = (actionName, data): ActionThunk => {
+  const action: GetActionThunk<TComponent["ActionPayloads"]> = (actionName, data): ActionThunk => {
     return createActionThunk(id, String(actionName), data);
   };
 
-  const task: GetTaskThunk<TComponent["Tasks"]> = (taskName, data): TaskThunk => {
+  const task: GetTaskThunk<TComponent["TaskPayloads"]> = (taskName, data): TaskThunk => {
     return createTaskThunk(id, String(taskName), data);
   };
 
   const config = getConfig({
     action,
     task,
-    rootAction: rootAction as GetActionThunk<TComponent["RootActions"]>,
-    rootTask: rootTask as GetTaskThunk<TComponent["RootTasks"]>
+    rootAction: rootAction as GetActionThunk<TComponent["RootActionPayloads"]>,
+    rootTask: rootTask as GetTaskThunk<TComponent["RootTaskPayloads"]>
   });
 
   const state = config.state && config.state(props);
