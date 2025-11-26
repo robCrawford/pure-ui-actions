@@ -3,7 +3,7 @@ import counter from "../components/counter";
 import themeMenu from "../components/themeMenu";
 import like from "../components/like";
 import { RootState, RootTaskPayloads } from "../app";
-const { div, h1, a } = html;
+const { div, span, a } = html;
 
 export type Component = {
   RootState: RootState;
@@ -11,15 +11,16 @@ export type Component = {
 };
 
 export default component<Component>(({ rootTask }) => ({
-  init: rootTask("SetDocTitle", { title: "Counter" }),
+  init: rootTask("SetDocTitle", { title: "Counter Page" }),
 
-  view(id, { rootState }) {
+  view(id) {
     return div(`#${id}`, [
       div(".content", [
         themeMenu("#theme-menu"),
-        a({ attrs: { href: "/about" + location.search, "data-navigo": true } }, "About page"),
-        div(".visits", ["Likes: ", rootState.likes.counterPage]),
-        h1("Counter"),
+        div(".nav", [
+          span("counter page | "),
+          a({ attrs: { href: "/about" + location.search, "data-navigo": true } }, "about page")
+        ]),
         like("#counter-like", { page: "counterPage" })
       ]),
       counter("#counter-0", { start: 0 }),

@@ -32,5 +32,5 @@ export default component<Component>(({ action, rootAction, rootTask }) => ({
     }
   },
   view: (id, { props, rootState }) =>
-    button(`#${id}.like`, { on: { click: action("Like") } }, `👍${rootState.likes[props.page]}`)
+    button(`#${id}.like`, { on: { click: action("Like") } }, `👍 ${rootState.likes[props.page]}`)
 }));

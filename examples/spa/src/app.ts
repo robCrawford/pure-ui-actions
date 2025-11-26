@@ -36,71 +36,73 @@ export type Component = {
   TaskPayloads: RootTaskPayloads;
 };
 
+export default component<Component>(() => ({
+  state: () => ({
+    theme: "dark",
+    page: undefined,
+    likes: {
+      counterPage: 0,
+      aboutPage: 0
+    }
+  }),
 
-export default component<Component>(
-  () => ({
-
-    state: () => ({
-      theme: "light",
-      page: undefined,
-      likes: {
-        counterPage: 0,
-        aboutPage: 0
-      }
-    }),
-
-    actions: {
-      SetPage: ({ page }, { state }) => {
-        return {
-          state: page === state.page ? state : {
-            ...state,
-            page
-          }
-        };
-      },
-      SetTheme: ({ theme }, { state }) => {
-        return {
-          state: theme === state.theme ? state : {
-            ...state,
-            theme
-          }
-        };
-      },
-      Like: ({ page }, { state }) => {
-        return {
-          state: {
-            ...state,
-            likes: {
-              ...state.likes,
-              [ page ]: state.likes[ page ] + 1
-            }
-          }
-        };
-      }
+  actions: {
+    SetPage: ({ page }, { state }) => {
+      return {
+        state:
+          page === state.page
+            ? state
+            : {
+                ...state,
+                page
+              }
+      };
     },
-
-    tasks: {
-      // Demonstrates a task that is only an effect
-      SetDocTitle: ({ title }) => ({
-        perform: () => {
-          document.title = title;
+    SetTheme: ({ theme }, { state }) => {
+      return {
+        state:
+          theme === state.theme
+            ? state
+            : {
+                ...state,
+                theme
+              }
+      };
+    },
+    Like: ({ page }, { state }) => {
+      return {
+        state: {
+          ...state,
+          likes: {
+            ...state.likes,
+            [page]: state.likes[page] + 1
+          }
         }
-      })
-    },
+      };
+    }
+  },
 
-    view(id, { state }) {
-      return div(`#${id}.page.${state.theme}`,
-        (() => {
-          switch (state.page) {
+  tasks: {
+    // Demonstrates a task that is only an effect
+    SetDocTitle: ({ title }) => ({
+      perform: () => {
+        document.title = title;
+      }
+    })
+  },
+
+  view(id, { state }) {
+    return div(
+      `#${id}.page.${state.theme}`,
+      (() => {
+        switch (state.page) {
           case "aboutPage":
             return aboutPage("#about-page");
 
           case "counterPage":
             return counterPage("#counter-page");
-          }
-        })()
-      );
-    }
-
-  })
-);
+        }
+      })()
+    );
+  }
+}));

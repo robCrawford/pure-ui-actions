@@ -2,7 +2,7 @@ import { component, html } from "pure-ui-actions";
 import themeMenu from "../components/themeMenu";
 import like from "../components/like";
 import { RootState, RootTaskPayloads } from "../app";
-const { div, h1, a } = html;
+const { div, span, a } = html;
 
 export type Component = {
   RootState: RootState;
@@ -10,18 +10,19 @@ export type Component = {
 };
 
 export default component<Component>(({ rootTask }) => ({
-  init: rootTask("SetDocTitle", { title: "About" }),
+  init: rootTask("SetDocTitle", { title: "About Page" }),
 
-  view(id, { rootState }) {
+  view(id) {
     return div(
       `#${id}`,
       div(".content", [
         themeMenu("#theme-menu"),
-        a({ attrs: { href: "/counter" + location.search, "data-navigo": true } }, "Counter page"),
-        div(".visits", ["Likes: ", rootState.likes.aboutPage]),
-        h1("About"),
+        div(".nav", [
+          a({ attrs: { href: "/counter" + location.search, "data-navigo": true } }, "counter page"),
+          span(" | about page")
+        ]),
         like("#about-like", { page: "aboutPage" }),
-        div(".intro", "Lorem ipsum dolor sit amet.")
+        div(".intro", "This is the about page.")
       ])
     );
   }
