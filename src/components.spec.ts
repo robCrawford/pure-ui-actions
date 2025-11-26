@@ -51,7 +51,7 @@ describe("pure-ui-actions components", () => {
     const child = component<{
       Props: { test: string };
       State: { count: number };
-      Actions: {
+      ActionPayloads: {
         Increment: { step: number };
         NoOp: null;
         Mutate: { k: string };
@@ -63,17 +63,17 @@ describe("pure-ui-actions components", () => {
         actions: {
           Increment: (data, ctx) => {
             const step = data?.step ?? 0;
-            const state = ctx?.state ?? { count: 0 };
+            const state = ctx.state ?? { count: 0 };
             return { state: { ...state, count: state.count + step } };
           },
           NoOp: (_, ctx) => {
-            const state = ctx?.state ?? { count: 0 };
+            const state = ctx.state ?? { count: 0 };
             return { state };
           },
           Mutate: (data, ctx) => {
             const k = data?.k;
-            const state = ctx?.state ?? { count: 0 };
-            const props = ctx?.props ?? { test: "" };
+            const state = ctx.state ?? { count: 0 };
+            const props = ctx.props ?? { test: "" };
             if (k === "state") state.count = 999;
             if (k === "props") props.test = "999";
             return { state };
@@ -120,7 +120,7 @@ describe("pure-ui-actions components", () => {
     const app = component<{
       Props: { test: string };
       State: { theme: string };
-      Actions: {
+      ActionPayloads: {
         SetTheme: { theme: string };
         NoOp: null;
       };
@@ -131,11 +131,11 @@ describe("pure-ui-actions components", () => {
         actions: {
           SetTheme: (data, ctx) => {
             const theme = data?.theme ?? "";
-            const state = ctx?.state ?? { theme: "" };
+            const state = ctx.state ?? { theme: "" };
             return { state: { ...state, theme } };
           },
           NoOp: (_, ctx) => {
-            const state = ctx?.state ?? { theme: "" };
+            const state = ctx.state ?? { theme: "" };
             return { state };
           }
         },

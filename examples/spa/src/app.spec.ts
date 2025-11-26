@@ -7,7 +7,7 @@ describe("App", () => {
 
   it("should set initial state", () => {
     expect(initialState).toEqual({
-      theme: "light",
+      theme: "dark",
       page: undefined,
       likes: {
         counterPage: 0,

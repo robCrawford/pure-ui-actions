@@ -31,19 +31,19 @@ export type GetTaskThunk<TTasks> = (taskName: keyof TTasks, data?: ValueOf<TTask
 export type Next = undefined | ActionThunk | TaskThunk | (ActionThunk | TaskThunk)[];
 
 export type Context<TProps, TState, TRootState> = {
-  props?: TProps;
-  state?: TState;
-  rootState?: TRootState;
+  props: TProps;
+  state: TState;
+  rootState: TRootState;
   event?: Event;
 };
 
 export type ActionHandler<TData, TProps, TState, TRootState> = (
-  data?: TData,
-  ctx?: Context<TProps, TState, TRootState>
+  data: TData,
+  ctx: Context<TProps, TState, TRootState>
 ) => { state: TState; next?: Next };
 
 export type TaskHandler<TData, TProps, TState, TRootState> = (
-  data?: TData
+  data: TData
 ) => Task<any, TProps, TState, TRootState>;
 
 export type Task<TResult, TProps, TState, TRootState> = {
@@ -53,8 +53,8 @@ export type Task<TResult, TProps, TState, TRootState> = {
 };
 
 export type Component = {
-  Props?: Record<string, unknown>;
-  State?: Record<string, unknown>;
+  Props?: Record<string, unknown> | null;
+  State?: Record<string, unknown> | null;
   ActionPayloads?: Record<string, unknown>;
   TaskPayloads?: Record<string, unknown>;
   RootState?: Record<string, unknown>;
@@ -66,17 +66,17 @@ export type ComponentInstance = {
   id: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: Config<any>;
-  state?: Record<string, unknown>;
-  props?: Record<string, unknown>;
-  prevProps?: Record<string, unknown>;
-  render: RenderFn<Record<string, unknown>>;
+  state?: Record<string, unknown> | null;
+  props?: Record<string, unknown> | null;
+  prevProps?: Record<string, unknown> | null;
+  render: RenderFn<Record<string, unknown> | null>;
   vnode?: VNode;
   isRoot: boolean;
   inCurrentRender: boolean;
 };
 
 export type Config<TComponent extends Component = Component> = {
-  state?: (props?: TComponent["Props"]) => TComponent["State"];
+  state?: (props: TComponent["Props"]) => TComponent["State"];
   init?: Next;
   actions?: {
     [TKey in keyof TComponent["ActionPayloads"]]: ActionHandler<
@@ -107,4 +107,4 @@ export type GetConfig<TComponent extends Component> = (fns: {
   rootTask: GetTaskThunk<TComponent["RootTaskPayloads"]>;
 }) => Config<TComponent>;
 
-export type RenderFn<TProps> = (props?: TProps) => VNode | void;
+export type RenderFn<TProps> = (props?: TProps | null) => VNode | void;

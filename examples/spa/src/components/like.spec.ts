@@ -9,7 +9,8 @@ describe("Like component", () => {
     const { state, next } = testAction<RootState>("Like");
 
     it("should not update state", () => {
-      expect(state).toEqual(initialState);
+      // Stateless component - initialState is undefined, but context defaults to {}
+      expect(state).toEqual({});
     });
 
     it("should return next", () => {

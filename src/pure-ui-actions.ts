@@ -42,7 +42,7 @@ const taskThunkCache = new Map<string, TaskThunk>();
 // Module-level refs to root component's creators, typed via cast when passed to components
 let rootAction: GetActionThunk<any> | undefined;
 let rootTask: GetTaskThunk<any> | undefined;
-let rootState: Record<string, unknown> | undefined;
+let rootState: Record<string, unknown> | undefined | null;
 let renderRootId: string | undefined;
 
 function resetAppState(): void {
@@ -157,9 +157,9 @@ function executeAction(
   const prevStateFrozen = deepFreeze(prevState);
 
   ({ state: instance.state, next } = actions[actionName](data as Record<string, unknown>, {
-    props,
-    state: prevStateFrozen,
-    rootState,
+    props: props ?? {},
+    state: prevStateFrozen ?? {},
+    rootState: rootState ?? {},
     event
   }));
 
@@ -198,9 +198,19 @@ function performTask(
 
   const { perform, success, failure } = tasks[taskName](data);
   const runSuccess = (result: unknown): Next | undefined =>
-    success && success(result, { props, state, rootState });
+    success &&
+    success(result, {
+      props: props ?? {},
+      state: state ?? {},
+      rootState: rootState ?? {}
+    });
   const runFailure = (err: unknown): Next | undefined =>
-    failure && failure(err, { props, state, rootState });
+    failure &&
+    failure(err, {
+      props: props ?? {},
+      state: state ?? {},
+      rootState: rootState ?? {}
+    });
 
   try {
     const output = perform();
@@ -261,9 +271,9 @@ function renderComponentInstance(instance: ComponentInstance): VNode | undefined
 
       const prevVNode = instance.vnode;
       instance.vnode = instance.config.view(instance.id, {
-        props: instance.props,
-        state: instance.state,
-        rootState
+        props: instance.props ?? {},
+        state: instance.state ?? {},
+        rootState: rootState ?? {}
       });
       log.render(instance.id, instance.props);
 
@@ -392,7 +402,11 @@ export function renderComponent<TComponent extends Component>(
   }
 
   log.render(id, props);
-  instance.vnode = config.view(id, { props, state: instance.state, rootState });
+  instance.vnode = config.view(id, {
+    props: props ?? {},
+    state: instance.state ?? {},
+    rootState: rootState ?? {}
+  });
   instance.prevProps = props;
 
   setRenderRef(instance);
@@ -481,7 +495,9 @@ function isPromise<TValue>(o: Promise<TValue> | unknown): o is Promise<TValue> {
   return Boolean(o && (o as Promise<unknown>).then);
 }
 
-function deepFreeze<TObject extends Record<string, unknown>>(o?: TObject): TObject | undefined {
+function deepFreeze<TObject extends Record<string, unknown>>(
+  o?: TObject | null
+): TObject | undefined | null {
   if (o) {
     Object.freeze(o);
     Object.getOwnPropertyNames(o).forEach((p: string) => {

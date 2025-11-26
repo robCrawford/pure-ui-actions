@@ -5,6 +5,6 @@ describe("About Page component", () => {
   const { config } = testComponent<Component>(aboutPage);
 
   it("should run initial action", () => {
-    expect(config.init).toEqual({ name: "SetDocTitle", data: { title: "About" } });
+    expect(config.init).toEqual({ name: "SetDocTitle", data: { title: "About Page" } });
   });
 });

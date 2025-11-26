@@ -67,8 +67,8 @@ export type TestTaskSpec<
   TRootState = Record<string, unknown>
 > = {
   perform: () => Promise<unknown> | void;
-  success?: (result?: unknown, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[];
-  failure?: (error?: unknown, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[];
+  success?: (result?: unknown, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[] | undefined;
+  failure?: (error?: unknown, ctx?: Context<TProps, TState, TRootState>) => NextData | NextData[] | undefined;
 };
 
 // Returns next action/task inputs as data
@@ -101,9 +101,9 @@ export function testComponent<TComponent extends Partial<ComponentType>>(
     ): { state: TState; next?: NextData | NextData[] } {
       // Returns any next operations as data
       return config.actions[name](data, {
-        props,
-        state: options?.state !== undefined ? options.state : initialState,
-        rootState: options?.rootState,
+        props: props ?? {},
+        state: options?.state !== undefined ? options.state : initialState ?? {},
+        rootState: options?.rootState ?? {},
         event: options?.event
       });
     },

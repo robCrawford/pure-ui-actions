@@ -45,13 +45,13 @@ describe("App", () => {
     });
 
     it("should handle success", () => {
-      const { name, data } = success() as NextData;
+      const { name, data } = success?.() as NextData;
       expect(name).toBe("PageReady");
       expect(data).toEqual({ done: true });
     });
 
     it("should handle failure", () => {
-      const { name, data } = failure() as NextData;
+      const { name, data } = failure?.() as NextData;
       expect(name).toBe("PageReady");
       expect(data).toEqual({ done: false });
     });

@@ -50,13 +50,13 @@ function getAggregatedState(): Record<string, any> {
 }
 
 export const log = {
-  setStateGlobal(id: string, state: object | undefined) {
+  setStateGlobal(id: string, state: object | undefined | null) {
     // Maintain global state registry (DevTools and logging rely on this)
     // Called after actions update state and during render lifecycle
-    const win = window as unknown as { state: Record<string, object | undefined> };
+    const win = window as unknown as { state: Record<string, object | undefined | null> };
     const stateGlobal = win.state || (win.state = {});
 
-    if (state === undefined) {
+    if (state === undefined || state === null) {
       delete stateGlobal[id];
     } else {
       stateGlobal[id] = state;
@@ -65,7 +65,7 @@ export const log = {
     // Note: State updates are sent to DevTools by updateStart, not here
     // This just maintains window.state for getAggregatedState() to read
   },
-  noInitialAction(id: string, state?: Record<string, unknown>) {
+  noInitialAction(id: string, state?: Record<string, unknown> | null) {
     // Send initial mount to Redux DevTools
     if (devToolsConnection && state) {
       // Build aggregated state with the initial state for this component
@@ -92,15 +92,15 @@ export const log = {
   },
   updateStart(
     id: string,
-    state: Record<string, unknown> | undefined,
+    state: Record<string, unknown> | undefined | null,
     label: string,
     data?: Record<string, unknown>,
-    newState?: Record<string, unknown>
+    newState?: Record<string, unknown> | null
   ) {
     // Send to Redux DevTools with current state
     if (devToolsConnection && newState !== undefined) {
       // Update window.state FIRST so subsequent getAggregatedState() calls are accurate
-      const win = window as unknown as { state: Record<string, object | undefined> };
+      const win = window as unknown as { state: Record<string, object | undefined | null> };
       const stateGlobal = win.state || (win.state = {});
       stateGlobal[id] = newState;
 
@@ -206,7 +206,7 @@ export const log = {
       if (err) console.error(JSON.stringify(err));
     }
   },
-  render(id: string, props?: Record<string, unknown>) {
+  render(id: string, props?: Record<string, unknown> | null) {
     // Send render event to Redux DevTools (controlled by logRenders flag)
     if (devToolsConnection && logRenders) {
       devToolsConnection.send(

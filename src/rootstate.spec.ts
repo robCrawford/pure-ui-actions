@@ -28,7 +28,7 @@ describe("RootState with Memoization", () => {
     const child = component<{
       Props: Record<string, never>;
       State: { count: number };
-      Actions: {
+      ActionPayloads: {
         Increment: { step: number };
       };
       RootState: { theme: string };
@@ -53,7 +53,7 @@ describe("RootState with Memoization", () => {
     const app = component<{
       Props: Record<string, never>;
       State: { theme: string };
-      Actions: {
+      ActionPayloads: {
         SetTheme: { theme: string };
       };
     }>(({ action: a }) => {
@@ -107,7 +107,7 @@ describe("RootState with Memoization", () => {
     const child = component<{
       Props: Record<string, never>;
       State: { count: number };
-      Tasks: {
+      TaskPayloads: {
         DelayedIncrement: { step: number };
       };
       RootState: { theme: string };
@@ -131,7 +131,7 @@ describe("RootState with Memoization", () => {
     const app = component<{
       Props: Record<string, never>;
       State: { theme: string };
-      Actions: {
+      ActionPayloads: {
         SetTheme: { theme: string };
       };
     }>(({ action: a }) => {

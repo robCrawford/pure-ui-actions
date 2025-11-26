@@ -35,7 +35,7 @@ describe("Component Lifecycle & State Management", () => {
       const comp = component<{
         Props: { value: number };
         State: { count: number };
-        Actions: { Increment: { step: number } };
+        ActionPayloads: { Increment: { step: number } };
       }>(({ action: a }) => {
         action = a;
         return {
@@ -67,7 +67,7 @@ describe("Component Lifecycle & State Management", () => {
       const comp = component<{
         Props: Record<string, never>;
         State: { result: number };
-        Tasks: { FetchData: { id: number } };
+        TaskPayloads: { FetchData: { id: number } };
       }>(({ task: t }) => {
         task = t;
         return {
@@ -100,7 +100,7 @@ describe("Component Lifecycle & State Management", () => {
       const child = component<{
         Props: Record<string, never>;
         State: { count: number };
-        Actions: { Increment: null };
+        ActionPayloads: { Increment: null };
       }>(({ action: a }) => {
         childAction = a;
         return {
@@ -118,7 +118,7 @@ describe("Component Lifecycle & State Management", () => {
       const parent = component<{
         Props: Record<string, never>;
         State: { showChild: boolean };
-        Actions: { Toggle: null };
+        ActionPayloads: { Toggle: null };
       }>(({ action: a }) => {
         parentAction = a;
         return {
@@ -170,7 +170,7 @@ describe("Component Lifecycle & State Management", () => {
       const comp = component<{
         Props: { data: { value: number } };
         State: Record<string, never>;
-        Actions: { MutateProps: null };
+        ActionPayloads: { MutateProps: null };
       }>(({ action: a }) => {
         action = a;
         return {
@@ -217,7 +217,7 @@ describe("Component Lifecycle & State Management", () => {
       const parent = component<{
         Props: Record<string, never>;
         State: { childValue: number };
-        Actions: { UpdateChild: null };
+        ActionPayloads: { UpdateChild: null };
       }>(({ action: a }) => {
         action = a;
         return {
@@ -279,7 +279,7 @@ describe("Component Lifecycle & State Management", () => {
       const parent = component<{
         Props: Record<string, never>;
         State: { show: boolean };
-        Actions: { Toggle: null };
+        ActionPayloads: { Toggle: null };
       }>(({ action: a }) => {
         action = a;
         return {
@@ -321,7 +321,7 @@ describe("Component Lifecycle & State Management", () => {
       const comp = component<{
         Props: Record<string, never>;
         State: { count: number };
-        Actions: { Increment: null };
+        ActionPayloads: { Increment: null };
       }>(({ action: a }) => {
         action = a;
         return {
@@ -360,7 +360,7 @@ describe("Component Lifecycle & State Management", () => {
       const comp = component<{
         Props: Record<string, never>;
         State: { count: number };
-        Actions: { NoChange: null; Change: null };
+        ActionPayloads: { NoChange: null; Change: null };
       }>(({ action: a }) => {
         action = a;
         return {
@@ -408,7 +408,7 @@ describe("Component Lifecycle & State Management", () => {
       const comp = component<{
         Props: Record<string, never>;
         State: { initialized: boolean };
-        Actions: { Init: null };
+        ActionPayloads: { Init: null };
       }>(({ action: a }) => {
         return {
           state: () => ({ initialized: false }),
@@ -439,8 +439,8 @@ describe("Component Lifecycle & State Management", () => {
       const comp = component<{
         Props: Record<string, never>;
         State: { data: string };
-        Actions: { SetData: { value: string } };
-        Tasks: { LoadData: null };
+        ActionPayloads: { SetData: { value: string } };
+        TaskPayloads: { LoadData: null };
       }>(({ action: a, task: t }) => {
         return {
           state: () => ({ data: "" }),
@@ -538,7 +538,7 @@ describe("Component Lifecycle & State Management", () => {
       const parent = component<{
         Props: Record<string, never>;
         State: { message: string };
-        Actions: { UpdateMessage: { text: string } };
+        ActionPayloads: { UpdateMessage: { text: string } };
       }>(({ action: a }) => {
         action = a;
         return {
@@ -585,7 +585,7 @@ describe("Component Lifecycle & State Management", () => {
       const parent = component<{
         Props: Record<string, never>;
         State: { value: number };
-        Actions: { ParentAction: { value: string } };
+        ActionPayloads: { ParentAction: { value: string } };
       }>(({ action: a }) => {
         parentAction = a;
         return {
@@ -630,7 +630,7 @@ describe("Component Lifecycle & State Management", () => {
       const child = component<{
         Props: { message: string };
         State: { count: number };
-        Actions: { Increment: null };
+        ActionPayloads: { Increment: null };
       }>(({ action: a }) => {
         childAction = a;
         return {
@@ -653,7 +653,7 @@ describe("Component Lifecycle & State Management", () => {
       const parent = component<{
         Props: Record<string, never>;
         State: { message: string };
-        Actions: { UpdateMessage: { text: string } };
+        ActionPayloads: { UpdateMessage: { text: string } };
       }>(({ action: a }) => {
         parentAction = a;
         return {
@@ -712,7 +712,7 @@ describe("Component Lifecycle & State Management", () => {
       const parent = component<{
         Props: Record<string, never>;
         State: { value: string };
-        Actions: { SetValue: { value: string } };
+        ActionPayloads: { SetValue: { value: string } };
       }>(({ action: a }) => {
         action = a;
         return {
@@ -761,7 +761,7 @@ describe("Component Lifecycle & State Management", () => {
       const parent = component<{
         Props: Record<string, never>;
         State: { childProps: { value?: string } | undefined };
-        Actions: { SetProps: { props: { value?: string } | undefined } };
+        ActionPayloads: { SetProps: { props: { value?: string } | undefined } };
       }>(({ action: a }) => {
         action = a;
         return {
@@ -778,15 +778,15 @@ describe("Component Lifecycle & State Management", () => {
       });
 
       mount({ app: parent, props: {} });
-      expect(viewCalls[0]).toBeUndefined();
+      expect(viewCalls[0]).toEqual({});
 
       // Props become defined
       action("SetProps", { props: { value: "defined" } })(testKey);
       expect(viewCalls[1]).toEqual({ value: "defined" });
 
-      // Props back to undefined
+      // Props back to empty object (no longer undefined)
       action("SetProps", { props: undefined })(testKey);
-      expect(viewCalls[2]).toBeUndefined();
+      expect(viewCalls[2]).toEqual({});
     });
   });
 
@@ -798,7 +798,7 @@ describe("Component Lifecycle & State Management", () => {
       const child = component<{
         Props: { label: string };
         State: { count: number };
-        Actions: { Increment: null };
+        ActionPayloads: { Increment: null };
       }>(({ action: a }) => {
         childAction = a;
         return {

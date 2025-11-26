@@ -1,15 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import {
-  component,
-  mount,
-  html,
-  subscribe,
-  unsubscribe,
-  Config,
-  Next,
-  VNode
-} from "./pure-ui-actions";
+import { component, mount, html, subscribe, unsubscribe, Config, VNode } from "./pure-ui-actions";
 import { log } from "./log";
 import { JSDOM } from "jsdom";
 
@@ -58,8 +49,8 @@ type RootTasks = Readonly<{
 type RootComponent = {
   Props: RootProps;
   State: RootState;
-  Actions: RootActions;
-  Tasks: RootTasks;
+  ActionPayloads: RootActions;
+  TaskPayloads: RootTasks;
 };
 
 type ChildProps = Record<string, never>;
@@ -71,9 +62,9 @@ type ChildActions = Readonly<{
 type ChildComponent = {
   Props: ChildProps;
   State: Record<string, never>;
-  Actions: ChildActions;
+  ActionPayloads: ChildActions;
   RootState: RootState;
-  RootActions: RootActions;
+  RootActionPayloads: RootActions;
 };
 
 // ===== TRACKING VARIABLES =====
@@ -103,275 +94,273 @@ let patchEventFired = false;
 let patchEventState: Record<string, RootState> | null = null;
 
 const createRootComponent = () => {
-  return component<RootComponent>(
-    ({ action, task }): Config<RootComponent> => ({
-      // State initializer - tests props → state flow
-      state: (props?: RootProps): RootState => ({
-        value: props?.initialValue ?? "",
-        counter: props?.startAt ?? 0,
-        executionOrder: ["mount"],
-        step1Done: false,
-        step2Done: false,
-        step3Done: false,
-        step4Done: false,
-        step5Done: false,
-        domEventHandled: false,
-        complete: false
+  return component<RootComponent>(({ action, task }) => ({
+    // State initializer - tests props → state flow
+    state: (props?) => ({
+      value: props?.initialValue ?? "",
+      counter: props?.startAt ?? 0,
+      executionOrder: ["mount"],
+      step1Done: false,
+      step2Done: false,
+      step3Done: false,
+      step4Done: false,
+      step5Done: false,
+      domEventHandled: false,
+      complete: false
+    }),
+
+    // Init action
+    init: action("Step1_InitAction", null),
+
+    // Action handlers
+    actions: {
+      Step1_InitAction: (_, context) => {
+        // Track context
+        contextTracker.actions.Step1_InitAction = {
+          hasProps: !!context.props,
+          hasState: !!context.state,
+          hasRootState: context.rootState !== undefined,
+          hasEvent: !!context?.event
+        };
+
+        if (!context.state) throw new Error("Context state is required");
+        const currentState = context.state;
+        return {
+          state: {
+            ...currentState,
+            executionOrder: [...currentState.executionOrder, "step1"],
+            step1Done: true
+          },
+          next: task("SyncTask", null)
+        };
+      },
+
+      Step2_HandleSyncSuccess: (_, context) => {
+        contextTracker.actions.Step2_HandleSyncSuccess = {
+          hasProps: !!context.props,
+          hasState: !!context.state,
+          hasRootState: context.rootState !== undefined,
+          hasEvent: !!context?.event
+        };
+
+        if (!context.state) throw new Error("Context state is required");
+        const currentState = context.state;
+        return {
+          state: {
+            ...currentState,
+            executionOrder: [...currentState.executionOrder, "step2"],
+            step2Done: true
+          },
+          next: task("AsyncTask", null)
+        };
+      },
+
+      Step3_HandleAsyncSuccess: (payload, context) => {
+        contextTracker.actions.Step3_HandleAsyncSuccess = {
+          hasProps: !!context.props,
+          hasState: !!context.state,
+          hasRootState: context.rootState !== undefined,
+          hasEvent: !!context?.event,
+          receivedData: payload?.data
+        };
+
+        if (!context.state) throw new Error("Context state is required");
+        const currentState = context.state;
+        return {
+          state: {
+            ...currentState,
+            executionOrder: [...currentState.executionOrder, "step3"],
+            step3Done: true
+          },
+          next: task("FailingTask", null)
+        };
+      },
+
+      Step4_HandleFailure: (payload, context) => {
+        contextTracker.actions.Step4_HandleFailure = {
+          hasProps: !!context.props,
+          hasState: !!context.state,
+          hasRootState: context.rootState !== undefined,
+          hasEvent: !!context?.event,
+          receivedError: payload?.error
+        };
+
+        if (!context.state) throw new Error("Context state is required");
+        const currentState = context.state;
+        return {
+          state: {
+            ...currentState,
+            executionOrder: [...currentState.executionOrder, "step4"],
+            step4Done: true
+          },
+          next: [action("Step5a_ArrayItem", null), action("Step5b_ArrayItem", null)]
+        };
+      },
+
+      Step5a_ArrayItem: (_, context) => {
+        contextTracker.actions.Step5a_ArrayItem = {
+          hasProps: !!context.props,
+          hasState: !!context.state,
+          hasRootState: context.rootState !== undefined,
+          hasEvent: !!context?.event
+        };
+
+        if (!context.state) throw new Error("Context state is required");
+        const currentState = context.state;
+        return {
+          state: {
+            ...currentState,
+            executionOrder: [...currentState.executionOrder, "step5a"]
+          }
+        };
+      },
+
+      Step5b_ArrayItem: (_, context) => {
+        contextTracker.actions.Step5b_ArrayItem = {
+          hasProps: !!context.props,
+          hasState: !!context.state,
+          hasRootState: context.rootState !== undefined,
+          hasEvent: !!context?.event
+        };
+
+        if (!context.state) throw new Error("Context state is required");
+        const currentState = context.state;
+        return {
+          state: {
+            ...currentState,
+            executionOrder: [...currentState.executionOrder, "step5b"],
+            step5Done: true
+          },
+          next: undefined // Will trigger DOM event next
+        };
+      },
+
+      Step6_HandleDomEvent: (_, context) => {
+        contextTracker.actions.Step6_HandleDomEvent = {
+          hasProps: !!context.props,
+          hasState: !!context.state,
+          hasRootState: context.rootState !== undefined,
+          hasEvent: !!context?.event,
+          eventType: context?.event?.type
+        };
+
+        if (!context.state) throw new Error("Context state is required");
+        const currentState = context.state;
+        return {
+          state: {
+            ...currentState,
+            executionOrder: [...currentState.executionOrder, "step6"],
+            domEventHandled: true
+          },
+          next: undefined // Child will trigger increment next
+        };
+      },
+
+      IncrementCounter: (_, context) => {
+        contextTracker.actions.IncrementCounter = {
+          hasProps: !!context.props,
+          hasState: !!context.state,
+          hasRootState: context.rootState !== undefined,
+          hasEvent: !!context?.event
+        };
+
+        if (!context.state) throw new Error("Context state is required");
+        const currentState = context.state;
+        return {
+          state: {
+            ...currentState,
+            counter: currentState.counter + 1,
+            executionOrder: [...currentState.executionOrder, "increment"]
+          },
+          next: action("Step7_Complete", null)
+        };
+      },
+
+      Step7_Complete: (_, context) => {
+        contextTracker.actions.Step7_Complete = {
+          hasProps: !!context.props,
+          hasState: !!context.state,
+          hasRootState: context.rootState !== undefined,
+          hasEvent: !!context?.event
+        };
+
+        if (!context.state) throw new Error("Context state is required");
+        const currentState = context.state;
+        return {
+          state: {
+            ...currentState,
+            executionOrder: [...currentState.executionOrder, "step7"],
+            complete: true
+          }
+        };
+      }
+    },
+
+    // Task handlers
+    tasks: {
+      SyncTask: () => ({
+        perform: () => {
+          // Synchronous side effect (no Promise)
+        },
+        success: (_, ctx) => {
+          contextTracker.tasks.SyncTask = {
+            hasProps: !!ctx.props,
+            hasState: !!ctx.state,
+            hasRootState: ctx.rootState !== undefined,
+            hasEvent: !!ctx?.event
+          };
+          return action("Step2_HandleSyncSuccess", null);
+        }
       }),
 
-      // Init action
-      init: action("Step1_InitAction", null),
-
-      // Action handlers
-      actions: {
-        Step1_InitAction: (_, context): { state: RootState; next: Next } => {
-          // Track context
-          contextTracker.actions.Step1_InitAction = {
-            hasProps: !!context?.props,
-            hasState: !!context?.state,
-            hasRootState: context?.rootState !== undefined,
-            hasEvent: !!context?.event
-          };
-
-          if (!context?.state) throw new Error("Context state is required");
-          const currentState = context.state;
-          return {
-            state: {
-              ...currentState,
-              executionOrder: [...currentState.executionOrder, "step1"],
-              step1Done: true
-            },
-            next: task("SyncTask", null)
-          };
+      AsyncTask: () => ({
+        perform: () => {
+          return Promise.resolve({ data: "async-result" });
         },
-
-        Step2_HandleSyncSuccess: (_, context): { state: RootState; next: Next } => {
-          contextTracker.actions.Step2_HandleSyncSuccess = {
-            hasProps: !!context?.props,
-            hasState: !!context?.state,
-            hasRootState: context?.rootState !== undefined,
-            hasEvent: !!context?.event
+        success: (result, ctx) => {
+          contextTracker.tasks.AsyncTask = {
+            hasProps: !!ctx.props,
+            hasState: !!ctx.state,
+            hasRootState: ctx.rootState !== undefined,
+            hasEvent: !!ctx?.event,
+            receivedResult: result
           };
-
-          if (!context?.state) throw new Error("Context state is required");
-          const currentState = context.state;
-          return {
-            state: {
-              ...currentState,
-              executionOrder: [...currentState.executionOrder, "step2"],
-              step2Done: true
-            },
-            next: task("AsyncTask", null)
-          };
-        },
-
-        Step3_HandleAsyncSuccess: (payload, context): { state: RootState; next: Next } => {
-          contextTracker.actions.Step3_HandleAsyncSuccess = {
-            hasProps: !!context?.props,
-            hasState: !!context?.state,
-            hasRootState: context?.rootState !== undefined,
-            hasEvent: !!context?.event,
-            receivedData: payload?.data
-          };
-
-          if (!context?.state) throw new Error("Context state is required");
-          const currentState = context.state;
-          return {
-            state: {
-              ...currentState,
-              executionOrder: [...currentState.executionOrder, "step3"],
-              step3Done: true
-            },
-            next: task("FailingTask", null)
-          };
-        },
-
-        Step4_HandleFailure: (payload, context): { state: RootState; next: Next } => {
-          contextTracker.actions.Step4_HandleFailure = {
-            hasProps: !!context?.props,
-            hasState: !!context?.state,
-            hasRootState: context?.rootState !== undefined,
-            hasEvent: !!context?.event,
-            receivedError: payload?.error
-          };
-
-          if (!context?.state) throw new Error("Context state is required");
-          const currentState = context.state;
-          return {
-            state: {
-              ...currentState,
-              executionOrder: [...currentState.executionOrder, "step4"],
-              step4Done: true
-            },
-            next: [action("Step5a_ArrayItem", null), action("Step5b_ArrayItem", null)]
-          };
-        },
-
-        Step5a_ArrayItem: (_, context): { state: RootState } => {
-          contextTracker.actions.Step5a_ArrayItem = {
-            hasProps: !!context?.props,
-            hasState: !!context?.state,
-            hasRootState: context?.rootState !== undefined,
-            hasEvent: !!context?.event
-          };
-
-          if (!context?.state) throw new Error("Context state is required");
-          const currentState = context.state;
-          return {
-            state: {
-              ...currentState,
-              executionOrder: [...currentState.executionOrder, "step5a"]
-            }
-          };
-        },
-
-        Step5b_ArrayItem: (_, context): { state: RootState; next: Next } => {
-          contextTracker.actions.Step5b_ArrayItem = {
-            hasProps: !!context?.props,
-            hasState: !!context?.state,
-            hasRootState: context?.rootState !== undefined,
-            hasEvent: !!context?.event
-          };
-
-          if (!context?.state) throw new Error("Context state is required");
-          const currentState = context.state;
-          return {
-            state: {
-              ...currentState,
-              executionOrder: [...currentState.executionOrder, "step5b"],
-              step5Done: true
-            },
-            next: undefined // Will trigger DOM event next
-          };
-        },
-
-        Step6_HandleDomEvent: (_, context): { state: RootState; next: Next } => {
-          contextTracker.actions.Step6_HandleDomEvent = {
-            hasProps: !!context?.props,
-            hasState: !!context?.state,
-            hasRootState: context?.rootState !== undefined,
-            hasEvent: !!context?.event,
-            eventType: context?.event?.type
-          };
-
-          if (!context?.state) throw new Error("Context state is required");
-          const currentState = context.state;
-          return {
-            state: {
-              ...currentState,
-              executionOrder: [...currentState.executionOrder, "step6"],
-              domEventHandled: true
-            },
-            next: undefined // Child will trigger increment next
-          };
-        },
-
-        IncrementCounter: (_, context): { state: RootState; next: Next } => {
-          contextTracker.actions.IncrementCounter = {
-            hasProps: !!context?.props,
-            hasState: !!context?.state,
-            hasRootState: context?.rootState !== undefined,
-            hasEvent: !!context?.event
-          };
-
-          if (!context?.state) throw new Error("Context state is required");
-          const currentState = context.state;
-          return {
-            state: {
-              ...currentState,
-              counter: currentState.counter + 1,
-              executionOrder: [...currentState.executionOrder, "increment"]
-            },
-            next: action("Step7_Complete", null)
-          };
-        },
-
-        Step7_Complete: (_, context): { state: RootState } => {
-          contextTracker.actions.Step7_Complete = {
-            hasProps: !!context?.props,
-            hasState: !!context?.state,
-            hasRootState: context?.rootState !== undefined,
-            hasEvent: !!context?.event
-          };
-
-          if (!context?.state) throw new Error("Context state is required");
-          const currentState = context.state;
-          return {
-            state: {
-              ...currentState,
-              executionOrder: [...currentState.executionOrder, "step7"],
-              complete: true
-            }
-          };
+          return action("Step3_HandleAsyncSuccess", { data: result.data });
         }
-      },
+      }),
 
-      // Task handlers
-      tasks: {
-        SyncTask: () => ({
-          perform: () => {
-            // Synchronous side effect (no Promise)
+      FailingTask: () => ({
+        perform: () => {
+          return Promise.reject(new Error("task-failure"));
+        },
+        failure: (error, ctx) => {
+          contextTracker.tasks.FailingTask = {
+            hasProps: !!ctx.props,
+            hasState: !!ctx.state,
+            hasRootState: ctx.rootState !== undefined,
+            hasEvent: !!ctx?.event,
+            receivedError: error instanceof Error ? error.message : String(error)
+          };
+          return action("Step4_HandleFailure", { error: "task-failure" });
+        }
+      })
+    },
+
+    // View
+    view(id, { state }): VNode {
+      return div(`#${id}`, [
+        div(`Counter: ${state?.counter ?? 0}`),
+        button(
+          {
+            attrs: { id: "test-button" },
+            on: { click: action("Step6_HandleDomEvent", null) }
           },
-          success: (_, ctx) => {
-            contextTracker.tasks.SyncTask = {
-              hasProps: !!ctx?.props,
-              hasState: !!ctx?.state,
-              hasRootState: ctx?.rootState !== undefined,
-              hasEvent: !!ctx?.event
-            };
-            return action("Step2_HandleSyncSuccess", null);
-          }
-        }),
-
-        AsyncTask: () => ({
-          perform: (): Promise<{ data: string }> => {
-            return Promise.resolve({ data: "async-result" });
-          },
-          success: (result, ctx) => {
-            contextTracker.tasks.AsyncTask = {
-              hasProps: !!ctx?.props,
-              hasState: !!ctx?.state,
-              hasRootState: ctx?.rootState !== undefined,
-              hasEvent: !!ctx?.event,
-              receivedResult: result
-            };
-            return action("Step3_HandleAsyncSuccess", { data: result.data });
-          }
-        }),
-
-        FailingTask: () => ({
-          perform: (): Promise<never> => {
-            return Promise.reject(new Error("task-failure"));
-          },
-          failure: (error, ctx) => {
-            contextTracker.tasks.FailingTask = {
-              hasProps: !!ctx?.props,
-              hasState: !!ctx?.state,
-              hasRootState: ctx?.rootState !== undefined,
-              hasEvent: !!ctx?.event,
-              receivedError: error instanceof Error ? error.message : String(error)
-            };
-            return action("Step4_HandleFailure", { error: "task-failure" });
-          }
-        })
-      },
-
-      // View
-      view(id, { state }): VNode {
-        return div(`#${id}`, [
-          div(`Counter: ${state?.counter ?? 0}`),
-          button(
-            {
-              attrs: { id: "test-button" },
-              on: { click: action("Step6_HandleDomEvent", null) }
-            },
-            "Click me"
-          ),
-          div(`#${id}-child-container`)
-        ]);
-      }
-    })
-  );
+          "Click me"
+        ),
+        div(`#${id}-child-container`)
+      ]);
+    }
+  }));
 };
 
 // ===== CHILD COMPONENT =====
@@ -382,11 +371,9 @@ const createChildComponent = () => {
       actions: {
         TriggerIncrement: (_, context) => {
           contextTracker.actions.ChildTriggerIncrement = {
-            hasProps:
-              context?.props === undefined || Object.keys(context?.props ?? {}).length === 0,
-            hasState:
-              context?.state === undefined || Object.keys(context?.state ?? {}).length === 0,
-            hasRootState: !!context?.rootState,
+            hasProps: context.props === undefined || Object.keys(context.props ?? {}).length === 0,
+            hasState: context.state === undefined || Object.keys(context.state ?? {}).length === 0,
+            hasRootState: !!context.rootState,
             hasEvent: !!context?.event
           };
 
@@ -565,18 +552,18 @@ describe("Lifecycle and Data Flow", () => {
       type TestComponent = {
         Props: TestProps;
         State: TestState;
-        Actions: TestActions;
+        ActionPayloads: TestActions;
       };
 
       const testComponent = component<TestComponent>(({ action }) => ({
-        state: (props?: TestProps): TestState => ({
+        state: (props?) => ({
           value: props?.value ?? "default",
           modified: false
         }),
         init: action("TestMutation", null),
         actions: {
-          TestMutation: (_, context): { state: TestState } => {
-            if (!context?.state) throw new Error("Context state is required");
+          TestMutation: (_, context) => {
+            if (!context.state) throw new Error("Context state is required");
             const state = context.state;
             stateInAction = state;
             mutationAttempted = true;

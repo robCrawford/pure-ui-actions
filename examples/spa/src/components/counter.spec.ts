@@ -93,13 +93,13 @@ describe("Counter component", () => {
     });
 
     it("should handle success", () => {
-      const { name, data } = success({ text: "Success test" }, {}) as NextData;
+      const { name, data } = success?.({ text: "Success test" }) as NextData;
       expect(name).toBe("SetFeedback");
       expect(data).toEqual({ text: "Success test" });
     });
 
     it("should handle failure", () => {
-      const { name, data } = failure("", {}) as NextData;
+      const { name, data } = failure?.("") as NextData;
       expect(name).toBe("SetFeedback");
       expect(data).toEqual({ text: "Unavailable" });
     });

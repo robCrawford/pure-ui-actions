@@ -1,12 +1,10 @@
 {
   "compilerOptions": {
-    "lib": [
-      "dom",
-      "es2022"
-    ],
+    "lib": ["dom", "es2022"],
     "target": "es2022",
     "module": "esnext",
     "moduleResolution": "node",
+    "strict": true,
     "declaration": true,
     "esModuleInterop": true,
     "noEmit": true,
@@ -17,11 +15,6 @@
       "pure-ui-actions": ["../../src/pure-ui-actions.ts"]
     }
   },
-  "include": [
-    "./src/**/*"
-  ],
-  "exclude": [
-    ".git",
-    "node_modules"
-  ]
+  "include": ["./src/**/*"],
+  "exclude": [".git", "node_modules"]
 }
