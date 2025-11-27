@@ -43,7 +43,7 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tseslint,
-      "prettier": prettierPlugin
+      prettier: prettierPlugin
     },
     rules: {
       // Extend recommended rules
@@ -60,17 +60,19 @@ export default [
       "@typescript-eslint/no-use-before-define": "off",
       "@typescript-eslint/no-unsafe-function-type": "off",
       "@typescript-eslint/no-empty-object-type": "error",
-      "@typescript-eslint/explicit-function-return-type": ["error", {
-        allowExpressions: true,
-        allowTypedFunctionExpressions: true,
-        allowHigherOrderFunctions: true
-      }],
+      "@typescript-eslint/explicit-function-return-type": [
+        "error",
+        {
+          allowTypedFunctionExpressions: true,
+          allowHigherOrderFunctions: true
+        }
+      ],
 
       // Prettier integration
       "prettier/prettier": "error",
 
       // Disable style rules that conflict with Prettier
-      "indent": "off",
+      indent: "off",
       "no-console": "off"
     }
   },
@@ -94,4 +96,3 @@ export default [
     }
   }
 ];
-

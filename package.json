@@ -9,8 +9,8 @@
     "ts:check": "tsc --noEmit",
     "ts:build": "rm -rf ./dist && tsc",
     "test": "vitest run",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix"
+    "lint": "eslint 'src/**/*.ts'",
+    "lint:fix": "eslint 'src/**/*.ts' --fix"
   },
   "author": "Robert Crawford",
   "repository": {

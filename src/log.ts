@@ -50,7 +50,7 @@ function getAggregatedState(): Record<string, any> {
 }
 
 export const log = {
-  setStateGlobal(id: string, state: object | undefined | null) {
+  setStateGlobal(id: string, state: object | undefined | null): void {
     // Maintain global state registry (DevTools and logging rely on this)
     // Called after actions update state and during render lifecycle
     const win = window as unknown as { state: Record<string, object | undefined | null> };
@@ -65,7 +65,7 @@ export const log = {
     // Note: State updates are sent to DevTools by updateStart, not here
     // This just maintains window.state for getAggregatedState() to read
   },
-  noInitialAction(id: string, state?: Record<string, unknown> | null) {
+  noInitialAction(id: string, state?: Record<string, unknown> | null): void {
     // Send initial mount to Redux DevTools
     if (devToolsConnection && state) {
       // Build aggregated state with the initial state for this component
@@ -96,7 +96,7 @@ export const log = {
     label: string,
     data?: Record<string, unknown>,
     newState?: Record<string, unknown> | null
-  ) {
+  ): void {
     // Send to Redux DevTools with current state
     if (devToolsConnection && newState !== undefined) {
       // Update window.state FIRST so subsequent getAggregatedState() calls are accurate
@@ -135,7 +135,7 @@ export const log = {
       }
     }
   },
-  updateEnd(state: Record<string, unknown>, id?: string) {
+  updateEnd(state: Record<string, unknown>, id?: string): void {
     // Note: updateEnd is informational only - state already sent in updateStart
     // Only send if we have both state and id, and logRenders is enabled (can be noisy)
     if (devToolsConnection && state && id && logRenders) {
@@ -153,7 +153,7 @@ export const log = {
       console.log(`${JSON.stringify(state)}`);
     }
   },
-  taskPerform(id: string, label: string, isPromise: boolean) {
+  taskPerform(id: string, label: string, isPromise: boolean): void {
     // Send task start to Redux DevTools
     if (devToolsConnection) {
       devToolsConnection.send(
@@ -170,7 +170,7 @@ export const log = {
       console.log(`%cTask "${label}" perform${isPromise ? "..." : "ed"}`, "color: #dd8");
     }
   },
-  taskSuccess(id: string, label: string) {
+  taskSuccess(id: string, label: string): void {
     // Send to Redux DevTools
     if (devToolsConnection) {
       devToolsConnection.send(
@@ -187,7 +187,7 @@ export const log = {
       console.log(`%c\n...#${id} task "${label}" success`, "color: #dd8");
     }
   },
-  taskFailure(id: string, label: string, err: Error) {
+  taskFailure(id: string, label: string, err: Error): void {
     // Send to Redux DevTools
     if (devToolsConnection) {
       devToolsConnection.send(
@@ -206,7 +206,7 @@ export const log = {
       if (err) console.error(JSON.stringify(err));
     }
   },
-  render(id: string, props?: Record<string, unknown> | null) {
+  render(id: string, props?: Record<string, unknown> | null): void {
     // Send render event to Redux DevTools (controlled by logRenders flag)
     if (devToolsConnection && logRenders) {
       devToolsConnection.send(
@@ -230,7 +230,7 @@ export const log = {
       groupId = "";
     }
   },
-  patch() {
+  patch(): void {
     // Send updated state to Redux DevTools after VDOM patch completes
     // At this point, destroy hooks have run and window.state is clean
     // ALWAYS sent - critical for state synchronization (shows component cleanup)
@@ -250,7 +250,7 @@ export const log = {
       console.groupEnd();
     }
   },
-  manualError(id: string, name: string) {
+  manualError(id: string, name: string): void {
     throw Error(`#${id} "${name}" cannot be invoked manually`);
   }
 };
