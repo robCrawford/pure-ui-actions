@@ -1,6 +1,7 @@
 # AGENTS.md - pure-ui-actions Development Guide for AI Agents
 
 ## Purpose
+
 This document provides comprehensive guidance for AI agents working with the pure-ui-actions framework. It contains architectural patterns, best practices, testing conventions, and code organization principles.
 
 ## Framework Overview
@@ -22,6 +23,7 @@ This document provides comprehensive guidance for AI agents working with the pur
 **CRITICAL RULE**: Actions must be pure functions. All I/O and side effects must be in Tasks.
 
 #### Actions (Pure Functions)
+
 - Transform state based on input
 - Return new state and optional Next actions/tasks
 - No I/O, no mutations, no side effects
@@ -29,6 +31,7 @@ This document provides comprehensive guidance for AI agents working with the pur
 - Testable without mocks
 
 **Example - Pure action:**
+
 ```typescript
 actions: {
   Increment: ({ step }, { state }) => {
@@ -36,12 +39,14 @@ actions: {
       state: { ...state, count: state.count + step },
       next: action("Validate")
     };
-  }
+  };
 }
 ```
 
 #### Tasks (Side Effects Container)
+
 Tasks are the ONLY place for:
+
 - API calls and network requests
 - Browser APIs (localStorage, sessionStorage, document.title)
 - DOM mutations (except view rendering)
@@ -50,24 +55,26 @@ Tasks are the ONLY place for:
 - Any operation affecting the outside world
 
 **Example - Task with async operation:**
+
 ```typescript
 tasks: {
   FetchUser: ({ id }) => ({
-    perform: () => fetch(`/api/users/${id}`).then(r => r.json()),
+    perform: () => fetch(`/api/users/${id}`).then((r) => r.json()),
     success: (user: User) => action("UserLoaded", { user }),
     failure: (error: Error) => action("UserLoadFailed", { error: error.message })
-  })
+  });
 }
 ```
 
 **Example - Effect-only task (synchronous):**
+
 ```typescript
 tasks: {
   SetDocTitle: ({ title }) => ({
     perform: () => {
       document.title = title;
     }
-  })
+  });
 }
 ```
 
@@ -81,16 +88,16 @@ mount({
   props: {},
   init: (runRootAction) => {
     // Router integration
-    router.on({ 
-      about: () => runRootAction("SetPage", { page: "about" }),
-      home: () => runRootAction("SetPage", { page: "home" })
-    }).resolve();
-    
+    router
+      .on({
+        about: () => runRootAction("SetPage", { page: "about" }),
+        home: () => runRootAction("SetPage", { page: "home" })
+      })
+      .resolve();
+
     // Browser events
-    window.addEventListener("online", () => 
-      runRootAction("SetOnlineStatus", { online: true })
-    );
-    
+    window.addEventListener("online", () => runRootAction("SetOnlineStatus", { online: true }));
+
     // Subscribe to framework events
     subscribe("patch", () => {
       router.updatePageLinks();
@@ -135,7 +142,7 @@ tasks: {
       return result;
     },
     success: (result) => action("LoginSuccess", result)
-  })
+  });
 }
 
 // Elsewhere in your app - subscribe to events
@@ -158,7 +165,9 @@ Always clean up subscriptions when they're no longer needed:
 ```typescript
 import { subscribe, unsubscribe } from "pure-ui-actions";
 
-const handler = () => { /* ... */ };
+const handler = () => {
+  /* ... */
+};
 subscribe("patch", handler);
 
 // Later, clean up
@@ -166,6 +175,7 @@ unsubscribe("patch", handler);
 ```
 
 **Best Practice:** Use framework events sparingly. Most component-to-component communication should use props and actions. Use pub/sub for:
+
 - Integration with third-party libraries
 - Cross-cutting concerns (analytics, logging)
 - Reacting to framework lifecycle events
@@ -173,18 +183,20 @@ unsubscribe("patch", handler);
 ## Anti-Patterns and Common Mistakes
 
 ### ❌ WRONG: Side effects in actions
+
 ```typescript
 actions: {
   SaveData: ({ data }, { state }) => {
-    localStorage.setItem('data', JSON.stringify(data)); // WRONG
-    fetch('/api/save', { method: 'POST', body: JSON.stringify(data) }); // WRONG
-    document.title = 'Data Saved'; // WRONG
+    localStorage.setItem("data", JSON.stringify(data)); // WRONG
+    fetch("/api/save", { method: "POST", body: JSON.stringify(data) }); // WRONG
+    document.title = "Data Saved"; // WRONG
     return { state: { ...state, saved: true } };
-  }
+  };
 }
 ```
 
 ### ✅ CORRECT: Side effects in tasks
+
 ```typescript
 actions: {
   SaveData: ({ data }, { state }) => ({
@@ -196,9 +208,9 @@ tasks: {
   PersistData: ({ data }) => ({
     perform: () => {
       localStorage.setItem('data', JSON.stringify(data));
-      return fetch('/api/save', { 
-        method: 'POST', 
-        body: JSON.stringify(data) 
+      return fetch('/api/save', {
+        method: 'POST',
+        body: JSON.stringify(data)
       });
     },
     success: () => action("DataSaved"),
@@ -208,16 +220,18 @@ tasks: {
 ```
 
 ### ❌ WRONG: State mutation
+
 ```typescript
 actions: {
   AddItem: ({ item }, { state }) => {
     state.items.push(item); // WRONG - Will throw due to deepFreeze
     return { state };
-  }
+  };
 }
 ```
 
 ### ✅ CORRECT: Immutable updates
+
 ```typescript
 actions: {
   AddItem: ({ item }, { state }) => ({
@@ -225,17 +239,19 @@ actions: {
       ...state,
       items: [...state.items, item]
     }
-  })
+  });
 }
 ```
 
 ### ❌ WRONG: Manually calling action thunks
+
 ```typescript
 const myAction = action("DoSomething", { value: 1 });
 myAction(); // WRONG - Will log error
 ```
 
 ### ✅ CORRECT: Actions via DOM events or Next
+
 ```typescript
 // In view
 view(id, { state }) {
@@ -255,16 +271,19 @@ actions: {
 ```
 
 ### ❌ WRONG: Async operations in actions
+
 ```typescript
 actions: {
-  LoadUser: async ({ id }, { state }) => { // WRONG
-    const user = await fetch(`/api/users/${id}`).then(r => r.json());
+  LoadUser: async ({ id }, { state }) => {
+    // WRONG
+    const user = await fetch(`/api/users/${id}`).then((r) => r.json());
     return { state: { ...state, user } };
-  }
+  };
 }
 ```
 
 ### ✅ CORRECT: Async operations in tasks
+
 ```typescript
 actions: {
   LoadUser: ({ id }, { state }) => ({
@@ -292,19 +311,20 @@ All components must define a Component type with these fields:
 
 ```typescript
 type Component = {
-  Props: Props;                              // Component props (or null if none)
-  State: State;                              // Component state (or null if stateless)
-  ActionPayloads: ActionPayloads;            // Payload types for actions
-  TaskPayloads: TaskPayloads;                // Payload types for tasks
-  RootState: RootState;                      // Optional - access to root app state
-  RootActionPayloads: RootActionPayloads;    // Optional - payload types for root actions
-  RootTaskPayloads: RootTaskPayloads;        // Optional - payload types for root tasks
+  Props: Props; // Component props (or null if none)
+  State: State; // Component state (or null if stateless)
+  ActionPayloads: ActionPayloads; // Payload types for actions
+  TaskPayloads: TaskPayloads; // Payload types for tasks
+  RootState: RootState; // Optional - access to root app state
+  RootActionPayloads: RootActionPayloads; // Optional - payload types for root actions
+  RootTaskPayloads: RootTaskPayloads; // Optional - payload types for root tasks
 };
 ```
 
 ### Type Definition Patterns
 
 **Props and State - Always Readonly:**
+
 ```typescript
 export type Props = Readonly<{
   title: string;
@@ -318,15 +338,17 @@ export type State = Readonly<{
 ```
 
 **ActionPayloads - Mapped payload types:**
+
 ```typescript
 export type ActionPayloads = Readonly<{
   ShowMessage: { text: string };
   PageReady: { done: boolean };
-  Reset: null;  // No payload
+  Reset: null; // No payload
 }>;
 ```
 
 **TaskPayloads - Mapped payload types:**
+
 ```typescript
 export type TaskPayloads = Readonly<{
   SetDocTitle: { title: string };
@@ -335,10 +357,11 @@ export type TaskPayloads = Readonly<{
 ```
 
 **Stateless Components:**
+
 ```typescript
 type Component = {
   Props: Props;
-  State: null;  // No local state
+  State: null; // No local state
   ActionPayloads: ActionPayloads;
 };
 
@@ -346,20 +369,22 @@ type Component = {
 actions: {
   DoSomething: (_, { props }) => {
     return { state: null };
-  }
+  };
 }
 ```
 
 ### Function Signatures
 
 **State initializer:**
+
 ```typescript
 state: (props: Props) => ({
   count: props.initialCount
-})
+});
 ```
 
 **Action handler:**
+
 ```typescript
 actions: {
   Increment: ({ step }, { state }) => {
@@ -367,22 +392,24 @@ actions: {
       state: { ...state, count: state.count + step },
       next: action("Validate")
     };
-  }
+  };
 }
 ```
 
 **Task handler:**
+
 ```typescript
 tasks: {
   FetchData: ({ id }) => ({
-    perform: () => fetch(`/api/${id}`).then(r => r.json()),
+    perform: () => fetch(`/api/${id}`).then((r) => r.json()),
     success: (data: Data) => action("DataLoaded", { data }),
     failure: (error: Error) => action("DataFailed", { error: error.message })
-  })
+  });
 }
 ```
 
 **View function:**
+
 ```typescript
 view(id: string, { props, state }: Context<Props, State, null>) {
   return div(`#${id}`, state.count.toString());
@@ -395,30 +422,38 @@ All action handlers, task callbacks, and view functions receive a `Context` obje
 
 ```typescript
 export type Context<TProps, TState, TRootState> = {
-  props?: TProps;         // Component's props
-  state?: TState;         // Component's local state
-  rootState?: TRootState; // Root application state
-  event?: Event;          // DOM event (only in action handlers)
+  props: TProps; // Component's props (defaults to {})
+  state: TState; // Component's local state (defaults to {})
+  rootState: TRootState; // Root application state (defaults to {})
+  event?: Event; // DOM event (optional, only in action handlers)
 };
 ```
 
+**TypeScript Strict Mode Compatibility:**
+
+- `props`, `state`, and `rootState` are guaranteed to be defined (non-optional)
+- The framework provides empty objects as defaults when values are undefined/null
+- `event` remains optional as it's only present for DOM-triggered actions
+
 **When `event` is available:**
+
 - Only in action handlers
 - Only when triggered by a DOM event (click, input, submit, etc.)
 - Not available in tasks or view functions
 - Undefined when action is triggered programmatically via `next`
 
 **Accessing DOM events in actions:**
+
 ```typescript
 actions: {
   HandleInput: (_, { state, event }) => {
-    // Access native DOM event
+    // Access native DOM event (event is optional)
     const value = (event?.target as HTMLInputElement)?.value ?? "";
     return {
       state: { ...state, inputValue: value }
     };
   },
-  
+
   HandleSubmit: (_, { state, event }) => {
     event?.preventDefault(); // Prevent form submission
     return {
@@ -429,13 +464,16 @@ actions: {
 }
 ```
 
+**Note:** Use optional chaining (`?.`) for `event` only, not for `props`, `state`, or `rootState`.
+
 **Context in tasks:**
 Task success and failure callbacks also receive context (without event):
+
 ```typescript
 tasks: {
   FetchData: ({ id }) => ({
-    perform: () => fetch(`/api/${id}`).then(r => r.json()),
-    
+    perform: () => fetch(`/api/${id}`).then((r) => r.json()),
+
     // Context available: props, state, rootState (no event)
     success: (data, { props, state, rootState }) => {
       // Can access current component state and rootState
@@ -444,12 +482,12 @@ tasks: {
       }
       return action("DataLoaded", { data });
     },
-    
+
     failure: (error, { state }) => {
       console.error("Failed with state:", state);
       return action("LoadFailed", { error: error.message });
     }
-  })
+  });
 }
 ```
 
@@ -458,6 +496,7 @@ tasks: {
 ### Object Updates
 
 **Simple property update:**
+
 ```typescript
 return {
   state: { ...state, count: state.count + 1 }
@@ -465,6 +504,7 @@ return {
 ```
 
 **Nested object update:**
+
 ```typescript
 return {
   state: {
@@ -478,18 +518,23 @@ return {
 ```
 
 **Conditional same-state optimization:**
+
 ```typescript
 return {
-  state: theme === state.theme ? state : {
-    ...state,
-    theme
-  }
+  state:
+    theme === state.theme
+      ? state
+      : {
+          ...state,
+          theme
+        }
 };
 ```
 
 ### Array Updates
 
 **Add item:**
+
 ```typescript
 return {
   state: {
@@ -500,6 +545,7 @@ return {
 ```
 
 **Remove item:**
+
 ```typescript
 return {
   state: {
@@ -510,13 +556,12 @@ return {
 ```
 
 **Update item:**
+
 ```typescript
 return {
   state: {
     ...state,
-    items: state.items.map((item, i) => 
-      i === index ? updatedItem : item
-    )
+    items: state.items.map((item, i) => (i === index ? updatedItem : item))
   }
 };
 ```
@@ -535,30 +580,32 @@ When a component's local state changes, **only that component re-renders**. When
 // BAD: Using rootState for component-local concerns
 type RootState = Readonly<{
   theme: string;
-  inputValue: string;  // ❌ Component-specific state in root
-  buttonClicked: boolean;  // ❌ Component-specific state in root
+  inputValue: string; // ❌ Component-specific state in root
+  buttonClicked: boolean; // ❌ Component-specific state in root
 }>;
 
 // GOOD: Component-local state stays local
 type RootState = Readonly<{
-  theme: string;  // ✅ Truly global concern
+  theme: string; // ✅ Truly global concern
 }>;
 
 type ComponentState = Readonly<{
-  inputValue: string;  // ✅ Local to this component
-  buttonClicked: boolean;  // ✅ Local to this component
+  inputValue: string; // ✅ Local to this component
+  buttonClicked: boolean; // ✅ Local to this component
 }>;
 ```
 
 #### State Location Decision Tree
 
 **Use Local State when:**
+
 - Only one component needs the data
 - Data is ephemeral (form inputs, UI toggles, animation state)
 - Frequent updates that don't affect other components
 - Component-specific UI state (expanded/collapsed, selected tabs)
 
 **Use Root State when:**
+
 - Multiple unrelated components need the same data
 - Data persists across navigation (user auth, theme, global settings)
 - Data is truly application-wide
@@ -569,47 +616,47 @@ type ComponentState = Readonly<{
 When multiple components need to share state, **lift state to the nearest common parent** and pass actions down as props. Do NOT use root state for this.
 
 **❌ WRONG: Using root state for shared sibling state**
+
 ```typescript
 // Inefficient - changes trigger re-renders in ALL components using rootState
 export type RootState = Readonly<{
   theme: string;
-  selectedUserId: string;  // ❌ Only needed by UserList and UserDetail
+  selectedUserId: string; // ❌ Only needed by UserList and UserDetail
 }>;
 ```
 
 **✅ CORRECT: Lift state to common parent**
+
 ```typescript
 // Parent component holds shared state
 type ParentState = Readonly<{
-  selectedUserId: string;  // ✅ Scoped to this component tree
+  selectedUserId: string; // ✅ Scoped to this component tree
 }>;
 
-export default component<ParentComponent>(
-  ({ action }) => ({
-    state: () => ({
-      selectedUserId: null
-    }),
-    
-    actions: {
-      SelectUser: ({ userId }, { state }) => ({
-        state: { ...state, selectedUserId: userId }
+export default component<ParentComponent>(({ action }) => ({
+  state: () => ({
+    selectedUserId: null
+  }),
+
+  actions: {
+    SelectUser: ({ userId }, { state }) => ({
+      state: { ...state, selectedUserId: userId }
+    })
+  },
+
+  view(id, { state }) {
+    return div(`#${id}`, [
+      // Pass action down to child
+      userList(`#${id}-list`, {
+        onSelect: action("SelectUser")
+      }),
+      // Pass state as prop to child
+      userDetail(`#${id}-detail`, {
+        userId: state.selectedUserId
       })
-    },
-    
-    view(id, { state }) {
-      return div(`#${id}`, [
-        // Pass action down to child
-        userList(`#${id}-list`, {
-          onSelect: action("SelectUser")
-        }),
-        // Pass state as prop to child
-        userDetail(`#${id}-detail`, {
-          userId: state.selectedUserId
-        })
-      ]);
-    }
-  })
-);
+    ]);
+  }
+}));
 ```
 
 #### Action Callback Pattern
@@ -620,52 +667,48 @@ Pass action thunks as props to enable child-to-parent communication without root
 // Child component
 export type ChildProps = Readonly<{
   value: string;
-  onChange: ActionThunk;  // Action from parent
+  onChange: ActionThunk; // Action from parent
 }>;
 
-export default component<ChildComponent>(
-  ({ action }) => ({
-    actions: {
-      HandleInput: (_, { props, event }) => ({
-        state: null,
-        // Invoke parent's action
-        next: props.onChange({ value: event.target.value })
-      })
-    },
-    
-    view(id, { props }) {
-      return input({
-        props: { value: props.value },
-        on: { input: action("HandleInput") }
-      });
-    }
-  })
-);
+export default component<ChildComponent>(({ action }) => ({
+  actions: {
+    HandleInput: (_, { props, event }) => ({
+      state: null,
+      // Invoke parent's action
+      next: props.onChange({ value: event.target.value })
+    })
+  },
+
+  view(id, { props }) {
+    return input({
+      props: { value: props.value },
+      on: { input: action("HandleInput") }
+    });
+  }
+}));
 
 // Parent component
-export default component<ParentComponent>(
-  ({ action }) => ({
-    state: () => ({
-      inputValue: ""
-    }),
-    
-    actions: {
-      UpdateInput: ({ value }, { state }) => ({
-        state: { ...state, inputValue: value }
+export default component<ParentComponent>(({ action }) => ({
+  state: () => ({
+    inputValue: ""
+  }),
+
+  actions: {
+    UpdateInput: ({ value }, { state }) => ({
+      state: { ...state, inputValue: value }
+    })
+  },
+
+  view(id, { state }) {
+    return div(`#${id}`, [
+      // Pass action down as callback prop
+      childInput(`#${id}-input`, {
+        value: state.inputValue,
+        onChange: action("UpdateInput")
       })
-    },
-    
-    view(id, { state }) {
-      return div(`#${id}`, [
-        // Pass action down as callback prop
-        childInput(`#${id}-input`, {
-          value: state.inputValue,
-          onChange: action("UpdateInput")
-        })
-      ]);
-    }
-  })
-);
+    ]);
+  }
+}));
 ```
 
 #### Root State Performance Impact Example
@@ -699,10 +742,10 @@ type RootState = Readonly<{
 ```typescript
 // Appropriate root state - truly global concerns
 export type RootState = Readonly<{
-  theme: "light" | "dark";           // UI theme (used by layout components)
-  currentUser: User | null;          // Auth state (checked by multiple pages)
-  isOnline: boolean;                 // Network status (affects many features)
-  featureFlags: Record<string, boolean>;  // A/B tests (cross-cutting)
+  theme: "light" | "dark"; // UI theme (used by layout components)
+  currentUser: User | null; // Auth state (checked by multiple pages)
+  isOnline: boolean; // Network status (affects many features)
+  featureFlags: Record<string, boolean>; // A/B tests (cross-cutting)
 }>;
 
 // Examples of what should NOT be in root state:
@@ -724,16 +767,16 @@ If you have too much in root state, refactor using this priority:
 
 ### Summary: State Location Rules
 
-| State Type | Location | Reason |
-|------------|----------|---------|
-| Form input values | Local | High update frequency, single component |
-| UI toggles (expanded/collapsed) | Local | Single component concern |
-| Selected item in list | Local or Parent | Depends on if detail view is sibling |
-| Active tab | Local | Component-specific UI state |
-| Theme preference | Root | Affects multiple components globally |
-| Current user / auth | Root | Required by many unrelated components |
-| API loading state | Local | Unless multiple components need it |
-| Error messages | Local | Unless global error handler needed |
+| State Type                      | Location        | Reason                                  |
+| ------------------------------- | --------------- | --------------------------------------- |
+| Form input values               | Local           | High update frequency, single component |
+| UI toggles (expanded/collapsed) | Local           | Single component concern                |
+| Selected item in list           | Local or Parent | Depends on if detail view is sibling    |
+| Active tab                      | Local           | Component-specific UI state             |
+| Theme preference                | Root            | Affects multiple components globally    |
+| Current user / auth             | Root            | Required by many unrelated components   |
+| API loading state               | Local           | Unless multiple components need it      |
+| Error messages                  | Local           | Unless global error handler needed      |
 
 **Golden Rule**: State lives at the lowest common ancestor that needs it. Root state is the highest ancestor, so it should be used sparingly.
 
@@ -742,31 +785,28 @@ If you have too much in root state, refactor using this priority:
 ### Parent-Child Communication
 
 **Child component with callback prop:**
+
 ```typescript
 export type Props = Readonly<{
   text: string;
-  onDismiss: ActionThunk;  // Parent action passed as prop
+  onDismiss: ActionThunk; // Parent action passed as prop
 }>;
 
-export default component<Component>(
-  ({ action }) => ({
-    actions: {
-      Dismiss: (_, { props, state }) => ({
-        state: { ...state, show: false },
-        next: props.onDismiss  // Invoke parent action
-      })
-    },
-    view(id, { props }) {
-      return div(`#${id}`, [
-        props.text,
-        button({ on: { click: action("Dismiss") } }, "Dismiss")
-      ]);
-    }
-  })
-);
+export default component<Component>(({ action }) => ({
+  actions: {
+    Dismiss: (_, { props, state }) => ({
+      state: { ...state, show: false },
+      next: props.onDismiss // Invoke parent action
+    })
+  },
+  view(id, { props }) {
+    return div(`#${id}`, [props.text, button({ on: { click: action("Dismiss") } }, "Dismiss")]);
+  }
+}));
 ```
 
 **Parent rendering child:**
+
 ```typescript
 view(id, { state }) {
   return div(`#${id}`, [
@@ -783,6 +823,7 @@ view(id, { state }) {
 The root app component can export `RootState`, `RootActionPayloads`, and `RootTaskPayloads` types that any child component can access. This is intended for application-wide concerns only (theme, auth, global settings), not for parent-child communication.
 
 **Root app component (app.ts) - Define and export root types:**
+
 ```typescript
 import { component, html } from "pure-ui-actions";
 import likeButton from "./components/likeButton";
@@ -810,51 +851,50 @@ export type Component = {
   TaskPayloads: RootTaskPayloads;
 };
 
-export default component<Component>(
-  ({ action, task }) => ({
-    state: () => ({
-      theme: "light",
-      likes: { home: 0, about: 0 }
+export default component<Component>(({ action, task }) => ({
+  state: () => ({
+    theme: "light",
+    likes: { home: 0, about: 0 }
+  }),
+
+  // Root action handlers
+  actions: {
+    SetTheme: ({ theme }, { state }) => ({
+      state: { ...state, theme }
     }),
-    
-    // Root action handlers
-    actions: {
-      SetTheme: ({ theme }, { state }) => ({
-        state: { ...state, theme }
-      }),
-      
-      Like: ({ page }, { state }) => ({
-        state: {
-          ...state,
-          likes: {
-            ...state.likes,
-            [page]: state.likes[page] + 1
-          }
-        },
-        next: task("SetDocTitle", { title: `Liked ${page}!` })
-      })
-    },
-    
-    // Root task handlers
-    tasks: {
-      SetDocTitle: ({ title }) => ({
-        perform: () => {
-          document.title = title;
+
+    Like: ({ page }, { state }) => ({
+      state: {
+        ...state,
+        likes: {
+          ...state.likes,
+          [page]: state.likes[page] + 1
         }
-      })
-    },
-    
-    view(id, { state }) {
-      return div(`#${id}.${state.theme}`, [
-        likeButton(`#${id}-like-home`, { page: "home" }),
-        likeButton(`#${id}-like-about`, { page: "about" })
-      ]);
-    }
-  })
-);
+      },
+      next: task("SetDocTitle", { title: `Liked ${page}!` })
+    })
+  },
+
+  // Root task handlers
+  tasks: {
+    SetDocTitle: ({ title }) => ({
+      perform: () => {
+        document.title = title;
+      }
+    })
+  },
+
+  view(id, { state }) {
+    return div(`#${id}.${state.theme}`, [
+      likeButton(`#${id}-like-home`, { page: "home" }),
+      likeButton(`#${id}-like-about`, { page: "about" })
+    ]);
+  }
+}));
 ```
 
 **Child component (likeButton.ts) - Import and use root types:**
+
 ```typescript
 import { component, html } from "pure-ui-actions";
 import { RootState, RootActionPayloads, RootTaskPayloads } from "../app";
@@ -872,37 +912,36 @@ type Component = {
   Props: Props;
   State: null;
   ActionPayloads: ActionPayloads;
-  RootState: RootState;                          // Import from parent
-  RootActionPayloads: RootActionPayloads;        // Import from parent
-  RootTaskPayloads: RootTaskPayloads;            // Import from parent
+  RootState: RootState; // Import from parent
+  RootActionPayloads: RootActionPayloads; // Import from parent
+  RootTaskPayloads: RootTaskPayloads; // Import from parent
 };
 
-export default component<Component>(
-  ({ action, rootAction, rootTask }) => ({
-    actions: {
-      Like: (_, { props }) => ({
-        state: null,
-        next: [
-          // Invoke parent's action
-          rootAction("Like", { page: props.page }),
-          // Invoke parent's task
-          rootTask("SetDocTitle", { title: "Liked!" })
-        ]
-      })
-    },
-    
-    view(id, { props, rootState }) {
-      return button(
-        { on: { click: action("Like") } },
-        // Access parent's state
-        `👍 ${rootState.likes[props.page]}`
-      );
-    }
-  })
-);
+export default component<Component>(({ action, rootAction, rootTask }) => ({
+  actions: {
+    Like: (_, { props }) => ({
+      state: null,
+      next: [
+        // Invoke parent's action
+        rootAction("Like", { page: props.page }),
+        // Invoke parent's task
+        rootTask("SetDocTitle", { title: "Liked!" })
+      ]
+    })
+  },
+
+  view(id, { props, rootState }) {
+    return button(
+      { on: { click: action("Like") } },
+      // Access parent's state
+      `👍 ${rootState.likes[props.page]}`
+    );
+  }
+}));
 ```
 
 **Key points:**
+
 - Only the root app component should export `RootState`, `RootActionPayloads`, `RootTaskPayloads`
 - Any child component can import these types and include them in its Component type definition
 - Child components access `rootAction`, `rootTask`, `rootState` via the component callback and context
@@ -913,6 +952,7 @@ export default component<Component>(
 ## Task Patterns
 
 ### Effect-Only Tasks
+
 No success/failure handlers needed for synchronous side effects:
 
 ```typescript
@@ -921,29 +961,31 @@ tasks: {
     perform: () => {
       document.title = title;
     }
-  })
+  });
 }
 ```
 
 ### Async Tasks with Success/Failure
+
 ```typescript
 tasks: {
   FetchData: ({ id }) => ({
-    perform: () => fetch(`/api/${id}`).then(r => r.json()),
-    
+    perform: () => fetch(`/api/${id}`).then((r) => r.json()),
+
     // Success and failure callbacks receive context
     success: (data: Data, { props, state, rootState }) => {
       return action("DataLoaded", { data });
     },
-    
+
     failure: (error: Error, { props, state, rootState }) => {
       return action("DataFailed", { error: error.message });
     }
-  })
+  });
 }
 ```
 
 ### Conditional Next Based on Result
+
 ```typescript
 tasks: {
   ValidateInput: ({ value }) => ({
@@ -956,11 +998,12 @@ tasks: {
       }
     },
     failure: (error: Error) => action("ValidationError", { message: error.message })
-  })
+  });
 }
 ```
 
 ### Multiple Next Actions
+
 ```typescript
 tasks: {
   Initialize: () => ({
@@ -972,7 +1015,7 @@ tasks: {
         task("TrackAnalytics", { event: "app_loaded" })
       ];
     }
-  })
+  });
 }
 ```
 
@@ -983,6 +1026,7 @@ Service functions encapsulate I/O operations and are called from task `perform` 
 ### Service Organization
 
 **src/services/api.ts:**
+
 ```typescript
 export async function fetchUser(id: string): Promise<User> {
   const response = await fetch(`/api/users/${id}`);
@@ -994,8 +1038,8 @@ export async function fetchUser(id: string): Promise<User> {
 
 export async function saveUser(user: User): Promise<void> {
   const response = await fetch(`/api/users/${user.id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(user)
   });
   if (!response.ok) {
@@ -1005,6 +1049,7 @@ export async function saveUser(user: User): Promise<void> {
 ```
 
 **src/services/storage.ts:**
+
 ```typescript
 export function saveToLocalStorage(key: string, data: unknown): void {
   localStorage.setItem(key, JSON.stringify(data));
@@ -1017,6 +1062,7 @@ export function loadFromLocalStorage<T>(key: string): T | null {
 ```
 
 **src/services/browser.ts:**
+
 ```typescript
 export async function setDocTitle(title: string): Promise<void> {
   document.title = title;
@@ -1028,6 +1074,7 @@ export function copyToClipboard(text: string): Promise<void> {
 ```
 
 ### Using Services in Tasks
+
 ```typescript
 import { fetchUser, saveUser } from "./services/api";
 import { saveToLocalStorage } from "./services/storage";
@@ -1038,7 +1085,7 @@ tasks: {
     success: (user) => action("UserLoaded", { user }),
     failure: (error) => action("LoadFailed", { error: error.message })
   }),
-  
+
   SaveUser: ({ user }) => ({
     perform: async () => {
       await saveUser(user);
@@ -1053,6 +1100,7 @@ tasks: {
 ## Error Handling Patterns
 
 ### Loading, Error, and Data States
+
 ```typescript
 type State = Readonly<{
   user: User | null;
@@ -1065,11 +1113,11 @@ actions: {
     state: { ...state, loading: true, error: null },
     next: task("FetchUser", { id })
   }),
-  
+
   UserLoaded: ({ user }, { state }) => ({
     state: { ...state, user, loading: false, error: null }
   }),
-  
+
   LoadFailed: ({ error }, { state }) => ({
     state: { ...state, loading: false, error }
   })
@@ -1077,6 +1125,7 @@ actions: {
 ```
 
 ### Retry Logic
+
 ```typescript
 type State = Readonly<{
   data: Data | null;
@@ -1096,11 +1145,12 @@ actions: {
       },
       next: shouldRetry ? task("FetchData", {}) : undefined
     };
-  }
+  };
 }
 ```
 
 ### Validation Errors
+
 ```typescript
 type ValidationError = {
   field: string;
@@ -1118,12 +1168,12 @@ actions: {
     state: { ...state, submitting: true, validationErrors: [] },
     next: task("ValidateAndSubmit", { data: state.formData })
   }),
-  
+
   ValidationFailed: ({ errors }, { state }) => ({
-    state: { 
-      ...state, 
-      submitting: false, 
-      validationErrors: errors 
+    state: {
+      ...state,
+      submitting: false,
+      validationErrors: errors
     }
   })
 }
@@ -1142,7 +1192,9 @@ import { testComponent, NextData } from "pure-ui-actions";
 import app, { State, Component } from "./app";
 
 describe("App", () => {
-  const { testAction, testTask, config, initialState } = testComponent<Component>(app, { placeholder: "test" });
+  const { testAction, testTask, config, initialState } = testComponent<Component>(app, {
+    placeholder: "test"
+  });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({ text: "test", done: false });
@@ -1211,7 +1263,7 @@ describe("Action accessing rootState", () => {
   const { state } = testAction<State, RootState>(
     "ApplyTheme",
     {},
-    { 
+    {
       state: initialState,
       rootState: { theme: "dark", user: null }
     }
@@ -1224,7 +1276,7 @@ describe("Action accessing rootState", () => {
 
 describe("Action accessing DOM event", () => {
   // Test action that reads event context
-  const mockEvent = { 
+  const mockEvent = {
     target: { value: "input text" },
     preventDefault: jest.fn()
   } as unknown as Event;
@@ -1232,7 +1284,7 @@ describe("Action accessing DOM event", () => {
   const { state } = testAction<State>(
     "HandleInput",
     {},
-    { 
+    {
       state: initialState,
       event: mockEvent
     }
@@ -1259,20 +1311,20 @@ describe("API Service", () => {
   it("should fetch user", async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
-      json: async () => ({ id: '1', name: 'Alice' })
+      json: async () => ({ id: "1", name: "Alice" })
     });
 
-    const user = await fetchUser('1');
-    expect(user).toEqual({ id: '1', name: 'Alice' });
+    const user = await fetchUser("1");
+    expect(user).toEqual({ id: "1", name: "Alice" });
   });
 
   it("should throw on fetch error", async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
-      statusText: 'Not Found'
+      statusText: "Not Found"
     });
 
-    await expect(fetchUser('1')).rejects.toThrow('Failed to fetch user');
+    await expect(fetchUser("1")).rejects.toThrow("Failed to fetch user");
   });
 });
 ```
@@ -1298,6 +1350,7 @@ const nextThunk = action("DoSomething", { value: 1 });
 ```
 
 **Key points:**
+
 - Framework controls when effects execute (not user code)
 - Actions stay pure by returning thunks instead of executing them
 - Thunks enable memoization and efficient re-renders
@@ -1317,6 +1370,7 @@ const { state, next } = testAction("DoSomething", { value: 1 });
 ```
 
 **Key points:**
+
 - No mocks needed to test logic
 - Inspect what effects would run without executing them
 - Test pure transformations in isolation
@@ -1334,6 +1388,7 @@ The decoupling of declaration (what effect to run) from execution (actually runn
 ## Project Structure
 
 ### Recommended Directory Layout
+
 ```
 your-project/
 ├── index.html                 # Entry HTML with <div id="app"></div>
@@ -1370,6 +1425,7 @@ your-project/
 ```
 
 ### File Naming Conventions
+
 - `*.ts` - Component or service implementation
 - `*.spec.ts` - Unit tests (co-located with implementation)
 - Use camelCase: `userProfile.ts`, not `user-profile.ts`
@@ -1377,6 +1433,7 @@ your-project/
 - Export types as named exports: `export type RootState = ...`
 
 ### Component File Structure (app.ts)
+
 ```typescript
 import { component, html, Config, VNode, Next, Task } from "pure-ui-actions";
 import homePage from "./pages/homePage";
@@ -1384,10 +1441,18 @@ import aboutPage from "./pages/aboutPage";
 const { div } = html;
 
 // 1. Export types for child components
-export type RootProps = Readonly<{ /* ... */ }>;
-export type RootState = Readonly<{ /* ... */ }>;
-export type RootActionPayloads = Readonly<{ /* ... */ }>;
-export type RootTaskPayloads = Readonly<{ /* ... */ }>;
+export type RootProps = Readonly<{
+  /* ... */
+}>;
+export type RootState = Readonly<{
+  /* ... */
+}>;
+export type RootActionPayloads = Readonly<{
+  /* ... */
+}>;
+export type RootTaskPayloads = Readonly<{
+  /* ... */
+}>;
 
 // 2. Export Component type (needed for tests)
 export type Component = {
@@ -1398,18 +1463,25 @@ export type Component = {
 };
 
 // 3. Create and export component
-export default component<Component>(
-  ({ action, task }) => ({
-    state: () => ({ /* ... */ }),
-    init: action("Initialize"),
-    actions: { /* ... */ },
-    tasks: { /* ... */ },
-    view(id, { state }) { /* ... */ }
-  })
-);
+export default component<Component>(({ action, task }) => ({
+  state: () => ({
+    /* ... */
+  }),
+  init: action("Initialize"),
+  actions: {
+    /* ... */
+  },
+  tasks: {
+    /* ... */
+  },
+  view(id, { state }) {
+    /* ... */
+  }
+}));
 ```
 
 ### Router File Structure (router.ts)
+
 ```typescript
 import { mount, subscribe, RunAction } from "pure-ui-actions";
 import Navigo from "navigo";
@@ -1423,16 +1495,16 @@ document.addEventListener("DOMContentLoaded", () => {
     props: {},
     init: (runRootAction: RunAction<RootActionPayloads>) => {
       // Wire routing
-      router.on({
-        home: () => runRootAction("SetPage", { page: "home" }),
-        about: () => runRootAction("SetPage", { page: "about" })
-      }).resolve();
-      
+      router
+        .on({
+          home: () => runRootAction("SetPage", { page: "home" }),
+          about: () => runRootAction("SetPage", { page: "about" })
+        })
+        .resolve();
+
       // Wire browser events
-      window.addEventListener("online", () => 
-        runRootAction("SetOnlineStatus", { online: true })
-      );
-      
+      window.addEventListener("online", () => runRootAction("SetOnlineStatus", { online: true }));
+
       // Subscribe to patch events
       subscribe("patch", () => {
         router.updatePageLinks();
@@ -1447,18 +1519,21 @@ document.addEventListener("DOMContentLoaded", () => {
 ### Render Sequence
 
 **Initial render:**
+
 1. `state` function called with props → initial state
 2. `init` action/task runs (if defined)
 3. `view` function renders initial VNode
 4. VDOM patches DOM
 
 **Re-render on state change:**
+
 1. Action handler returns new state
 2. Framework checks if state reference changed
 3. If changed, `view` function called with new state
 4. VDOM patches only changed DOM elements
 
 **Re-render on props change:**
+
 1. Parent re-renders with new props for child
 2. Child's `view` function called with new props
 3. VDOM patches DOM
@@ -1484,13 +1559,14 @@ If action returns same state reference, no re-render occurs:
 actions: {
   SetTheme: ({ theme }, { state }) => ({
     state: theme === state.theme ? state : { ...state, theme }
-  })
+  });
 }
 ```
 
 ## View Rendering
 
 ### Hyperscript Helpers
+
 Use imported helpers from `html` constant:
 
 ```typescript
@@ -1499,31 +1575,26 @@ const { div, span, button, input, form, h1, h2, p, ul, li } = html;
 ```
 
 ### Element Syntax
+
 ```typescript
 // ID and classes
-div(`#${id}.container.active`, content)
+div(`#${id}.container.active`, content);
 
 // With attributes
 input({
   props: { value: state.text, type: "text" },
   on: { input: action("Input") }
-})
+});
 
 // With event handlers
-button(
-  { on: { click: action("Submit") } },
-  "Submit"
-)
+button({ on: { click: action("Submit") } }, "Submit");
 
 // Nested children
-div(`#${id}`, [
-  h1("Title"),
-  p("Content"),
-  button({ on: { click: action("Click") } }, "Click")
-])
+div(`#${id}`, [h1("Title"), p("Content"), button({ on: { click: action("Click") } }, "Click")]);
 ```
 
 ### Efficient List Rendering
+
 Use `withKey` for lists to enable efficient VDOM updates:
 
 ```typescript
@@ -1549,6 +1620,7 @@ pure-ui-actions exports Snabbdom's `thunk` as both `thunk` and `memo` for optimi
 #### Why This Matters
 
 Memoized components bypass pure-ui-actions' normal render flow. When `rootState` changes:
+
 1. pure-ui-actions re-renders from the root component
 2. Memoized components check their comparison key
 3. If key unchanged → skip re-render
@@ -1562,7 +1634,7 @@ This creates stale state bugs that are difficult to debug.
 import { memo } from "pure-ui-actions";
 
 // Component that ONLY uses props - safe to memoize
-const listComponent = (id, { items }) => 
+const listComponent = (id, { items }) =>
   div(`#${id}`, [
     ul(items.map(item => li(item.name)))
   ]);
@@ -1570,7 +1642,7 @@ const listComponent = (id, { items }) =>
 view(id, { state }) {
   return div(`#${id}`, [
     div(`Counter: ${state.counter}`),
-    
+
     // Safe: listComponent doesn't access rootState
     memo(
       `#${id}-list`,
@@ -1585,9 +1657,10 @@ view(id, { state }) {
 #### Unsafe Patterns
 
 **❌ WRONG: Component accesses rootState**
+
 ```typescript
 // This component reads rootState.theme
-const themedList = (id, { items, rootState }) => 
+const themedList = (id, { items, rootState }) =>
   div(`#${id}.${rootState.theme}`, [  // ❌ Uses rootState
     ul(items.map(item => li(item.name)))
   ]);
@@ -1606,6 +1679,7 @@ view(id, { state, rootState }) {
 ```
 
 **✅ CORRECT: Don't memoize components that need rootState**
+
 ```typescript
 view(id, { state, rootState }) {
   return div(`#${id}`, [
@@ -1616,9 +1690,10 @@ view(id, { state, rootState }) {
 ```
 
 **✅ CORRECT ALTERNATIVE: Pass rootState as explicit prop**
+
 ```typescript
 // Component takes theme as explicit prop (no rootState)
-const themedList = (id, { items, theme }) => 
+const themedList = (id, { items, theme }) =>
   div(`#${id}.${theme}`, [
     ul(items.map(item => li(item.name)))
   ]);
@@ -1639,12 +1714,14 @@ view(id, { state, rootState }) {
 #### When to Use Memo
 
 Use `memo` when:
+
 - Component is computationally expensive
 - Component renders frequently due to unrelated state changes
 - Component **only uses local state or explicit props**
 - Component does **NOT access rootState**
 
 Don't use `memo` when:
+
 - Component is already fast
 - Component needs rootState
 - The memoization overhead exceeds the rendering cost
@@ -1652,6 +1729,7 @@ Don't use `memo` when:
 #### Best Practice
 
 Prefer the state management approach that avoids the need for memoization:
+
 1. Keep state local to components
 2. Lift state only to nearest common parent
 3. Pass data as explicit props
@@ -1670,7 +1748,7 @@ import { setHook } from "pure-ui-actions";
 
 view(id, { state }) {
   const vnode = div(`#${id}`, "Content");
-  
+
   // Hook into VDOM lifecycle
   setHook(vnode, "insert", () => {
     // Called when element is inserted into DOM
@@ -1678,14 +1756,14 @@ view(id, { state }) {
     // Initialize third-party library
     initializeChartLibrary(id);
   });
-  
+
   setHook(vnode, "destroy", () => {
     // Called when element is removed from DOM
     // Useful for cleanup (e.g., removing event listeners, destroying instances)
     console.log("Element unmounted");
     cleanupChartLibrary(id);
   });
-  
+
   return vnode;
 }
 ```
@@ -1706,10 +1784,11 @@ See [Snabbdom hooks documentation](https://github.com/snabbdom/snabbdom#hooks) f
 #### Common Use Cases
 
 **Integrating third-party libraries:**
+
 ```typescript
 view(id, { state }) {
   const chartContainer = div(`#${id}-chart`);
-  
+
   setHook(chartContainer, "insert", () => {
     // Initialize chart after element is in DOM
     const chart = new Chart(document.getElementById(`${id}-chart`), {
@@ -1717,7 +1796,7 @@ view(id, { state }) {
       data: state.chartData
     });
   });
-  
+
   setHook(chartContainer, "update", () => {
     // Update chart when data changes
     const element = document.getElementById(`${id}-chart`);
@@ -1725,7 +1804,7 @@ view(id, { state }) {
       Chart.getChart(element)?.update();
     }
   });
-  
+
   setHook(chartContainer, "destroy", () => {
     // Clean up chart instance
     const element = document.getElementById(`${id}-chart`);
@@ -1733,30 +1812,32 @@ view(id, { state }) {
       Chart.getChart(element)?.destroy();
     }
   });
-  
+
   return chartContainer;
 }
 ```
 
 **Managing focus:**
+
 ```typescript
 view(id, { state }) {
   const input = html.input({
     props: { value: state.value }
   });
-  
+
   if (state.shouldFocus) {
     setHook(input, "insert", () => {
       const el = document.querySelector(`#${id} input`) as HTMLInputElement;
       el?.focus();
     });
   }
-  
+
   return div(`#${id}`, [input]);
 }
 ```
 
 **Note:** Most applications won't need lifecycle hooks. Use them only when:
+
 - Integrating third-party libraries that need direct DOM access
 - Performing imperative DOM operations that can't be expressed declaratively
 - Managing resources that need cleanup (WebGL contexts, observers, etc.)
@@ -1793,6 +1874,7 @@ Install Redux DevTools Extension → Open your pure-ui-actions app → Open DevT
 ```
 
 **What you get:**
+
 - **Action History** - All actions with payloads: `counter/Increment { step: 1 }`
 - **State Tree** - Component states: `{ app: {...}, counter: {...} }`
 - **State Diff** - Auto-computed changes for each action
@@ -1800,6 +1882,7 @@ Install Redux DevTools Extension → Open your pure-ui-actions app → Open DevT
 - **Export/Import** - Save sessions for bug reports
 
 **Limitations:**
+
 - Time travel is disabled (not compatible with pure-ui-actions' functional architecture)
 - Read-only monitoring (can't dispatch actions from DevTools)
 
@@ -1821,6 +1904,7 @@ http://localhost:3000/?debug=console&logRenders=true → Everything with render 
 Both console and DevTools logging can run simultaneously for maximum insight.
 
 **Framework enforces:**
+
 - No state mutation (deepFreeze throws errors)
 - No manual action thunk calls (logs errors)
 - Actions must be synchronous (returned values validated)
@@ -1842,6 +1926,75 @@ Both console and DevTools logging can run simultaneously for maximum insight.
 13. **Use withKey for lists** - Enable efficient VDOM updates
 14. **Context provides event in actions** - Access DOM events via context.event in action handlers
 15. **Use setHook for advanced needs** - VDOM lifecycle hooks for third-party integrations only
+16. **Context properties are always defined** - props, state, and rootState are guaranteed non-optional; only event is optional
+
+## TypeScript Strict Mode
+
+pure-ui-actions is fully compatible with TypeScript's strict mode (`"strict": true` in tsconfig.json).
+
+### Key Compatibility Features
+
+**Non-optional Context properties:**
+
+```typescript
+// Context definition
+export type Context<TProps, TState, TRootState> = {
+  props: TProps; // Always defined (defaults to {})
+  state: TState; // Always defined (defaults to {})
+  rootState: TRootState; // Always defined (defaults to {})
+  event?: Event; // Optional (only present for DOM events)
+};
+```
+
+**No optional chaining needed for props/state/rootState:**
+
+```typescript
+actions: {
+  MyAction: (data, { props, state, rootState }) => {
+    // ✅ Direct access - no optional chaining needed
+    const value = props.someValue;
+    const count = state.count;
+    const theme = rootState.theme;
+
+    // ✅ Optional chaining only for event
+    const eventType = context.event?.type;
+
+    return { state: { ...state, updated: true } };
+  };
+}
+```
+
+**Type inference in test files:**
+For test files, you can omit explicit type annotations and let TypeScript infer types from the Component generic:
+
+```typescript
+// ✅ Let TypeScript infer types
+const myComponent = component<MyComponent>(({ action }) => ({
+  actions: {
+    MyAction: (data, ctx) => {
+      // Types are inferred from MyComponent definition
+      return { state: { ...ctx.state, value: data.value } };
+    }
+  }
+}));
+```
+
+### Enabling Strict Mode
+
+Add to your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["dom", "es2022"],
+    "target": "es2022",
+    "module": "esnext"
+  }
+}
+```
+
+All framework code and examples are tested with strict mode enabled.
 
 ## Build and Test Commands
 
@@ -1870,12 +2023,13 @@ yarn dev
 ## Dependencies
 
 Core dependencies for a pure-ui-actions project:
+
 - `pure-ui-actions` - The framework
 - `snabbdom` - Virtual DOM (peer dependency)
 - `typescript` - Type checking
 - `vitest` - Testing framework
 
 Optional:
+
 - `navigo` - Client-side routing
 - Bundler: Parcel, Vite, or Webpack
-
