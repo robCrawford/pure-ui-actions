@@ -1,4 +1,4 @@
-import { component, html } from "pure-ui-actions";
+import { component, html, Next, VNode } from "pure-ui-actions";
 import { Page, RootState, RootActionPayloads, RootTaskPayloads } from "../app";
 const { button } = html;
 
@@ -21,7 +21,7 @@ export type Component = {
 
 export default component<Component>(({ action, rootAction, rootTask }) => ({
   actions: {
-    Like: (_, { props, state }) => {
+    Like: (_, { props, state }): { state: null; next: Next } => {
       return {
         state,
         next: [
@@ -31,6 +31,6 @@ export default component<Component>(({ action, rootAction, rootTask }) => ({
       };
     }
   },
-  view: (id, { props, rootState }) =>
+  view: (id, { props, rootState }): VNode =>
     button(`#${id}.like`, { on: { click: action("Like") } }, `👍 ${rootState.likes[props.page]}`)
 }));

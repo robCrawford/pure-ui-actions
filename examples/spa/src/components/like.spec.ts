@@ -3,7 +3,7 @@ import like, { Component } from "./like";
 import { RootState } from "../app";
 
 describe("Like component", () => {
-  const { initialState, testAction } = testComponent<Component>(like, { page: "counterPage" });
+  const { testAction } = testComponent<Component>(like, { page: "counterPage" });
 
   describe("'Like' action", () => {
     const { state, next } = testAction<RootState>("Like");

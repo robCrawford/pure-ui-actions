@@ -1,4 +1,4 @@
-import { component, html } from "pure-ui-actions";
+import { component, html, Task, VNode } from "pure-ui-actions";
 import counterPage from "./pages/counterPage";
 import aboutPage from "./pages/aboutPage";
 import "./router";
@@ -37,7 +37,7 @@ export type Component = {
 };
 
 export default component<Component>(() => ({
-  state: () => ({
+  state: (): RootState => ({
     theme: "dark",
     page: undefined,
     likes: {
@@ -47,7 +47,7 @@ export default component<Component>(() => ({
   }),
 
   actions: {
-    SetPage: ({ page }, { state }) => {
+    SetPage: ({ page }, { state }): { state: RootState } => {
       return {
         state:
           page === state.page
@@ -58,7 +58,7 @@ export default component<Component>(() => ({
               }
       };
     },
-    SetTheme: ({ theme }, { state }) => {
+    SetTheme: ({ theme }, { state }): { state: RootState } => {
       return {
         state:
           theme === state.theme
@@ -69,7 +69,7 @@ export default component<Component>(() => ({
               }
       };
     },
-    Like: ({ page }, { state }) => {
+    Like: ({ page }, { state }): { state: RootState } => {
       return {
         state: {
           ...state,
@@ -84,17 +84,17 @@ export default component<Component>(() => ({
 
   tasks: {
     // Demonstrates a task that is only an effect
-    SetDocTitle: ({ title }) => ({
-      perform: () => {
+    SetDocTitle: ({ title }): Task<void, RootProps, RootState, unknown> => ({
+      perform: (): void => {
         document.title = title;
       }
     })
   },
 
-  view(id, { state }) {
+  view(id, { state }): VNode {
     return div(
       `#${id}.page.${state.theme}`,
-      (() => {
+      ((): VNode | undefined => {
         switch (state.page) {
           case "aboutPage":
             return aboutPage("#about-page");

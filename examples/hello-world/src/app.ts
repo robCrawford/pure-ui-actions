@@ -1,4 +1,4 @@
-import { component, html, mount } from "pure-ui-actions";
+import { component, html, mount, Next, Task, VNode } from "pure-ui-actions";
 import { setDocTitle } from "./services/browser";
 const { h3, div } = html;
 
@@ -30,7 +30,7 @@ export type Component = {
 
 const app = component<Component>(({ action, task }) => ({
   // Initial state
-  state: (props) => ({
+  state: (props): State => ({
     title: `Welcome! ${props.date}`,
     text: "",
     done: false
@@ -41,7 +41,7 @@ const app = component<Component>(({ action, task }) => ({
 
   // Action handlers return new state, and any next actions/tasks
   actions: {
-    ShowMessage: (data, context) => {
+    ShowMessage: (data, context): { state: State; next: Next } => {
       return {
         state: {
           ...context.state,
@@ -50,7 +50,7 @@ const app = component<Component>(({ action, task }) => ({
         next: task("SetDocTitle", { title: data.text })
       };
     },
-    PageReady: (data, context) => {
+    PageReady: (data, context): { state: State } => {
       return {
         state: {
           ...context.state,
@@ -62,7 +62,7 @@ const app = component<Component>(({ action, task }) => ({
 
   // Task handlers provide callbacks for effects and async operations that may fail
   tasks: {
-    SetDocTitle: (data) => ({
+    SetDocTitle: (data): Task<void, Props, State, unknown> => ({
       perform: () => setDocTitle(data.title),
       success: () => action("PageReady", { done: true }),
       failure: () => action("PageReady", { done: false })
@@ -70,7 +70,7 @@ const app = component<Component>(({ action, task }) => ({
   },
 
   // View renders from props & state
-  view(id, context) {
+  view(id, context): VNode {
     return div(`#${id}-message`, [
       h3(context.state.title),
       div(context.state.text),

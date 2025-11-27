@@ -1,4 +1,4 @@
-import { ActionThunk, component, html } from "pure-ui-actions";
+import { ActionThunk, component, html, Next, VNode } from "pure-ui-actions";
 const { div, button } = html;
 
 export type Props = Readonly<{
@@ -21,12 +21,12 @@ export type Component = {
 };
 
 export default component<Component>(({ action }) => ({
-  state: () => ({
+  state: (): State => ({
     show: true
   }),
 
   actions: {
-    Dismiss: (_, { props, state }) => {
+    Dismiss: (_, { props, state }): { state: State; next: Next } => {
       return {
         state: {
           ...state,
@@ -37,7 +37,7 @@ export default component<Component>(({ action }) => ({
     }
   },
 
-  view(id, { props, state }) {
+  view(id, { props, state }): VNode {
     return div(
       `#${id}.notification`,
       {

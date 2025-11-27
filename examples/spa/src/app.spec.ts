@@ -2,7 +2,6 @@ import { testComponent } from "pure-ui-actions";
 import app, { RootState, Component } from "./app";
 
 describe("App", () => {
-
   const { testAction, testTask, initialState } = testComponent<Component>(app, {});
 
   it("should set initial state", () => {
@@ -50,7 +49,6 @@ describe("App", () => {
     const { state, next } = testAction<RootState>("Like", { page: "aboutPage" });
 
     it("should update state", () => {
-
       expect(state).toEqual({
         ...initialState,
         likes: {
@@ -80,5 +78,4 @@ describe("App", () => {
       expect(failure).toBeUndefined();
     });
   });
-
 });

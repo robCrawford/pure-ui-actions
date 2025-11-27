@@ -2,8 +2,9 @@ import { testComponent, NextData } from "pure-ui-actions";
 import app, { State, Component } from "./app";
 
 describe("App", () => {
-
-  const { testAction, testTask, config, initialState } = testComponent<Component>(app, { date: "Test Date" });
+  const { testAction, testTask, config, initialState } = testComponent<Component>(app, {
+    date: "Test Date"
+  });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({
@@ -21,7 +22,7 @@ describe("App", () => {
   });
 
   describe("'ShowMessage' action", () => {
-    const { state, next } = testAction<State>("ShowMessage", { text: "Hello World!"});
+    const { state, next } = testAction<State>("ShowMessage", { text: "Hello World!" });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -56,5 +57,4 @@ describe("App", () => {
       expect(data).toEqual({ done: false });
     });
   });
-
 });

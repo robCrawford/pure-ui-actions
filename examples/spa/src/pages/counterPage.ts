@@ -1,4 +1,4 @@
-import { component, html } from "pure-ui-actions";
+import { component, html, VNode } from "pure-ui-actions";
 import counter from "../components/counter";
 import themeMenu from "../components/themeMenu";
 import like from "../components/like";
@@ -13,7 +13,7 @@ export type Component = {
 export default component<Component>(({ rootTask }) => ({
   init: rootTask("SetDocTitle", { title: "Counter Page" }),
 
-  view(id) {
+  view(id): VNode {
     return div(`#${id}`, [
       div(".content", [
         themeMenu("#theme-menu"),

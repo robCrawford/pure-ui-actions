@@ -1,4 +1,4 @@
-import { component, html } from "pure-ui-actions";
+import { component, html, VNode } from "pure-ui-actions";
 import themeMenu from "../components/themeMenu";
 import like from "../components/like";
 import { RootState, RootTaskPayloads } from "../app";
@@ -12,7 +12,7 @@ export type Component = {
 export default component<Component>(({ rootTask }) => ({
   init: rootTask("SetDocTitle", { title: "About Page" }),
 
-  view(id) {
+  view(id): VNode {
     return div(
       `#${id}`,
       div(".content", [

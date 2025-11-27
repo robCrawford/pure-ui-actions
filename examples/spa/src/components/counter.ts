@@ -1,4 +1,4 @@
-import { component, html } from "pure-ui-actions";
+import { component, html, Next, Task, VNode } from "pure-ui-actions";
 import notification from "./notification";
 import { validateCount } from "../services/validation";
 const { div, button } = html;
@@ -31,7 +31,7 @@ export type Component = {
 };
 
 export default component<Component>(({ action, task }) => ({
-  state: (props) => ({
+  state: (props): State => ({
     counter: props.start,
     feedback: ""
   }),
@@ -39,7 +39,7 @@ export default component<Component>(({ action, task }) => ({
   init: action("Validate"),
 
   actions: {
-    Increment: ({ step }, { state }) => {
+    Increment: ({ step }, { state }): { state: State; next: Next } => {
       return {
         state: {
           ...state,
@@ -48,7 +48,7 @@ export default component<Component>(({ action, task }) => ({
         next: action("Validate")
       };
     },
-    Decrement: ({ step }, { state }) => {
+    Decrement: ({ step }, { state }): { state: State; next: Next } => {
       return {
         state: {
           ...state,
@@ -57,7 +57,7 @@ export default component<Component>(({ action, task }) => ({
         next: action("Validate")
       };
     },
-    Validate: (_, { state }) => {
+    Validate: (_, { state }): { state: State; next: Next } => {
       return {
         state,
         next: [
@@ -67,7 +67,7 @@ export default component<Component>(({ action, task }) => ({
         ]
       };
     },
-    SetFeedback: ({ text }, { state }) => {
+    SetFeedback: ({ text }, { state }): { state: State } => {
       return {
         state:
           text === state.feedback
@@ -81,16 +81,16 @@ export default component<Component>(({ action, task }) => ({
   },
 
   tasks: {
-    ValidateCount: ({ count }) => {
+    ValidateCount: ({ count }): Task<{ text: string }, Props, State, unknown> => {
       return {
         perform: () => validateCount(count),
-        success: (result: { text: string }) => action("SetFeedback", result),
+        success: (result) => action("SetFeedback", result),
         failure: () => action("SetFeedback", { text: "Unavailable" })
       };
     }
   },
 
-  view(id, { state }) {
+  view(id, { state }): VNode {
     return div(`#${id}.counter`, [
       button({ on: { click: action("Increment", { step: 1 }) } }, "+"),
       div(String(state.counter)),

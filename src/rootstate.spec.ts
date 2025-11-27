@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { vi } from "vitest";
 import { _setTestKey, component, html, mount } from "./pure-ui-actions";
 import * as vdom from "./vdom";

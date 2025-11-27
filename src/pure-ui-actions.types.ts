@@ -44,6 +44,7 @@ export type ActionHandler<TData, TProps, TState, TRootState> = (
 
 export type TaskHandler<TData, TProps, TState, TRootState> = (
   data: TData
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => Task<any, TProps, TState, TRootState>;
 
 export type Task<TResult, TProps, TState, TRootState> = {
