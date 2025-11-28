@@ -555,7 +555,7 @@ describe("Lifecycle and Data Flow", () => {
         ActionPayloads: TestActions;
       };
 
-      const testComponent = component<TestComponent>(({ action }) => ({
+      const componentTest = component<TestComponent>(({ action }) => ({
         state: (props?) => ({
           value: props?.value ?? "default",
           modified: false
@@ -584,7 +584,7 @@ describe("Lifecycle and Data Flow", () => {
       }));
 
       mount({
-        app: testComponent,
+        app: componentTest,
         props: { value: "original" }
       });
 

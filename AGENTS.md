@@ -655,14 +655,14 @@ actions: {
 
 ## Testing
 
-Use `testComponent` to test component logic without mocks. Returns plain data instead of thunks.
+Use `componentTest` to test component logic without mocks. Returns plain data instead of thunks.
 
 ```typescript
-import { testComponent, NextData } from "pure-ui-actions";
+import { componentTest, NextData } from "pure-ui-actions";
 import app, { State, Component } from "./app";
 
 describe("App", () => {
-  const { testAction, testTask, config, initialState } = testComponent<Component>(app, {
+  const { actionTest, taskTest, config, initialState } = componentTest<Component>(app, {
     date: "Test Date"
   });
 
@@ -675,7 +675,7 @@ describe("App", () => {
   });
 
   describe("ShowMessage action", () => {
-    const { state, next } = testAction<State>("ShowMessage", { text: "Test" });
+    const { state, next } = actionTest<State>("ShowMessage", { text: "Test" });
 
     it("updates state", () => {
       expect(state).toEqual({ ...initialState, text: "Test" });
@@ -689,7 +689,7 @@ describe("App", () => {
   });
 
   describe("SetDocTitle task", () => {
-    const { perform, success } = testTask("SetDocTitle", { title: "test" });
+    const { perform, success } = taskTest("SetDocTitle", { title: "test" });
 
     it("provides perform", () => {
       expect(perform).toBeDefined();
@@ -704,14 +704,14 @@ describe("App", () => {
 });
 
 // Custom context (state, rootState, event)
-const { state } = testAction<State>(
+const { state } = actionTest<State>(
   "ProcessData",
   { value: 10 },
   { state: { count: 5, data: [] } }
 );
 
 // Mock event
-const { state: eventState } = testAction<State>(
+const { state: eventState } = actionTest<State>(
   "HandleInput",
   {},
   {
@@ -928,7 +928,7 @@ Limitations: Time travel disabled, read-only monitoring
 6. **Don't memo components with rootState** - They won't see changes
 7. **External events in mount init** - Wire routing/browser events there
 8. **Service functions for I/O** - Extract reusable I/O to services/
-9. **Test with testComponent** - Export Component type for type inference
+9. **Test with componentTest** - Export Component type for type inference
 10. **Use withKey for lists** - Enable efficient VDOM updates when reordering
 11. **Context in actions** - `props`, `state`, `rootState` non-optional; `event` optional
 12. **TypeScript strict mode** - Add return types: `{ state: State; next: Next }`, `Task<Result, Props, State, RootState>`, `VNode`

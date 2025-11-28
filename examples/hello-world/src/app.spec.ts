@@ -1,8 +1,8 @@
-import { testComponent, NextData } from "pure-ui-actions";
+import { componentTest, NextData } from "pure-ui-actions";
 import app, { State, Component } from "./app";
 
 describe("App", () => {
-  const { testAction, testTask, config, initialState } = testComponent<Component>(app, {
+  const { actionTest, taskTest, config, initialState } = componentTest<Component>(app, {
     date: "Test Date"
   });
 
@@ -22,7 +22,7 @@ describe("App", () => {
   });
 
   describe("'ShowMessage' action", () => {
-    const { state, next } = testAction<State>("ShowMessage", { text: "Hello World!" });
+    const { state, next } = actionTest<State>("ShowMessage", { text: "Hello World!" });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -39,7 +39,7 @@ describe("App", () => {
   });
 
   describe("'SetDocTitle' task", () => {
-    const { perform, success, failure } = testTask("SetDocTitle", { title: "test" });
+    const { perform, success, failure } = taskTest("SetDocTitle", { title: "test" });
 
     it("should provide perform", () => {
       expect(perform).toBeDefined();

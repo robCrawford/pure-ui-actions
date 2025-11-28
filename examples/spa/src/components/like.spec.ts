@@ -1,12 +1,12 @@
-import { testComponent } from "pure-ui-actions";
+import { componentTest } from "pure-ui-actions";
 import like, { Component } from "./like";
 import { RootState } from "../app";
 
 describe("Like component", () => {
-  const { testAction } = testComponent<Component>(like, { page: "counterPage" });
+  const { actionTest } = componentTest<Component>(like, { page: "counterPage" });
 
   describe("'Like' action", () => {
-    const { state, next } = testAction<RootState>("Like");
+    const { state, next } = actionTest<RootState>("Like");
 
     it("should not update state", () => {
       // Stateless component - initialState is undefined, but context defaults to {}

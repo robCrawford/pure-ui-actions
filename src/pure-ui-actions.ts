@@ -14,7 +14,7 @@ import {
   TaskThunk,
   ThunkType
 } from "./pure-ui-actions.types";
-export * from "./test-component";
+export * from "./component-test";
 export {
   ActionHandler,
   ActionThunk,

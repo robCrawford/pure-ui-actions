@@ -1,11 +1,11 @@
-import { testComponent, ThunkType, ActionThunk } from "pure-ui-actions";
+import { componentTest, ThunkType, ActionThunk } from "pure-ui-actions";
 import notification, { State, Component } from "./notification";
 
 const passedInActionThunk: ActionThunk = () => {};
 passedInActionThunk.type = ThunkType.Action;
 
 describe("Notification component", () => {
-  const { initialState, testAction } = testComponent<Component>(notification, {
+  const { initialState, actionTest } = componentTest<Component>(notification, {
     text: "test",
     onDismiss: passedInActionThunk
   });
@@ -15,7 +15,7 @@ describe("Notification component", () => {
   });
 
   describe("'Dismiss' action", () => {
-    const { state, next } = testAction<State>("Dismiss");
+    const { state, next } = actionTest<State>("Dismiss");
 
     it("should update state", () => {
       expect(state).toEqual({

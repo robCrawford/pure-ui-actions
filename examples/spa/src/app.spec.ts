@@ -1,8 +1,8 @@
-import { testComponent } from "pure-ui-actions";
+import { componentTest } from "pure-ui-actions";
 import app, { RootState, Component } from "./app";
 
 describe("App", () => {
-  const { testAction, testTask, initialState } = testComponent<Component>(app, {});
+  const { actionTest, taskTest, initialState } = componentTest<Component>(app, {});
 
   it("should set initial state", () => {
     expect(initialState).toEqual({
@@ -16,7 +16,7 @@ describe("App", () => {
   });
 
   describe("'SetPage' action", () => {
-    const { state, next } = testAction<RootState>("SetPage", { page: "test" });
+    const { state, next } = actionTest<RootState>("SetPage", { page: "test" });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -31,7 +31,7 @@ describe("App", () => {
   });
 
   describe("'SetTheme' action", () => {
-    const { state, next } = testAction<RootState>("SetTheme", { theme: "test" });
+    const { state, next } = actionTest<RootState>("SetTheme", { theme: "test" });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -46,7 +46,7 @@ describe("App", () => {
   });
 
   describe("'Like' action", () => {
-    const { state, next } = testAction<RootState>("Like", { page: "aboutPage" });
+    const { state, next } = actionTest<RootState>("Like", { page: "aboutPage" });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -64,7 +64,7 @@ describe("App", () => {
   });
 
   describe("'SetDocTitle' task", () => {
-    const { perform, success, failure } = testTask("SetDocTitle", { count: 0 });
+    const { perform, success, failure } = taskTest("SetDocTitle", { count: 0 });
 
     it("should provide perform", () => {
       expect(perform).toBeDefined();

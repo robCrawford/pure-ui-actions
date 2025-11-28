@@ -3,30 +3,30 @@ API for unit testing components
 
 - Initialise component test API
 import counter from "./counter";
-const { initialState, testAction, testTask, config } = testComponent(counter, { start: 0 });
+const { initialState, actionTest, taskTest, config } = componentTest(counter, { start: 0 });
 
 - Test an action: outputs `state` and `next` results as data
-const { state, next } = testAction("Increment", { step: 1 });
+const { state, next } = actionTest("Increment", { step: 1 });
 
 - Test an action with custom state
-const { state, next } = testAction("Increment", { step: 1 }, { state: { count: 5 } });
+const { state, next } = actionTest("Increment", { step: 1 }, { state: { count: 5 } });
 
 - Test an action with rootState or event
-const { state, next } = testAction("HandleSubmit", {}, {
+const { state, next } = actionTest("HandleSubmit", {}, {
   state: customState,
   rootState: { theme: "dark" },
   event: mockEvent
 });
 
 - Test a task: returns `success` and `failure` callbacks for tests to invoke
-const { perform, success, failure } = testTask("ValidateCount", { count: 0 });
+const { perform, success, failure } = taskTest("ValidateCount", { count: 0 });
 const { name, data } = success({ text: "Test" });
 */
 import { Config, Context } from "./pure-ui-actions.types";
 
 // Options for testing actions with custom context
 // Note: Props are set during component initialization and cannot be overridden per-action
-export type TestActionOptions<TState, TRootState> = {
+export type ActionTestOptions<TState, TRootState> = {
   // Override the component state for this test (defaults to initialState)
   state?: TState;
   // Provide rootState for components that access it
@@ -53,15 +53,15 @@ export type ComponentTestApi<
 > = {
   config: Config;
   initialState: TState;
-  testAction: <TActionState = TState>(
+  actionTest: <TActionState = TState>(
     name: string,
     data?: Record<string, unknown>,
-    options?: TestActionOptions<TActionState, TRootState>
+    options?: ActionTestOptions<TActionState, TRootState>
   ) => { state: TActionState; next?: NextData | NextData[] };
-  testTask: (name: string, data?: Record<string, unknown>) => TestTaskSpec;
+  taskTest: (name: string, data?: Record<string, unknown>) => TaskTestSpec;
 };
 
-export type TestTaskSpec<
+export type TaskTestSpec<
   TProps = Record<string, unknown>,
   TState = Record<string, unknown>,
   TRootState = Record<string, unknown>
@@ -80,7 +80,7 @@ export type TestTaskSpec<
 // Returns next action/task inputs as data
 const nextToData = (name: string, data?: Record<string, unknown>): NextData => ({ name, data });
 
-export function testComponent<TComponent extends Partial<ComponentType>>(
+export function componentTest<TComponent extends Partial<ComponentType>>(
   component: { getConfig: Function },
   props?: TComponent["Props"]
 ): ComponentTestApi<TComponent["State"], TComponent["RootState"]> {
@@ -100,10 +100,10 @@ export function testComponent<TComponent extends Partial<ComponentType>>(
     // For comparing state changes
     initialState,
 
-    testAction<TState, TRootState = Record<string, unknown>>(
+    actionTest<TState, TRootState = Record<string, unknown>>(
       name: string,
       data?: Record<string, unknown>,
-      options?: TestActionOptions<TState, TRootState>
+      options?: ActionTestOptions<TState, TRootState>
     ): { state: TState; next?: NextData | NextData[] } {
       // Returns any next operations as data
       return config.actions[name](data, {
@@ -115,7 +115,7 @@ export function testComponent<TComponent extends Partial<ComponentType>>(
     },
 
     // Get task spec for manually testing `success` and `failure` output
-    testTask(name: string, data?: Record<string, unknown>): TestTaskSpec {
+    taskTest(name: string, data?: Record<string, unknown>): TaskTestSpec {
       // Returns task spec
       return config.tasks[name](data);
     }

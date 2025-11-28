@@ -158,15 +158,15 @@ An `event` prop is also passed via `Context` when actions are invoked from the D
 
 ## Unit tests
 
-For tests, `testAction` and `testTask` functions return plain data, so component logic can be tested without mocks or executing actual effects.
+For tests, `actionTest` and `taskTest` functions return plain data, so component logic can be tested without mocks or executing actual effects.
 
 ```JavaScript
-import { testComponent, NextData } from "pure-ui-actions";
+import { componentTest, NextData } from "pure-ui-actions";
 import app, { State } from "./app";
 
 describe("App", () => {
 
-  const { testAction, testTask, config, initialState } = testComponent(app, { placeholder: "placeholder" });
+  const { actionTest, taskTest, config, initialState } = componentTest(app, { placeholder: "placeholder" });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({ text: "placeholder", done: false });
@@ -180,7 +180,7 @@ describe("App", () => {
   });
 
   describe("'ShowMessage' action", () => {
-    const { state, next } = testAction<State>("ShowMessage", { text: "Hello World!"});
+    const { state, next } = actionTest<State>("ShowMessage", { text: "Hello World!"});
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -197,7 +197,7 @@ describe("App", () => {
   });
 
   describe("'SetDocTitle' task", () => {
-    const { perform, success, failure } = testTask("SetDocTitle", { title: "test" });
+    const { perform, success, failure } = taskTest("SetDocTitle", { title: "test" });
 
     it("should provide perform", () => {
       expect(perform).toBeDefined();
@@ -225,19 +225,19 @@ Pass an optional third parameter to test actions with specific state, rootState,
 
 ```JavaScript
 // Test with custom state
-const { state } = testAction("ProcessData", { value: 10 }, {
+const { state } = actionTest("ProcessData", { value: 10 }, {
   state: { count: 5, data: [] }
 });
 
 // Test action that accesses rootState
-const { state } = testAction("ApplyTheme", {}, {
+const { state } = actionTest("ApplyTheme", {}, {
   state: initialState,
   rootState: { theme: "dark" }
 });
 
 // Test action that accesses DOM event
 const mockEvent = { target: { value: "test input" } };
-const { state } = testAction("HandleInput", {}, {
+const { state } = actionTest("HandleInput", {}, {
   state: initialState,
   event: mockEvent
 });
