@@ -179,7 +179,7 @@ function executeAction(
   }
 
   if (currStateChanged && instance.state) {
-    log.updateEnd(instance.state, id);
+    log.updateEnd(instance.state);
   }
   runNext(instance, next);
 }

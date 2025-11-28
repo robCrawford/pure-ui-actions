@@ -8,7 +8,6 @@ let groupId = "";
 const searchParams =
   typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
 const logToConsole = searchParams?.get("debug") === "console"; // Enable with ?debug=console
-const logRenders = searchParams?.get("logRenders") === "true"; // Enable with ?logRenders=true
 
 const logEnabled = logToConsole;
 
@@ -135,19 +134,8 @@ export const log = {
       }
     }
   },
-  updateEnd(state: Record<string, unknown>, id?: string): void {
+  updateEnd(state: Record<string, unknown>): void {
     // Note: updateEnd is informational only - state already sent in updateStart
-    // Only send if we have both state and id, and logRenders is enabled (can be noisy)
-    if (devToolsConnection && state && id && logRenders) {
-      devToolsConnection.send(
-        {
-          type: `${id}/[StateUpdated]`,
-          meta: { isStateUpdate: true }
-        },
-        getAggregatedState()
-      );
-    }
-
     // Console logging
     if (logEnabled && state) {
       console.log(`${JSON.stringify(state)}`);
@@ -207,18 +195,6 @@ export const log = {
     }
   },
   render(id: string, props?: Record<string, unknown> | null): void {
-    // Send render event to Redux DevTools (controlled by logRenders flag)
-    if (devToolsConnection && logRenders) {
-      devToolsConnection.send(
-        {
-          type: `${id}/[Render]`,
-          payload: props && Object.keys(props).length ? props : null,
-          meta: { isRender: true }
-        },
-        getAggregatedState()
-      );
-    }
-
     // Console logging
     if (logEnabled) {
       console.groupEnd();

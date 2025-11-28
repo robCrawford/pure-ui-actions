@@ -19,7 +19,7 @@ body {
   overflow-y: auto;
 }
 
-.page.default {
+.page.light {
   background: #f8f9fa;
   color: #212529;
 }

@@ -1886,23 +1886,6 @@ Install Redux DevTools Extension → Open your pure-ui-actions app → Open DevT
 - Time travel is disabled (not compatible with pure-ui-actions' functional architecture)
 - Read-only monitoring (can't dispatch actions from DevTools)
 
-**Logging Controls:**
-
-pure-ui-actions provides flexible logging via URL query parameters:
-
-- **Redux DevTools** - Automatic when extension is installed
-- **Console logging** - Add `?debug=console` to URL
-- **Render events** - Add `?logRenders=true` to include render/patch events (verbose)
-
-```
-Example URLs:
-http://localhost:3000/                              → Redux DevTools only (if installed)
-http://localhost:3000/?debug=console                → Console + Redux DevTools
-http://localhost:3000/?debug=console&logRenders=true → Everything with render events
-```
-
-Both console and DevTools logging can run simultaneously for maximum insight.
-
 **Framework enforces:**
 
 - No state mutation (deepFreeze throws errors)
