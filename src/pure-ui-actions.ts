@@ -1,0 +1,528 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { patch, setHook, VNode } from "./vdom";
+export { html, VNode, memo, setHook } from "./vdom";
+import { log } from "./log";
+import {
+  ActionThunk,
+  Component,
+  ComponentInstance,
+  GetActionThunk,
+  GetConfig,
+  GetTaskThunk,
+  Next,
+  RunAction,
+  TaskThunk,
+  ThunkType
+} from "./pure-ui-actions.types";
+export * from "./component-test";
+export {
+  ActionHandler,
+  ActionThunk,
+  Component,
+  ComponentInstance,
+  Config,
+  Context,
+  GetActionThunk,
+  GetConfig,
+  GetTaskThunk,
+  Next,
+  RunAction,
+  Task,
+  TaskHandler,
+  TaskThunk,
+  ThunkType
+} from "./pure-ui-actions.types";
+
+const componentRegistry = new Map<string, ComponentInstance>();
+export const getComponentRegistry = (): Map<string, ComponentInstance> => componentRegistry;
+
+const actionThunkCache = new Map<string, ActionThunk>();
+const taskThunkCache = new Map<string, TaskThunk>();
+
+// Module-level refs to root component's creators, typed via cast when passed to components
+let rootAction: GetActionThunk<any> | undefined;
+let rootTask: GetTaskThunk<any> | undefined;
+let rootState: Record<string, unknown> | undefined | null;
+let renderRootId: string | undefined;
+
+function resetAppState(): void {
+  componentRegistry.clear();
+  actionThunkCache.clear();
+  taskThunkCache.clear();
+
+  rootState = undefined;
+  renderRootId = undefined;
+  rootAction = undefined;
+  rootTask = undefined;
+}
+
+const appId = "app";
+let internalKey = {}; // Private unique value
+export const _setTestKey = // Set for tests
+  <T extends object>(k: T): T => (internalKey = k);
+let noRender = 0;
+let rootStateChanged = false;
+let stateChanged = false;
+
+// Helper to create stable cache keys
+function createCacheKey(id: string, name: string, data: unknown): string {
+  const dataKey = data === null || data === undefined ? "" : JSON.stringify(data);
+  return `${id}:${name}:${dataKey}`;
+}
+
+// Action thunk creator with memoization
+function createActionThunk(componentId: string, actionName: string, data: unknown): ActionThunk {
+  const cacheKey = createCacheKey(componentId, actionName, data);
+
+  const cached = actionThunkCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const actionThunk: {
+    (thunkInput?: Record<string, unknown> | Event): void | ActionThunk;
+    type: ThunkType.Action;
+  } = (thunkInput) => {
+    if (isDomEvent(thunkInput)) {
+      const instance = componentRegistry.get(componentId);
+      if (!instance) {
+        throw Error(`Component ${componentId} not found in registry`);
+      }
+      executeAction(instance, actionName, data, thunkInput as Event);
+    } else if (thunkInput === internalKey) {
+      const instance = componentRegistry.get(componentId);
+      if (!instance) {
+        throw Error(`Component ${componentId} not found in registry`);
+      }
+      executeAction(instance, actionName, data);
+    } else {
+      log.manualError(componentId, actionName);
+    }
+  };
+
+  actionThunk.type = ThunkType.Action;
+  actionThunkCache.set(cacheKey, actionThunk);
+  return actionThunk;
+}
+
+// Task thunk creator with memoization
+function createTaskThunk(componentId: string, taskName: string, data: unknown): TaskThunk {
+  const cacheKey = createCacheKey(componentId, taskName, data);
+
+  const cached = taskThunkCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const taskThunk: {
+    (thunkInput?: Record<string, unknown> | Event): Promise<Next | void> | void;
+    type: ThunkType.Task;
+    taskName: string;
+    taskData?: unknown;
+  } = (thunkInput) => {
+    // Defer instance lookup until thunk is actually invoked
+    if (isDomEvent(thunkInput) || thunkInput === internalKey) {
+      const instance = componentRegistry.get(componentId);
+      if (!instance) {
+        throw Error(`Component ${componentId} not found in registry`);
+      }
+      const result = performTask(instance, taskName, data);
+      return result.then((next?: Next) => runNext(instance, next));
+    } else {
+      log.manualError(componentId, taskName);
+    }
+  };
+
+  taskThunk.type = ThunkType.Task;
+  taskThunk.taskName = String(taskName);
+  taskThunk.taskData = data;
+  taskThunkCache.set(cacheKey, taskThunk);
+  return taskThunk;
+}
+
+function executeAction(
+  instance: ComponentInstance,
+  actionName: string,
+  data: unknown,
+  event?: Event
+): void {
+  const { config, state: prevState, props, isRoot, id } = instance;
+  const actions = config.actions;
+
+  if (!actions || !actions[actionName]) {
+    return;
+  }
+
+  let next: Next;
+  const prevStateFrozen = deepFreeze(prevState);
+
+  ({ state: instance.state, next } = actions[actionName](data as Record<string, unknown>, {
+    props: props ?? {},
+    state: prevStateFrozen ?? {},
+    rootState: rootState ?? {},
+    event
+  }));
+
+  const currStateChanged = instance.state !== prevState;
+  stateChanged = stateChanged || currStateChanged;
+  log.updateStart(
+    id,
+    currStateChanged ? prevState : undefined,
+    actionName,
+    data as Record<string, unknown>,
+    instance.state
+  );
+
+  if (isRoot) {
+    rootState = instance.state;
+    rootStateChanged = currStateChanged;
+  }
+
+  if (currStateChanged && instance.state) {
+    log.updateEnd(instance.state);
+  }
+  runNext(instance, next);
+}
+
+function performTask(
+  instance: ComponentInstance,
+  taskName: string,
+  data: unknown
+): Promise<Next | undefined> {
+  const { config, state, props, id } = instance;
+  const tasks = config.tasks;
+
+  if (!tasks || !tasks[taskName]) {
+    throw Error(`Task ${taskName} not found in component ${id}`);
+  }
+
+  const { perform, success, failure } = tasks[taskName](data);
+  const runSuccess = (result: unknown): Next | undefined =>
+    success &&
+    success(result, {
+      props: props ?? {},
+      state: state ?? {},
+      rootState: rootState ?? {}
+    });
+  const runFailure = (err: unknown): Next | undefined =>
+    failure &&
+    failure(err, {
+      props: props ?? {},
+      state: state ?? {},
+      rootState: rootState ?? {}
+    });
+
+  try {
+    const output = perform();
+    log.taskPerform(id, String(taskName), isPromise(output));
+
+    if (isPromise(output)) {
+      renderComponentInstance(instance); // Render pending state updates
+      return output
+        .then((result: unknown) => {
+          log.taskSuccess(id, String(taskName));
+          return runSuccess(result);
+        })
+        .catch((err: Error) => {
+          log.taskFailure(id, String(taskName), err);
+          return runFailure(err);
+        });
+    } else {
+      log.taskSuccess(id, String(taskName));
+      return Promise.resolve(runSuccess(output));
+    }
+  } catch (err) {
+    log.taskFailure(id, String(taskName), err as Error);
+    return Promise.resolve(runFailure(err));
+  }
+}
+
+// Next executor
+function runNext(instance: ComponentInstance, next: Next | undefined): void {
+  if (!next) {
+    renderComponentInstance(instance);
+  } else if (isThunk(next)) {
+    // Thunks may only be invoked here or from the DOM
+    // `internalKey` prevents any manual calls from outside
+    next(internalKey);
+  } else if (Array.isArray(next)) {
+    noRender++;
+    next.forEach((n: Next) => runNext(instance, n));
+    noRender--;
+    renderComponentInstance(instance);
+  }
+}
+
+// Render function
+function renderComponentInstance(instance: ComponentInstance): VNode | undefined {
+  if (!noRender) {
+    if (rootStateChanged) {
+      const rootInstance = componentRegistry.get(appId);
+      rootStateChanged = false;
+      if (rootInstance) {
+        return renderComponentInstance(rootInstance);
+      }
+    } else if (stateChanged || instance.props !== instance.prevProps) {
+      let isRenderRoot = false;
+      if (!renderRootId) {
+        renderRootId = instance.id;
+        isRenderRoot = true;
+      }
+
+      const prevVNode = instance.vnode;
+      instance.vnode = instance.config.view(instance.id, {
+        props: instance.props ?? {},
+        state: instance.state ?? {},
+        rootState: rootState ?? {}
+      });
+      log.render(instance.id, instance.props);
+
+      // Update global state before patch so DevTools has accurate state
+      log.setStateGlobal(instance.id, instance.state);
+
+      if (isRenderRoot && prevVNode) {
+        patch(prevVNode, instance.vnode);
+        log.patch();
+        stateChanged = false;
+        renderRootId = undefined;
+
+        // Reset render flags
+        Array.from(componentRegistry.values()).forEach((inst) => {
+          inst.inCurrentRender = false;
+        });
+      }
+
+      if (isRenderRoot) {
+        publish("patch");
+      }
+
+      setRenderRef(instance);
+    }
+  }
+
+  instance.prevProps = instance.props;
+
+  return instance.vnode;
+}
+
+export function component<TComponent extends Component>(
+  getConfig: GetConfig<TComponent>
+): { (idStr: string, props?: TComponent["Props"]): VNode; getConfig: Function } {
+  // Pass in callback that returns component config
+  // Returns render function that is called by parent e.g. `counter("counter-0", { start: 0 })`
+  const renderFn = (idStr: string, props?: TComponent["Props"]): VNode => {
+    const id = (idStr || "").replace(/^#/, "");
+
+    // Check if component exists in registry
+    const existing = componentRegistry.get(id);
+
+    if (!id.length || (!noRender && existing && existing.inCurrentRender)) {
+      throw Error(`Component${id ? ` "${id}" ` : " "}must have a unique id!`);
+    }
+
+    // Mark as in current render
+    if (existing) {
+      existing.inCurrentRender = true;
+    }
+
+    return renderComponent<TComponent>(id, getConfig, props);
+  };
+  // Add a handle to `getConfig` for tests
+  renderFn.getConfig = getConfig;
+  return renderFn;
+}
+
+export function renderComponent<TComponent extends Component>(
+  id: string,
+  getConfig: GetConfig<TComponent>,
+  props?: TComponent["Props"]
+): VNode {
+  deepFreeze(props);
+  const isRoot = id === appId;
+
+  // If component already exists, just render again
+  const existingRender = componentRegistry.get(id)?.render;
+  if (existingRender) {
+    const newVNode = existingRender(props);
+    if (newVNode) {
+      return newVNode;
+    }
+  }
+
+  const action: GetActionThunk<TComponent["ActionPayloads"]> = (actionName, data): ActionThunk => {
+    return createActionThunk(id, String(actionName), data);
+  };
+
+  const task: GetTaskThunk<TComponent["TaskPayloads"]> = (taskName, data): TaskThunk => {
+    return createTaskThunk(id, String(taskName), data);
+  };
+
+  const config = getConfig({
+    action,
+    task,
+    rootAction: rootAction as GetActionThunk<TComponent["RootActionPayloads"]>,
+    rootTask: rootTask as GetTaskThunk<TComponent["RootTaskPayloads"]>
+  });
+
+  const state = config.state && config.state(props);
+
+  // Create component instance
+  const instance: ComponentInstance = {
+    id,
+    config,
+    state,
+    props,
+    prevProps: undefined,
+    render: (p) => {
+      const inst = componentRegistry.get(id);
+      if (inst) {
+        inst.props = p;
+        return renderComponentInstance(inst);
+      }
+    },
+    vnode: undefined,
+    isRoot,
+    inCurrentRender: true
+  };
+
+  componentRegistry.set(id, instance);
+
+  if (config.init) {
+    noRender++;
+    runNext(instance, config.init);
+    noRender--;
+  } else {
+    log.noInitialAction(id, state);
+  }
+
+  if (isRoot) {
+    rootAction = action;
+    rootTask = task;
+    rootState = instance.state;
+  }
+
+  log.render(id, props);
+  instance.vnode = config.view(id, {
+    props: props ?? {},
+    state: instance.state ?? {},
+    rootState: rootState ?? {}
+  });
+  instance.prevProps = props;
+
+  setRenderRef(instance);
+  log.setStateGlobal(id, instance.state);
+
+  return instance.vnode;
+}
+
+export function mount<TActions, TProps>({
+  app,
+  props,
+  init
+}: {
+  app: (idStr: string, props?: TProps) => VNode;
+  props: TProps;
+  init?: (runRootAction: RunAction<TActions>) => void;
+}): void {
+  resetAppState();
+  // Mount the top-level app component
+  const appElement = document.getElementById(appId);
+  if (!appElement) {
+    throw Error(`Element with id "${appId}" not found`);
+  }
+  patch(appElement, app(appId, props));
+  log.patch();
+  publish("patch");
+
+  // Reset render flags
+  Array.from(componentRegistry.values()).forEach((instance) => {
+    instance.inCurrentRender = false;
+  });
+
+  // Manually invoking an action without `internalKey` is an error, so `runRootAction`
+  // is provided by `mount` for wiring up events to root actions (e.g. routing)
+  if (init) {
+    const runRootAction: RunAction<TActions> = (actionName, data) => {
+      rootAction?.(actionName, data)(internalKey);
+    };
+    init(runRootAction);
+  }
+}
+
+export function withKey(key: string, vnode: VNode): VNode {
+  vnode.key = key;
+  return vnode;
+}
+
+function isDomEvent(e?: Record<string, unknown> | Event): e is Event {
+  return Boolean(e && "eventPhase" in e && "target" in e && "type" in e);
+}
+
+function setRenderRef(instance: ComponentInstance): void {
+  if (!instance.vnode) return;
+
+  setHook(instance.vnode, "destroy", () => {
+    const inst = componentRegistry.get(instance.id);
+    if (inst && !inst.inCurrentRender && instance.id !== renderRootId) {
+      // Clean up registry
+      componentRegistry.delete(instance.id);
+
+      // Clean up thunk caches
+      Array.from(actionThunkCache.keys()).forEach((key) => {
+        if (key.startsWith(`${instance.id}:`)) {
+          actionThunkCache.delete(key);
+        }
+      });
+      Array.from(taskThunkCache.keys()).forEach((key) => {
+        if (key.startsWith(`${instance.id}:`)) {
+          taskThunkCache.delete(key);
+        }
+      });
+
+      log.setStateGlobal(instance.id, undefined);
+    }
+  });
+}
+
+function isThunk(next: Next): next is ActionThunk | TaskThunk {
+  if (next) {
+    return !Array.isArray(next) && next.type in ThunkType;
+  }
+  return false;
+}
+
+function isPromise<TValue>(o: Promise<TValue> | unknown): o is Promise<TValue> {
+  return Boolean(o && (o as Promise<unknown>).then);
+}
+
+function deepFreeze<TObject extends Record<string, unknown>>(
+  o?: TObject | null
+): TObject | undefined | null {
+  if (o) {
+    Object.freeze(o);
+    Object.getOwnPropertyNames(o).forEach((p: string) => {
+      if (
+        Object.prototype.hasOwnProperty.call(o, p) &&
+        o[p] !== null &&
+        (typeof o[p] === "object" || typeof o[p] === "function") &&
+        !Object.isFrozen(o[p])
+      ) {
+        deepFreeze(o[p] as Record<string, unknown>);
+      }
+    });
+  }
+  return o;
+}
+
+// Pub/sub
+export function subscribe(type: string, listener: EventListener): void {
+  document.addEventListener(type, listener);
+}
+
+export function unsubscribe(type: string, listener: EventListener): void {
+  document.removeEventListener(type, listener);
+}
+
+export function publish(type: string, detail?: Record<string, unknown>): void {
+  document.dispatchEvent(new CustomEvent(type, detail ? { detail } : undefined));
+}

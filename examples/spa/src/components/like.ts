@@ -1,39 +1,36 @@
-import { component, html, Config, VNode, Next } from "jetix";
-import { Page, RootState, RootActions, RootTasks } from "../app";
+import { component, html, Next, VNode } from "pure-ui-actions";
+import { Page, RootState, RootActionPayloads, RootTaskPayloads } from "../app";
 const { button } = html;
 
 export type Props = Readonly<{
   page: Page;
 }>;
 
-type Actions = Readonly<{
+type ActionPayloads = Readonly<{
   Like: null;
 }>;
 
-type Component = {
+export type Component = {
   Props: Props;
   State: null;
-  Actions: Actions;
+  ActionPayloads: ActionPayloads;
   RootState: RootState;
-  RootActions: RootActions;
-  RootTasks: RootTasks;
+  RootActionPayloads: RootActionPayloads;
+  RootTaskPayloads: RootTaskPayloads;
 };
 
-
-export default component<Component>(
-  ({ action, rootAction, rootTask }): Config<Component> => ({
-    actions: {
-      Like: (_, { props, state }): { state: null; next: Next } => {
-        return {
-          state,
-          next: [
-            rootAction("Like", { page: props.page }),
-            rootTask("SetDocTitle", { title: "You like this!" })
-          ]
-        };
-      }
-    },
-    view: (id, { props, rootState }): VNode =>
-      button(`#${id}.like`, { on: { click: action("Like") } }, `👍${rootState.likes[props.page]}`)
-  })
-);
+export default component<Component>(({ action, rootAction, rootTask }) => ({
+  actions: {
+    Like: (_, { props, state }): { state: null; next: Next } => {
+      return {
+        state,
+        next: [
+          rootAction("Like", { page: props.page }),
+          rootTask("SetDocTitle", { title: "You like this!" })
+        ]
+      };
+    }
+  },
+  view: (id, { props, rootState }): VNode =>
+    button(`#${id}.like`, { on: { click: action("Like") } }, `👍 ${rootState.likes[props.page]}`)
+}));

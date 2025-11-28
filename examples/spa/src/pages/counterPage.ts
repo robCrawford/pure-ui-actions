@@ -1,33 +1,30 @@
-import { component, html, Config, VNode } from "jetix";
+import { component, html, VNode } from "pure-ui-actions";
 import counter from "../components/counter";
 import themeMenu from "../components/themeMenu";
 import like from "../components/like";
-import { RootState, RootTasks } from "../app";
-const { div, h1, a } = html;
+import { RootState, RootTaskPayloads } from "../app";
+const { div, span, a } = html;
 
-type Component = {
+export type Component = {
   RootState: RootState;
-  RootTasks: RootTasks;
+  RootTaskPayloads: RootTaskPayloads;
 };
 
-export default component<Component>(
-  ({ rootTask }): Config<Component> => ({
+export default component<Component>(({ rootTask }) => ({
+  init: rootTask("SetDocTitle", { title: "Counter Page" }),
 
-    init: rootTask("SetDocTitle", { title: "Counter" }),
-
-    view(id, { rootState }): VNode {
-      return div(`#${id}`, [
-        div(".content", [
-          themeMenu("#theme-menu"),
-          a({ attrs: {href: "/about" + location.search, "data-navigo": true} }, "About page"),
-          div(".visits", ["Likes: ", rootState.likes.counterPage]),
-          h1("Counter"),
-          like('#counter-like', { page: 'counterPage'})
+  view(id): VNode {
+    return div(`#${id}`, [
+      div(".content", [
+        themeMenu("#theme-menu"),
+        div(".nav", [
+          span("counter page | "),
+          a({ attrs: { href: "/about" + location.search, "data-navigo": true } }, "about page")
         ]),
-        counter("#counter-0", { start: 0 }),
-        counter("#counter-1", { start: -1 })
-      ]);
-    }
-
-  })
-);
+        like("#counter-like", { page: "counterPage" })
+      ]),
+      counter("#counter-0", { start: 0 }),
+      counter("#counter-1", { start: -1 })
+    ]);
+  }
+}));

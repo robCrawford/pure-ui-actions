@@ -1,14 +1,13 @@
-import { testComponent, NextData } from "jetix";
-import app, { RootState } from "./app";
+import { componentTest } from "pure-ui-actions";
+import app, { RootState, Component } from "./app";
 
 describe("App", () => {
-
-  const { action, task, initialState } = testComponent(app);
+  const { actionTest, taskTest, initialState } = componentTest<Component>(app, {});
 
   it("should set initial state", () => {
     expect(initialState).toEqual({
-      theme: "light",
-      page: null,
+      theme: "dark",
+      page: undefined,
       likes: {
         counterPage: 0,
         aboutPage: 0
@@ -17,7 +16,7 @@ describe("App", () => {
   });
 
   describe("'SetPage' action", () => {
-    const { state, next } = action<RootState>("SetPage", { page: "test" });
+    const { state, next } = actionTest<RootState>("SetPage", { page: "test" });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -32,7 +31,7 @@ describe("App", () => {
   });
 
   describe("'SetTheme' action", () => {
-    const { state, next } = action<RootState>("SetTheme", { theme: "test" });
+    const { state, next } = actionTest<RootState>("SetTheme", { theme: "test" });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -47,7 +46,7 @@ describe("App", () => {
   });
 
   describe("'Like' action", () => {
-    const { state, next } = action<RootState>("Like", { page: "aboutPage" });
+    const { state, next } = actionTest<RootState>("Like", { page: "aboutPage" });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -65,7 +64,7 @@ describe("App", () => {
   });
 
   describe("'SetDocTitle' task", () => {
-    const { perform, success, failure } = task("SetDocTitle", { count: 0 });
+    const { perform, success, failure } = taskTest("SetDocTitle", { count: 0 });
 
     it("should provide perform", () => {
       expect(perform).toBeDefined();
@@ -79,5 +78,4 @@ describe("App", () => {
       expect(failure).toBeUndefined();
     });
   });
-
 });

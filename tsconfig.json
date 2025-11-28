@@ -1,20 +1,25 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "es2017"],
-    "target": "es5",
-    "module": "commonjs",
+    "lib": [
+      "dom",
+      "es2022"
+    ],
+    "target": "es2022",
+    "module": "esnext",
     "moduleResolution": "node",
     "strict": true,
     "declaration": true,
     "esModuleInterop": true,
     "removeComments": true,
-    "outDir": "./dist/"
+    "outDir": "./dist/",
+    "types": ["vitest/globals"],
+    "skipLibCheck": true
   },
   "include": [
-    "./src/jetix.ts"
+    "./src/**/*"
   ],
   "exclude": [
     ".git",
     "node_modules"
-  ],
+  ]
 }

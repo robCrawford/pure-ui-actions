@@ -1,48 +1,44 @@
-import { _setTestKey, component, html, mount, renderRefs, prevProps, renderIds } from "../src/jetix";
-import { log } from "../src/jetixLog";
-import * as vdom from "../src/vdom";
+import { vi, type Mock } from "vitest";
+import { _setTestKey, component, html, mount, getComponentRegistry } from "./pure-ui-actions";
+import { log } from "./log";
+import * as vdom from "./vdom";
 const { div } = html;
 const testKey = _setTestKey({});
 
-const patchSpy = jest.spyOn(vdom, "patch");
-const renderSpy = jest.spyOn(log, "render");
+const patchSpy = vi.spyOn(vdom, "patch");
+const renderSpy = vi.spyOn(log, "render");
 const ctx = { rootState: { theme: "a" }, props: { test: "x" }, state: { count: 0 } };
 
-
-describe("Jetix components", () => {
-  let rootAction;
-  let parentAction;
-  let parentTask;
-  let childAction;
-  let validatePerform;
+describe("pure-ui-actions components", () => {
+  let rootAction: Function = () => {};
+  let parentAction: Function = () => {};
+  let parentTask: Function = () => {};
+  let childAction: Function = () => {};
+  let validatePerform: Function = () => {};
 
   const parentActions = {
-    Increment: jest.fn( ({ step }, { state }) => ({ state: { ...state, count: state.count + step } }) ),
-    Decrement: jest.fn( ({ step }, { state }) => ({ state: { ...state, count: state.count - step } }) )
+    Increment: vi.fn(({ step }, { state }) => ({ state: { ...state, count: state.count + step } })),
+    Decrement: vi.fn(({ step }, { state }) => ({ state: { ...state, count: state.count - step } }))
   };
-  const validateSuccess = jest.fn(
-    (result, { props, state, rootState }) => parentAction("Increment", { step: result })
-  );
-  const validateFailure = jest.fn(
-    (err, { props, state, rootState }) => parentAction("Decrement", { step: err })
-  );
+  const validateSuccess = vi.fn((result) => parentAction("Increment", { step: result }));
+  const validateFailure = vi.fn((err) => parentAction("Decrement", { step: err }));
   const parentTasks = {
-    Validate: ({ count }) => {
+    Validate: () => {
       return {
         perform: () => validatePerform(),
         success: validateSuccess,
-        failure: validateFailure,
+        failure: validateFailure
       };
     }
   };
 
-  const jestReset = () => {
+  const testReset = () => {
     patchSpy.mockClear();
     renderSpy.mockClear();
     validateSuccess.mockClear();
     validateFailure.mockClear();
-    Object.keys(parentActions).forEach(
-      (k) => parentActions[k].mockClear()
+    Object.keys(parentActions).forEach((k) =>
+      (parentActions as Record<string, Mock>)[k].mockClear()
     );
   };
 
@@ -55,25 +51,35 @@ describe("Jetix components", () => {
     const child = component<{
       Props: { test: string };
       State: { count: number };
-      Actions: {
+      ActionPayloads: {
         Increment: { step: number };
         NoOp: null;
         Mutate: { k: string };
       };
-    }>(({ action: a })  => {
+    }>(({ action: a }) => {
       childAction = a;
       return {
         state: () => ({ count: 0 }),
         actions: {
-          Increment: ({ step }, { state }) => ({ state: { ...state, count: state.count + step } }),
-          NoOp: (_, { state }) => ({ state }),
-          Mutate: ({ k }, { state, props }) => {
-            if (k === 'state') state.count = 999;
-            if (k === 'props') props.test = '999';
+          Increment: (data, ctx) => {
+            const step = data?.step ?? 0;
+            const state = ctx.state ?? { count: 0 };
+            return { state: { ...state, count: state.count + step } };
+          },
+          NoOp: (_, ctx) => {
+            const state = ctx.state ?? { count: 0 };
+            return { state };
+          },
+          Mutate: (data, ctx) => {
+            const k = data?.k;
+            const state = ctx.state ?? { count: 0 };
+            const props = ctx.props ?? { test: "" };
+            if (k === "state") state.count = 999;
+            if (k === "props") props.test = "999";
             return { state };
           }
         },
-        view: id => div(`#${id}`, "test")
+        view: (id) => div(`#${id}`, "test")
       };
     });
 
@@ -94,24 +100,28 @@ describe("Jetix components", () => {
         state: () => ({ count: 0 }),
         actions: parentActions,
         tasks: parentTasks,
-        view: (id, { state }) => div(`#${id}`,
-        state.count < 100
-          // < 100 renders child component
-          ? child(`#child`, { test: "x" })
-          : state.count < 1000
-            // 100 to 999 renders with no child component
-            ? "-"
-            // 1000+ renders child component but with a duplicate id
-            : child(`#parent`, { test: "x" })
-        )
+        view: (id, { state }) => {
+          const count = state?.count ?? 0;
+          return div(
+            `#${id}`,
+            count < 100
+              ? // < 100 renders child component
+                child(`#child`, { test: "x" })
+              : count < 1000
+                ? // 100 to 999 renders with no child component
+                  "-"
+                : // 1000+ renders child component but with a duplicate id
+                  child(`#parent`, { test: "x" })
+          );
+        }
       };
     });
 
     const app = component<{
       Props: { test: string };
-      State: { theme: string; };
-      Actions: {
-        SetTheme: { theme: string; };
+      State: { theme: string };
+      ActionPayloads: {
+        SetTheme: { theme: string };
         NoOp: null;
       };
     }>(({ action: a }) => {
@@ -119,15 +129,22 @@ describe("Jetix components", () => {
       return {
         state: () => ({ theme: "a" }),
         actions: {
-          SetTheme: ({ theme }, { state }) => ({ state: { ...state, theme }}),
-          NoOp: (_, { state }) => ({ state })
+          SetTheme: (data, ctx) => {
+            const theme = data?.theme ?? "";
+            const state = ctx.state ?? { theme: "" };
+            return { state: { ...state, theme } };
+          },
+          NoOp: (_, ctx) => {
+            const state = ctx.state ?? { theme: "" };
+            return { state };
+          }
         },
-        view: id => div(`#${id}`, [ parent(`#parent`, { test: "x" }) ])
-      }
+        view: (id) => div(`#${id}`, [parent(`#parent`, { test: "x" })])
+      };
     });
 
     mount({ app, props: { test: "x" } });
-    jestReset();
+    testReset();
   });
 
   it("should render component and children when state changes", () => {
@@ -168,29 +185,31 @@ describe("Jetix components", () => {
       expect(parentActions.Increment).toHaveBeenCalledWith({ step: 5 }, ctx);
       expect(renderSpy).toHaveBeenCalledTimes(2);
       expect(patchSpy).toHaveBeenCalledTimes(1);
-    })
+    });
   });
 
   it("should run the failure action of a synchronous task", () => {
-    validatePerform = () => { throw 3 };
+    validatePerform = () => {
+      throw 3;
+    };
     return parentTask("Validate", { count: 1 })(testKey).then(() => {
       expect(validateSuccess).not.toHaveBeenCalled();
       expect(validateFailure).toHaveBeenCalled();
       expect(parentActions.Decrement).toHaveBeenCalledWith({ step: 3 }, ctx);
       expect(renderSpy).toHaveBeenCalledTimes(2);
       expect(patchSpy).toHaveBeenCalledTimes(1);
-    })
+    });
   });
 
   it("should run the success action of an asynchronous task", () => {
-    validatePerform = () => new Promise(res => setTimeout(() => res(5), 100));
+    validatePerform = () => new Promise((res) => setTimeout(() => res(5), 100));
     return parentTask("Validate", { count: 1 })(testKey).then(() => {
       expect(validateSuccess).toHaveBeenCalled();
       expect(validateFailure).not.toHaveBeenCalled();
       expect(parentActions.Increment).toHaveBeenCalledWith({ step: 5 }, ctx);
       expect(renderSpy).toHaveBeenCalledTimes(2);
       expect(patchSpy).toHaveBeenCalledTimes(1);
-    })
+    });
   });
 
   it("should run the failure action of an asynchronous task", () => {
@@ -201,51 +220,69 @@ describe("Jetix components", () => {
       expect(parentActions.Decrement).toHaveBeenCalledWith({ step: 3 }, ctx);
       expect(renderSpy).toHaveBeenCalledTimes(2);
       expect(patchSpy).toHaveBeenCalledTimes(1);
-    })
+    });
   });
 
   it("should throw when state is mutated", () => {
-    expect(() => childAction("Mutate", { k: 'state' })(testKey))
-      .toThrowError("Cannot assign to read only property 'count' of object");
+    expect(() => childAction("Mutate", { k: "state" })(testKey)).toThrow(
+      "Cannot assign to read only property 'count' of object"
+    );
   });
 
   it("should throw when props is mutated", () => {
-    expect(() => childAction("Mutate", { k: 'props' })(testKey))
-      .toThrowError("Cannot assign to read only property 'test' of object");
+    expect(() => childAction("Mutate", { k: "props" })(testKey)).toThrow(
+      "Cannot assign to read only property 'test' of object"
+    );
   });
 
   it("should throw when a duplicate id is found", () => {
-    expect(() => parentAction("Increment", { step: 1000 })(testKey))
-      .toThrowError('Component "parent" must have a unique id!');
+    expect(() => parentAction("Increment", { step: 1000 })(testKey)).toThrow(
+      'Component "parent" must have a unique id!'
+    );
   });
 
   it("should throw when an action is called manually", () => {
-    expect(() => parentAction("Increment", { step: 1 })())
-      .toThrowError('#parent "Increment" cannot be invoked manually');
+    expect(() => parentAction("Increment", { step: 1 })()).toThrow(
+      '#parent "Increment" cannot be invoked manually'
+    );
   });
 
   it("should allow action calls with a DOM event input", () => {
-    expect(() => parentAction("Increment", { step: 1 })({ eventPhase: 1 }))
-      .not.toThrow();
+    expect(() =>
+      parentAction("Increment", { step: 1 })({ eventPhase: 1, target: null, type: "test" })
+    ).not.toThrow();
   });
 
   it("should throw when a task is called manually", () => {
-    expect(() => parentTask("Validate", { count: 1 })())
-      .toThrowError('#parent "Validate" cannot be invoked manually');
+    expect(() => parentTask("Validate", { count: 1 })()).toThrow(
+      '#parent "Validate" cannot be invoked manually'
+    );
   });
 
   it("should allow task calls with a DOM event input", () => {
-    expect(() => parentTask("Validate", { count: 1 })({ eventPhase: 1 }))
-      .not.toThrow();
+    const mockEvent = { eventPhase: 1, target: null, type: "test" };
+
+    expect(() => parentTask("Validate", { count: 1 })(mockEvent)).not.toThrow();
   });
 
   it("should remove references when an existing component is not rendered", () => {
-    const testRefs = (expectedIds) => {
-      const refIds = Object.keys(renderRefs);
-      expect(refIds).toEqual(expectedIds);
-      expect(Object.keys(prevProps)).toEqual(refIds);
-      expect(renderIds).toEqual({});
-    }
+    const testRefs = (expectedIds: string[]) => {
+      const registry = getComponentRegistry();
+      const refIds = Array.from(registry.keys()).sort();
+      expect(refIds).toEqual(expectedIds.sort());
+
+      // Verify all components have prevProps set
+      refIds.forEach((id) => {
+        const instance = registry.get(id);
+        expect(instance?.prevProps).toBeDefined();
+      });
+
+      // Verify no components are marked as inCurrentRender after render completes
+      refIds.forEach((id) => {
+        const instance = registry.get(id);
+        expect(instance?.inCurrentRender).toBe(false);
+      });
+    };
 
     parentAction("Increment", { step: 1 })(testKey);
     expect(renderSpy).toHaveBeenCalledTimes(2);
@@ -263,4 +300,3 @@ describe("Jetix components", () => {
     testRefs(["parent", "app", "child"]);
   });
 });
-

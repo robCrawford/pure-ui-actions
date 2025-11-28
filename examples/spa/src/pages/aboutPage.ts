@@ -1,32 +1,29 @@
-import { component, html, Config, VNode } from "jetix";
+import { component, html, VNode } from "pure-ui-actions";
 import themeMenu from "../components/themeMenu";
 import like from "../components/like";
-import { RootState, RootTasks } from "../app";
-const { div, h1, a } = html;
+import { RootState, RootTaskPayloads } from "../app";
+const { div, span, a } = html;
 
-type Component = {
+export type Component = {
   RootState: RootState;
-  RootTasks: RootTasks;
+  RootTaskPayloads: RootTaskPayloads;
 };
 
+export default component<Component>(({ rootTask }) => ({
+  init: rootTask("SetDocTitle", { title: "About Page" }),
 
-export default component<Component>(
-  ({ rootTask }): Config<Component> => ({
-
-    init: rootTask("SetDocTitle", { title: "About" }),
-
-    view(id, { rootState }): VNode {
-      return div(`#${id}`,
-        div(".content", [
-          themeMenu("#theme-menu"),
-          a({ attrs: {href: "/counter" + location.search, "data-navigo": true} }, "Counter page"),
-          div(".visits", ["Likes: ", rootState.likes.aboutPage]),
-          h1("About"),
-          like('#about-like', { page: 'aboutPage'}),
-          div(".intro", "Lorem ipsum dolor sit amet.")
-        ])
-      );
-    }
-
-  }))
-;
+  view(id): VNode {
+    return div(
+      `#${id}`,
+      div(".content", [
+        themeMenu("#theme-menu"),
+        div(".nav", [
+          a({ attrs: { href: "/counter" + location.search, "data-navigo": true } }, "counter page"),
+          span(" | about page")
+        ]),
+        like("#about-like", { page: "aboutPage" }),
+        div(".intro", "This is the about page.")
+      ])
+    );
+  }
+}));

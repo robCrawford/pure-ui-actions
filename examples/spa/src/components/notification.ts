@@ -1,4 +1,4 @@
-import { ActionThunk, component, html, Config, VNode, Next } from "jetix";
+import { ActionThunk, component, html, Next, VNode } from "pure-ui-actions";
 const { div, button } = html;
 
 export type Props = Readonly<{
@@ -10,46 +10,42 @@ export type State = Readonly<{
   show: boolean;
 }>;
 
-type Actions = Readonly<{
+type ActionPayloads = Readonly<{
   Dismiss: null;
 }>;
 
-type Component = {
+export type Component = {
   Props: Props;
   State: State;
-  Actions: Actions;
+  ActionPayloads: ActionPayloads;
 };
 
+export default component<Component>(({ action }) => ({
+  state: (): State => ({
+    show: true
+  }),
 
-export default component<Component>(
-  ({ action }): Config<Component> => ({
+  actions: {
+    Dismiss: (_, { props, state }): { state: State; next: Next } => {
+      return {
+        state: {
+          ...state,
+          show: false
+        },
+        next: props.onDismiss
+      };
+    }
+  },
 
-    state: (): State => ({
-      show: true
-    }),
-
-    actions: {
-      Dismiss: (_, { props, state }): {state: State; next: Next} => {
-        return {
-          state: {
-            ...state,
-            show: false
-          },
-          next: props.onDismiss
-        };
-      }
-    },
-
-    view(id, { props, state }): VNode {
-      return div(`#${id}.notification`, {
+  view(id, { props, state }): VNode {
+    return div(
+      `#${id}.notification`,
+      {
         class: {
           show: state.show && props.text.length
         }
-      }, [
-        props.text,
-        button({ on: { click: action("Dismiss") } }, "Dismiss")
-      ]);
-    }
-
-  })
-);
+      },
+      [props.text, button({ on: { click: action("Dismiss") } }, "Dismiss")]
+    );
+  }
+}));

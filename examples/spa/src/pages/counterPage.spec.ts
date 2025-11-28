@@ -1,11 +1,10 @@
-import { testComponent } from "jetix";
-import counterPage from "./counterPage";
+import { componentTest } from "pure-ui-actions";
+import counterPage, { Component } from "./counterPage";
 
 describe("Counter Page component", () => {
-  const { config } = testComponent(counterPage);
+  const { config } = componentTest<Component>(counterPage);
 
   it("should run initial action", () => {
-    expect(config.init).toEqual({ name: "SetDocTitle", data: { title: "Counter" } });
+    expect(config.init).toEqual({ name: "SetDocTitle", data: { title: "Counter Page" } });
   });
-
 });

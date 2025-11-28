@@ -1,86 +1,86 @@
-import { component, html, mount, Config, Next, Task, VNode } from "jetix";
-import { setDocTitle} from "./services/browser";
-const { div } = html;
+import { component, html, mount, Next, Task, VNode } from "pure-ui-actions";
+import { setDocTitle } from "./services/browser";
+const { h3, div } = html;
 
 export type Props = Readonly<{
-  placeholder: string;
+  date: string;
 }>;
 
 export type State = Readonly<{
+  title: string;
   text: string;
   done: boolean;
 }>;
 
-export type Actions = Readonly<{
+export type ActionPayloads = Readonly<{
   ShowMessage: { text: string };
   PageReady: { done: boolean };
 }>;
 
-export type Tasks = Readonly<{
+export type TaskPayloads = Readonly<{
   SetDocTitle: { title: string };
 }>;
 
-type Component = {
+export type Component = {
   Props: Props;
   State: State;
-  Actions: Actions;
-  Tasks: Tasks;
+  ActionPayloads: ActionPayloads;
+  TaskPayloads: TaskPayloads;
 };
 
+const app = component<Component>(({ action, task }) => ({
+  // Initial state
+  state: (props): State => ({
+    title: `Welcome! ${props.date}`,
+    text: "",
+    done: false
+  }),
 
-const app = component<Component>(
-  ({ action, task }): Config<Component> => ({
+  // Initial action
+  init: action("ShowMessage", { text: "Hello World!" }),
 
-    // Initial state
-    state: ({ placeholder }): State => ({
-      text: placeholder,
-      done: false
-    }),
-
-    // Initial action
-    init: action(
-      "ShowMessage",
-      { text: "Hello World!" }
-    ),
-
-    // Action handlers return new state, and any next actions/tasks
-    actions: {
-      ShowMessage: ({ text }, { state }): { state: State; next: Next } => {
-        return {
-          state: { ...state, text },
-          next: task("SetDocTitle", { title: text })
-        };
-      },
-      PageReady: ({ done }, { state }): { state: State } => {
-        return {
-          state: { ...state, done }
-        };
-      },
+  // Action handlers return new state, and any next actions/tasks
+  actions: {
+    ShowMessage: (data, context): { state: State; next: Next } => {
+      return {
+        state: {
+          ...context.state,
+          text: data.text
+        },
+        next: task("SetDocTitle", { title: data.text })
+      };
     },
-
-    // Task handlers provide callbacks for effects and async operations that may fail
-    tasks: {
-      SetDocTitle: ({ title }): Task<null, State> => ({
-        perform: (): Promise<void> => setDocTitle(title),
-        success: (): Next => action("PageReady", { done: true }),
-        failure: (): Next => action("PageReady", { done: false })
-      })
-    },
-
-    // View renders from props & state
-    view(id, { state }): VNode {
-      return div(`#${id}-message`, [
-        div(state.text),
-        div(state.done ? '✅' : '❎')
-      ]);
+    PageReady: (data, context): { state: State } => {
+      return {
+        state: {
+          ...context.state,
+          done: data.done
+        }
+      };
     }
+  },
 
-  })
-);
+  // Task handlers provide callbacks for effects and async operations that may fail
+  tasks: {
+    SetDocTitle: (data): Task<void, Props, State, unknown> => ({
+      perform: () => setDocTitle(data.title),
+      success: () => action("PageReady", { done: true }),
+      failure: () => action("PageReady", { done: false })
+    })
+  },
 
-document.addEventListener(
-  "DOMContentLoaded",
-  (): void => mount({ app, props: { placeholder: "Loading" } })
+  // View renders from props & state
+  view(id, context): VNode {
+    return div(`#${id}-message`, [
+      h3(context.state.title),
+      div(context.state.text),
+      div(context.state.done ? "✅" : "❎")
+    ]);
+  }
+}));
+
+document.addEventListener("DOMContentLoaded", () =>
+  mount({ app, props: { date: new Date().toDateString() } })
 );
 
 export default app;

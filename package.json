@@ -1,37 +1,47 @@
 {
-  "name": "jetix",
-  "version": "0.2.3",
-  "description": "Type-safe HyperScript components using pure functions.",
-  "main": "dist/jetix.js",
-  "types": "dist/jetix.d.ts",
+  "name": "pure-ui-actions",
+  "version": "0.3.0",
+  "description": "Pure type-safe actions that humans and AI can follow",
+  "type": "module",
+  "main": "dist/pure-ui-actions.js",
+  "types": "dist/pure-ui-actions.d.ts",
   "scripts": {
-    "build": "rm -rf ./dist && tsc",
-    "test": "jest"
+    "ts:check": "tsc --noEmit",
+    "ts:build": "rm -rf ./dist && tsc",
+    "test": "vitest run",
+    "lint": "eslint 'src/**/*.ts'"
   },
-  "author": "Rob Crawford",
+  "author": "Robert Crawford",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robCrawford/jetix"
+    "url": "https://github.com/robCrawford/pure-ui-actions"
   },
   "license": "MIT",
   "keywords": [
+    "pure-functions",
+    "actions",
     "unidirectional",
     "hyperscript",
     "typescript",
-    "virtual dom"
+    "virtual-dom"
   ],
   "devDependencies": {
-    "@types/jest": "^25.1.4",
-    "@typescript-eslint/eslint-plugin": "^2.26.0",
-    "@typescript-eslint/parser": "^2.26.0",
-    "eslint": "^6.8.0",
-    "jest": "^25.2.4",
-    "ts-jest": "^25.3.0",
-    "typescript": "^3.8.3"
+    "@eslint/js": "^9.39.1",
+    "@types/jsdom": "^27.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "@vitest/ui": "^2.1.8",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "jsdom": "^25.0.1",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
   },
   "dependencies": {
     "hyperscript-helpers": "^3.0.3",
-    "snabbdom": "^0.7.4"
+    "snabbdom": "^3.6.3"
   },
   "files": [
     "dist/"

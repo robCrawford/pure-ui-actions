@@ -1,23 +1,16 @@
-import { component, html, Config, VNode } from "jetix";
-import { RootActions } from "../app";
+import { component, html, VNode } from "pure-ui-actions";
+import { RootActionPayloads } from "../app";
 const { div, button } = html;
 
 type Component = {
-  RootActions: RootActions;
+  RootActionPayloads: RootActionPayloads;
 };
 
-export default component<Component>(({ rootAction }): Config<Component> => ({
-
+export default component<Component>(({ rootAction }) => ({
   view(id): VNode {
     return div(`#${id}`, [
-      button(
-        { on: { click: rootAction("SetTheme", { theme: "light" }) } },
-        "Light theme"),
-      button(
-        { on: { click: rootAction("SetTheme", { theme: "dark" }) } },
-        "Dark theme"),
-      div('#note', "Add `debug` to the query string to activate logging.")
+      button({ on: { click: rootAction("SetTheme", { theme: "light" }) } }, "Light theme"),
+      button({ on: { click: rootAction("SetTheme", { theme: "dark" }) } }, "Dark theme")
     ]);
   }
-
 }));

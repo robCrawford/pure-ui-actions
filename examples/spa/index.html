@@ -1,37 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <title> Jetix SPA </title>
-  <link rel="stylesheet" href="src/css/main.css">
-</head>
-<body>
-  <div id="app"></div>
-  <script src="src/app.ts"></script>
+  <head>
+    <meta charset="utf-8" />
+    <title>pure-ui-actions example SPA</title>
+    <link rel="stylesheet" href="src/css/main.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="src/app.ts"></script>
 
-  <!-- Logging UI -->
-  <pre id="state"></pre>
-  <style>
-    pre div {
-      font: 10px sans-serif;
-      background: #fff;
-      padding: 5px 10px;
-      margin: 15px -10px -10px;
-      border-radius: 2px;
-    }
-    pre p {
-      margin: 2px;
-    }
-  </style>
-  <script>
-    if (/[&?]debug/.test(window.location.search)) {
-      document.body.className = 'debug';
-      const stateEl = document.getElementById("state");
-      const noteHtml = "<div><p>A state, render, patch timeline is logged to the JS console.</p></div>";
-      document.addEventListener('patch', () => {
-        stateEl.innerHTML = JSON.stringify(window.state, null, 4) + noteHtml;
+    <!-- Logging UI -->
+    <pre id="state"></pre>
+    <style>
+      pre div {
+        font: 10px sans-serif;
+        background: #fff;
+        padding: 5px 10px;
+        margin: 15px -10px -10px;
+        border-radius: 2px;
+      }
+      pre p {
+        margin: 2px;
+      }
+    </style>
+    <script>
+      document.addEventListener("patch", () => {
+        document.getElementById("state").innerHTML = JSON.stringify(window.state, null, 4);
       });
-    }
-  </script>
-</body>
+    </script>
+  </body>
 </html>

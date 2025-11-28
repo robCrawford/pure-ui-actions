@@ -1,10 +1,13 @@
-import { testComponent, NextData } from "jetix";
-import notification, { State } from "./notification";
+import { componentTest, ThunkType, ActionThunk } from "pure-ui-actions";
+import notification, { State, Component } from "./notification";
+
+const passedInActionThunk: ActionThunk = () => {};
+passedInActionThunk.type = ThunkType.Action;
 
 describe("Notification component", () => {
-  const { initialState, action } = testComponent(notification, {
+  const { initialState, actionTest } = componentTest<Component>(notification, {
     text: "test",
-    onDismiss: "passedInAction"
+    onDismiss: passedInActionThunk
   });
 
   it("should set initial state", () => {
@@ -12,7 +15,7 @@ describe("Notification component", () => {
   });
 
   describe("'Dismiss' action", () => {
-    const { state, next } = action<State>("Dismiss");
+    const { state, next } = actionTest<State>("Dismiss");
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -22,8 +25,7 @@ describe("Notification component", () => {
     });
 
     it("should return next", () => {
-      expect(next).toBe("passedInAction");
+      expect(next).toBe(passedInActionThunk);
     });
   });
-
 });

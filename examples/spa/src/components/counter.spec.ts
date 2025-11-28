@@ -1,8 +1,10 @@
-import { testComponent, NextData } from "jetix";
-import counter, { State } from "./counter";
+import { componentTest, NextData } from "pure-ui-actions";
+import counter, { State, Component } from "./counter";
 
 describe("Counter component", () => {
-  const { initialState, action, task, config } = testComponent(counter, { start: 0 });
+  const { initialState, actionTest, taskTest, config } = componentTest<Component>(counter, {
+    start: 0
+  });
 
   it("should set initial state", () => {
     expect(initialState).toEqual({ counter: 0, feedback: "" });
@@ -13,7 +15,7 @@ describe("Counter component", () => {
   });
 
   describe("'Increment' action", () => {
-    const { state, next } = action<State>("Increment", { step: 1 });
+    const { state, next } = actionTest<State>("Increment", { step: 1 });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -30,7 +32,7 @@ describe("Counter component", () => {
   });
 
   describe("'Decrement' action", () => {
-    const { state, next } = action<State>("Decrement", { step: 1 });
+    const { state, next } = actionTest<State>("Decrement", { step: 1 });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -47,7 +49,7 @@ describe("Counter component", () => {
   });
 
   describe("'Validate' action", () => {
-    const { state, next } = action<State>("Validate");
+    const { state, next } = actionTest<State>("Validate");
 
     it("should not update state", () => {
       expect(state).toEqual(initialState);
@@ -69,7 +71,7 @@ describe("Counter component", () => {
   });
 
   describe("'SetFeedback' action", () => {
-    const { state, next } = action<State>("SetFeedback", { text: 'test' });
+    const { state, next } = actionTest<State>("SetFeedback", { text: "test" });
 
     it("should update state", () => {
       expect(state).toEqual({
@@ -84,23 +86,22 @@ describe("Counter component", () => {
   });
 
   describe("'ValidateCount' task", () => {
-    const { perform, success, failure } = task("ValidateCount", { count: 0 });
+    const { perform, success, failure } = taskTest("ValidateCount", { count: 0 });
 
     it("should provide perform", () => {
       expect(perform).toBeDefined();
     });
 
     it("should handle success", () => {
-      const { name, data } = success({ text: "Success test" }, {}) as NextData;
+      const { name, data } = success?.({ text: "Success test" }) as NextData;
       expect(name).toBe("SetFeedback");
       expect(data).toEqual({ text: "Success test" });
     });
 
     it("should handle failure", () => {
-      const { name, data } = failure("", {}) as NextData;
-      expect(name).toBe('SetFeedback');
-      expect(data).toEqual({ text: 'Unavailable' });
+      const { name, data } = failure?.("") as NextData;
+      expect(name).toBe("SetFeedback");
+      expect(data).toEqual({ text: "Unavailable" });
     });
   });
-
 });
