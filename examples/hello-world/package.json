@@ -9,8 +9,7 @@
     "ts:build": "tsc && rm -rf ./dist && cross-env NODE_ENV=production parcel build ./index.html --public-url ./",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint 'src/**/*.ts'",
-    "lint:fix": "eslint 'src/**/*.ts' --fix"
+    "lint": "eslint 'src/**/*.ts'"
   },
   "author": "Rob Crawford",
   "repository": {

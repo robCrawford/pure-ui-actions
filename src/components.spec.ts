@@ -32,7 +32,7 @@ describe("pure-ui-actions components", () => {
     }
   };
 
-  const jestReset = () => {
+  const testReset = () => {
     patchSpy.mockClear();
     renderSpy.mockClear();
     validateSuccess.mockClear();
@@ -144,7 +144,7 @@ describe("pure-ui-actions components", () => {
     });
 
     mount({ app, props: { test: "x" } });
-    jestReset();
+    testReset();
   });
 
   it("should render component and children when state changes", () => {
