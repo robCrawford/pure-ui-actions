@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node ./scripts/dev-watch.js",
     "ts:check": "tsc --noEmit",
-    "ts:build": "tsc && rm -rf ./dist && cross-env NODE_ENV=production parcel build ./index.html --public-url ./",
+    "ts:build": "tsc --noEmit && cross-env NODE_ENV=production parcel build ./index.html --public-url ./",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint 'src/**/*.ts'"
