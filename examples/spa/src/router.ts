@@ -2,7 +2,7 @@ import { mount, subscribe, RunAction } from "pure-ui-actions";
 import Navigo from "navigo";
 import app, { RootActionPayloads, RootProps } from "./app";
 
-const router = new Navigo("/");
+const router = new Navigo("/demos/pure-ui-actions/spa/");
 
 document.addEventListener("DOMContentLoaded", () =>
   mount<RootActionPayloads, RootProps>({
