@@ -34,13 +34,28 @@ actions: {
 
 **ONLY place for**: API calls, browser APIs, localStorage, timers, logging, DOM mutations.
 
+**Task Type Signature**: `Task<TResult, TProps, TState, TRootState, TError = unknown>`
+
+- Specify `Error` or custom error types for better type inference in `failure` callbacks
+- All error properties are automatically made **optional (deep)** for runtime safety
+- This prevents crashes from accessing missing/misspelled properties - you get `undefined` instead
+- Forces safe patterns: optional chaining `?.`, nullish coalescing `??`, or type guards
+
 ```typescript
 tasks: {
-  // Async with success/failure
+  // Async with success/failure (error defaults to unknown)
   FetchUser: ({ id }): Task<User, Props, State, RootState> => ({
     perform: () => fetch(`/api/users/${id}`).then((r) => r.json()),
     success: (user) => action("UserLoaded", { user }),
-    failure: (error: Error) => action("LoadFailed", { error: error.message })
+    failure: (error) => action("LoadFailed", { error: String(error) })
+  }),
+
+  // Async with explicit Error type
+  FetchUserTyped: ({ id }): Task<User, Props, State, RootState, Error> => ({
+    perform: () => fetch(`/api/users/${id}`).then((r) => r.json()),
+    success: (user) => action("UserLoaded", { user }),
+    failure: (error) => action("LoadFailed", { error: error.message ?? "Unknown error" })
+    // Note: error.message is optional (string | undefined) for safety
   }),
 
   // Effect-only (sync)
@@ -557,7 +572,22 @@ tasks: {
   FetchData: ({ id }): Task<Data, Props, State, RootState> => ({
     perform: () => fetch(`/api/${id}`).then((r) => r.json()),
     success: (data, { props, state, rootState }) => action("DataLoaded", { data }),
-    failure: (error: Error) => action("DataFailed", { error: error.message })
+    failure: (error) => action("DataFailed", { 
+      // error is unknown - use String() or type guards for safety
+      error: String(error) 
+    })
+  });
+}
+
+// Async with explicit Error type for better type safety
+tasks: {
+  FetchDataTyped: ({ id }): Task<Data, Props, State, RootState, Error> => ({
+    perform: () => fetch(`/api/${id}`).then((r) => r.json()),
+    success: (data, { props, state, rootState }) => action("DataLoaded", { data }),
+    failure: (error) => action("DataFailed", { 
+      // error.message is optional (string | undefined) - prevents crashes
+      error: error.message ?? "Unknown error" 
+    })
   });
 }
 
@@ -615,6 +645,41 @@ tasks: {
 ```
 
 ## Error Handling
+
+### Error Type Safety
+
+Task failure callbacks receive errors with **all properties optional (deep)** for runtime safety:
+
+```typescript
+// Even if you specify Error type, properties are optional
+tasks: {
+  FetchData: ({ id }): Task<Data, Props, State, RootState, Error> => ({
+    perform: () => fetch(`/api/${id}`).then((r) => r.json()),
+    failure: (error) => {
+      // error.message has type: string | undefined
+      // Safe patterns:
+      
+      // ✅ Optional chaining
+      const msg = error.message ?? "Unknown error";
+      
+      // ✅ Type guard
+      const msg2 = error instanceof Error ? error.message : String(error);
+      
+      // ❌ Direct access would require handling undefined
+      // error.message.toLowerCase() // TypeScript error
+      
+      return action("LoadFailed", { error: msg });
+    }
+  })
+}
+```
+
+**Why optional?** Prevents runtime crashes from:
+- Typos in property names (returns `undefined` instead of crashing)
+- Wrong error type assumptions
+- Missing properties on thrown values
+
+### State Patterns
 
 ```typescript
 // Loading/error/data states
@@ -931,7 +996,7 @@ Limitations: Time travel disabled, read-only monitoring
 9. **Test with componentTest** - Export Component type for type inference
 10. **Use withKey for lists** - Enable efficient VDOM updates when reordering
 11. **Context in actions** - `props`, `state`, `rootState` non-optional; `event` optional
-12. **TypeScript strict mode** - Add return types: `{ state: State; next: Next }`, `Task<Result, Props, State, RootState>`, `VNode`
+12. **TypeScript strict mode** - Add return types: `{ state: State; next: Next }`, `Task<Result, Props, State, RootState, Error?>`, `VNode`
 
 ## TypeScript Strict Mode
 
@@ -942,8 +1007,11 @@ Fully compatible with `"strict": true`. Add explicit return types:
 ({ step }, { state }): { state: State; next: Next } => ({ ... })
 ({ step }, { state }): { state: State } => ({ ... })
 
-// Task
+// Task (TError defaults to unknown)
 ({ id }): Task<User, Props, State, RootState> => ({ ... })
+
+// Task with explicit error type
+({ id }): Task<User, Props, State, RootState, Error> => ({ ... })
 
 // View
 (id, { state }): VNode => div(`#${id}`, ...)

@@ -175,13 +175,15 @@ export const log = {
       console.log(`%c\n...#${id} task "${label}" success`, "color: #dd8");
     }
   },
-  taskFailure(id: string, label: string, err: Error): void {
+  taskFailure(id: string, label: string, err: unknown): void {
     // Send to Redux DevTools
     if (devToolsConnection) {
       devToolsConnection.send(
         {
           type: `${id}/[Task] ${label}/failure`,
-          payload: { error: err.message },
+          payload: {
+            error: err && typeof err === "object" && "message" in err ? err.message : String(err)
+          },
           meta: { isTask: true, status: "failure" }
         },
         getAggregatedState()

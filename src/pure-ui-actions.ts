@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { patch, setHook, VNode } from "./vdom";
 export { html, VNode, memo, setHook } from "./vdom";
 import { log } from "./log";
@@ -40,7 +39,9 @@ const actionThunkCache = new Map<string, ActionThunk>();
 const taskThunkCache = new Map<string, TaskThunk>();
 
 // Module-level refs to root component's creators, typed via cast when passed to components
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let rootAction: GetActionThunk<any> | undefined;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let rootTask: GetTaskThunk<any> | undefined;
 let rootState: Record<string, unknown> | undefined | null;
 let renderRootId: string | undefined;
@@ -223,7 +224,7 @@ function performTask(
           log.taskSuccess(id, String(taskName));
           return runSuccess(result);
         })
-        .catch((err: Error) => {
+        .catch((err: unknown) => {
           log.taskFailure(id, String(taskName), err);
           return runFailure(err);
         });
