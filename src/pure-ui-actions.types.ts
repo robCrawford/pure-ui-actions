@@ -56,8 +56,8 @@ export type Task<TResult, TProps, TState, TRootState, TError = unknown> = {
 };
 
 export type Component = {
-  Props?: Record<string, unknown> | null;
-  State?: Record<string, unknown> | null;
+  Props?: Record<string, unknown>;
+  State?: Record<string, unknown>;
   ActionPayloads?: Record<string, unknown>;
   TaskPayloads?: Record<string, unknown>;
   RootState?: Record<string, unknown>;
@@ -69,10 +69,10 @@ export type ComponentInstance = {
   id: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: Config<any>;
-  state?: Record<string, unknown> | null;
-  props?: Record<string, unknown> | null;
-  prevProps?: Record<string, unknown> | null;
-  render: RenderFn<Record<string, unknown> | null>;
+  state?: Record<string, unknown>;
+  props?: Record<string, unknown>;
+  prevProps?: Record<string, unknown>;
+  render: RenderFn<Record<string, unknown>>;
   vnode?: VNode;
   isRoot: boolean;
   inCurrentRender: boolean;
@@ -110,4 +110,4 @@ export type GetConfig<TComponent extends Component> = (fns: {
   rootTask: GetTaskThunk<TComponent["RootTaskPayloads"]>;
 }) => Config<TComponent>;
 
-export type RenderFn<TProps> = (props?: TProps | null) => VNode | void;
+export type RenderFn<TProps> = (props?: TProps) => VNode | void;

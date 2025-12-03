@@ -6,13 +6,15 @@ export type Props = Readonly<{
   page: Page;
 }>;
 
+export type State = Readonly<Record<string, never>>;
+
 type ActionPayloads = Readonly<{
   Like: null;
 }>;
 
 export type Component = {
   Props: Props;
-  State: null;
+  State: State;
   ActionPayloads: ActionPayloads;
   RootState: RootState;
   RootActionPayloads: RootActionPayloads;
@@ -21,15 +23,13 @@ export type Component = {
 
 export default component<Component>(({ action, rootAction, rootTask }) => ({
   actions: {
-    Like: (_, { props, state }): { state: null; next: Next } => {
-      return {
-        state,
-        next: [
-          rootAction("Like", { page: props.page }),
-          rootTask("SetDocTitle", { title: "You like this!" })
-        ]
-      };
-    }
+    Like: (_, { props, state }): { state: State; next: Next } => ({
+      state, // Return existing state to avoid unnecessary render
+      next: [
+        rootAction("Like", { page: props.page }),
+        rootTask("SetDocTitle", { title: "You like this!" })
+      ]
+    })
   },
   view: (id, { props, rootState }): VNode =>
     button(`#${id}.like`, { on: { click: action("Like") } }, `👍 ${rootState.likes[props.page]}`)

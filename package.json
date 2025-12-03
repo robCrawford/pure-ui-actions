@@ -9,7 +9,8 @@
     "ts:check": "tsc --noEmit",
     "ts:build": "rm -rf ./dist && tsc",
     "test": "vitest run",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "check:project": "yarn ts:check && yarn lint && cd examples/spa && yarn ts:check && yarn lint && cd ../hello-world && yarn ts:check && yarn lint && cd ../../"
   },
   "author": "Robert Crawford",
   "repository": {

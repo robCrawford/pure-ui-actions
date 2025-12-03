@@ -5,7 +5,13 @@ import like from "../components/like";
 import { RootState, RootTaskPayloads } from "../app";
 const { div, span, a } = html;
 
+export type Props = Readonly<Record<string, never>>;
+
+export type State = Readonly<Record<string, never>>;
+
 export type Component = {
+  Props: Props;
+  State: State;
   RootState: RootState;
   RootTaskPayloads: RootTaskPayloads;
 };

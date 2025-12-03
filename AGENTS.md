@@ -190,8 +190,8 @@ tasks: {
 
 ```typescript
 export type Component = {
-  Props: Props; // or null if no props
-  State: State; // or null if stateless
+  Props: Props;
+  State: State;
   ActionPayloads: ActionPayloads;
   TaskPayloads: TaskPayloads; // optional if no tasks
   RootState: RootState; // optional - for child components
@@ -202,13 +202,10 @@ export type Component = {
 
 ### Type Patterns
 
-```typescript
-// Props/State - always Readonly
-export type Props = Readonly<{ title: string; count: number }>;
-export type State = Readonly<{ items: string[]; selected: boolean }>;
-
-// Empty props
-export type Props = Readonly<Record<string, never>>;
+````typescript
+// Props/State - always Readonly, always declare these aliases for clarity
+export type Props = Readonly<{ title: string; count: number }>; // For no props use `Readonly<Record<string, never>>`
+export type State = Readonly<{ items: string[]; selected: boolean }>; // For stateless component use `Readonly<Record<string, never>>`
 
 // ActionPayloads - map action names to payload types
 export type ActionPayloads = Readonly<{
@@ -220,13 +217,6 @@ export type ActionPayloads = Readonly<{
 export type TaskPayloads = Readonly<{
   FetchData: { id: string };
 }>;
-
-// Stateless component
-export type Component = {
-  Props: Props;
-  State: null;
-  ActionPayloads: ActionPayloads;
-};
 ```
 
 ### Function Signatures (TypeScript Strict Mode)
@@ -252,14 +242,6 @@ actions: {
   })
 }
 
-// Stateless action
-actions: {
-  DoSomething: (_, { props }): { state: null; next: Next } => ({
-    state: null,
-    next: rootAction("Something", { data: props.value })
-  })
-}
-
 // Task
 tasks: {
   FetchData: ({ id }): Task<Data, Props, State, RootState> => ({
@@ -273,7 +255,7 @@ tasks: {
 view(id: string, { props, state }: Context<Props, State, RootState>): VNode {
   return div(`#${id}`, state.count.toString());
 }
-```
+````
 
 ### Context Object
 
@@ -288,7 +270,7 @@ type Context<TProps, TState, TRootState> = {
 
 **Key points**:
 
-- `props`, `state`, `rootState` are **non-optional** (strict mode compatible)
+- `props`, `state`, `rootState` are **non-optional**
 - `event` only available in actions triggered by DOM events (not in `next`)
 - Task success/failure callbacks receive context without `event`
 
@@ -417,8 +399,8 @@ export type ChildProps = Readonly<{
 
 // Child component
 actions: {
-  HandleInput: (_, { props, event }): { state: null; next: Next } => ({
-    state: null,
+  HandleInput: (_, { props, state, event }): { state: State; next: Next } => ({
+    state, // Return existing state to avoid unnecessary render
     next: props.onChange({ value: (event?.target as HTMLInputElement)?.value })
   })
 }
@@ -474,84 +456,7 @@ view(id, { state }): VNode {
 
 ### Root Actions and Tasks
 
-Root app exports `RootState`, `RootActionPayloads`, `RootTaskPayloads` for truly global concerns (theme, auth). Child components import these types.
-
-```typescript
-// app.ts - Root component
-export type RootState = Readonly<{
-  theme: string;
-  likes: Record<string, number>;
-}>;
-
-export type RootActionPayloads = Readonly<{
-  SetTheme: { theme: string };
-  Like: { page: string };
-}>;
-
-export type RootTaskPayloads = Readonly<{
-  SetDocTitle: { title: string };
-}>;
-
-export type Component = {
-  Props: null;
-  State: RootState;
-  ActionPayloads: RootActionPayloads;
-  TaskPayloads: RootTaskPayloads;
-};
-
-export default component<Component>(({ action, task }) => ({
-  state: (): RootState => ({
-    theme: "light",
-    likes: { home: 0, about: 0 }
-  }),
-
-  actions: {
-    Like: ({ page }, { state }): { state: RootState; next: Next } => ({
-      state: {
-        ...state,
-        likes: { ...state.likes, [page]: state.likes[page] + 1 }
-      },
-      next: task("SetDocTitle", { title: `Liked ${page}!` })
-    })
-  },
-
-  tasks: {
-    SetDocTitle: ({ title }): Task<void, null, RootState, unknown> => ({
-      perform: (): void => {
-        document.title = title;
-      }
-    })
-  },
-
-  view(id, { state }): VNode {
-    return div(`#${id}.${state.theme}`, [likeButton(`#${id}-like-home`, { page: "home" })]);
-  }
-}));
-
-// likeButton.ts - Child component
-import { RootState, RootActionPayloads, RootTaskPayloads } from "../app";
-
-type Component = {
-  Props: Props;
-  State: null;
-  ActionPayloads: ActionPayloads;
-  RootState: RootState;
-  RootActionPayloads: RootActionPayloads;
-  RootTaskPayloads: RootTaskPayloads;
-};
-
-export default component<Component>(({ action, rootAction, rootTask }) => ({
-  actions: {
-    Like: (_, { props }): { state: null; next: Next } => ({
-      state: null,
-      next: [rootAction("Like", { page: props.page }), rootTask("SetDocTitle", { title: "Liked!" })]
-    })
-  },
-
-  view: (id, { props, rootState }): VNode =>
-    button({ on: { click: action("Like") } }, `👍 ${rootState.likes[props.page]}`)
-}));
-```
+Root app exports `RootState`, `RootActionPayloads`, `RootTaskPayloads` for truly global concerns (theme, auth). Child components import these types, see example `spa` app.
 
 **Note**: Changes to `rootState` re-render ALL components accessing it. Use sparingly.
 
@@ -572,10 +477,11 @@ tasks: {
   FetchData: ({ id }): Task<Data, Props, State, RootState> => ({
     perform: () => fetch(`/api/${id}`).then((r) => r.json()),
     success: (data, { props, state, rootState }) => action("DataLoaded", { data }),
-    failure: (error) => action("DataFailed", { 
-      // error is unknown - use String() or type guards for safety
-      error: String(error) 
-    })
+    failure: (error) =>
+      action("DataFailed", {
+        // error is unknown - use String() or type guards for safety
+        error: String(error)
+      })
   });
 }
 
@@ -584,10 +490,11 @@ tasks: {
   FetchDataTyped: ({ id }): Task<Data, Props, State, RootState, Error> => ({
     perform: () => fetch(`/api/${id}`).then((r) => r.json()),
     success: (data, { props, state, rootState }) => action("DataLoaded", { data }),
-    failure: (error) => action("DataFailed", { 
-      // error.message is optional (string | undefined) - prevents crashes
-      error: error.message ?? "Unknown error" 
-    })
+    failure: (error) =>
+      action("DataFailed", {
+        // error.message is optional (string | undefined) - prevents crashes
+        error: error.message ?? "Unknown error"
+      })
   });
 }
 
@@ -658,23 +565,24 @@ tasks: {
     failure: (error) => {
       // error.message has type: string | undefined
       // Safe patterns:
-      
+
       // ✅ Optional chaining
       const msg = error.message ?? "Unknown error";
-      
+
       // ✅ Type guard
       const msg2 = error instanceof Error ? error.message : String(error);
-      
+
       // ❌ Direct access would require handling undefined
       // error.message.toLowerCase() // TypeScript error
-      
+
       return action("LoadFailed", { error: msg });
     }
-  })
+  });
 }
 ```
 
 **Why optional?** Prevents runtime crashes from:
+
 - Typos in property names (returns `undefined` instead of crashing)
 - Wrong error type assumptions
 - Missing properties on thrown values
@@ -814,15 +722,16 @@ import { component, html, VNode, Next, Task } from "pure-ui-actions";
 const { div } = html;
 
 // Export types
-export type RootProps = Readonly<{
-  /* ... */
-}>;
+export type RootProps = Readonly<Record<string, never>>;
+
 export type RootState = Readonly<{
   /* ... */
 }>;
+
 export type RootActionPayloads = Readonly<{
   /* ... */
 }>;
+
 export type RootTaskPayloads = Readonly<{
   /* ... */
 }>;

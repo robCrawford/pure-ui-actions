@@ -43,7 +43,7 @@ const taskThunkCache = new Map<string, TaskThunk>();
 let rootAction: GetActionThunk<any> | undefined;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let rootTask: GetTaskThunk<any> | undefined;
-let rootState: Record<string, unknown> | undefined | null;
+let rootState: Record<string, unknown> | undefined;
 let renderRootId: string | undefined;
 
 function resetAppState(): void {
