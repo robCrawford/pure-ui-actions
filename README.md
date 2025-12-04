@@ -1,6 +1,7 @@
 # pure-ui-actions
 
-Co-authored with an AI agent to produce clean, predictable state flows that humans and AI can follow.
+Minimal wiring for declarative actions with a fast vdom library.
+Co-authored with an AI agent to produce clear state flows that humans and AI can follow.
 
 - Emphasis on pure functions
 - Named actions with deferred effects, allow [testing without mocks](https://www.youtube.com/watch?v=6EdXaWfoslc) and works with redux dev tools

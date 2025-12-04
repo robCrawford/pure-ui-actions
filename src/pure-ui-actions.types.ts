@@ -1,6 +1,6 @@
 import { VNode } from "./vdom";
 
-type ValueOf<TType> = TType[keyof TType];
+type ValueOf<T> = T[keyof T];
 
 type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 
@@ -49,7 +49,7 @@ export type TaskHandler<TData, TProps, TState, TRootState> = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => Task<any, TProps, TState, TRootState, any>;
 
-export type Task<TResult, TProps, TState, TRootState, TError = unknown> = {
+export type Task<TResult, TProps, TState, TRootState = unknown, TError = unknown> = {
   perform: () => Promise<TResult | void> | TResult | void;
   success?: (result: TResult, ctx: Context<TProps, TState, TRootState>) => Next;
   failure?: (error: DeepPartial<TError>, ctx: Context<TProps, TState, TRootState>) => Next;

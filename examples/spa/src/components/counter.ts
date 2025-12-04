@@ -81,7 +81,7 @@ export default component<Component>(({ action, task }) => ({
   },
 
   tasks: {
-    ValidateCount: ({ count }): Task<{ text: string }, Props, State, unknown> => {
+    ValidateCount: ({ count }): Task<{ text: string }, Props, State> => {
       return {
         perform: () => validateCount(count),
         success: (result) => action("SetFeedback", result),

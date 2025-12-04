@@ -53,22 +53,21 @@ See `examples/spa/src/components/counter.ts` for complete action patterns.
 
 **ONLY place for**: API calls, browser APIs, localStorage, timers, logging, DOM mutations.
 
-**Task Type Signature**: `Task<TResult, TProps, TState, TRootState, TError = unknown>`
+**Task Type Signature**: `Task<TResult, TProps, TState, TRootState = unknown, TError = unknown>`
 
-- Use `unknown` for unused type parameters (e.g., when not accessing rootState)
 - All error properties are automatically made **optional (deep)** for runtime safety
 
 ```typescript
 tasks: {
-  // Async task - use `unknown` when not accessing rootState
-  ValidateCount: ({ count }): Task<{ text: string }, Props, State, unknown> => ({
+  // Async task
+  ValidateCount: ({ count }): Task<{ text: string }, Props, State> => ({
     perform: () => validateCount(count),
     success: (result) => action("SetFeedback", result),
     failure: () => action("SetFeedback", { text: "Unavailable" })
   }),
 
   // Effect-only (sync) - no success/failure needed
-  SetDocTitle: ({ title }): Task<void, RootProps, RootState, unknown> => ({
+  SetDocTitle: ({ title }): Task<void, RootProps, RootState> => ({
     perform: (): void => {
       document.title = title;
     }
@@ -366,6 +365,5 @@ setHook(vnode, "destroy", () => cleanupChartLibrary(id));
 9. **Test with componentTest** - Export Component type for type inference
 10. **Use withKey for lists** - Enable efficient VDOM updates when reordering
 11. **Context in actions** - `props`, `state`, `rootState` non-optional; `event` optional
-12. **Use `unknown` for unused type params** - e.g., `Task<Result, Props, State, unknown>`
-13. **Component type fields are optional** - Only include what you use
-14. **TypeScript strict mode** - Add return types: `{ state: State; next: Next }`, `Task<...>`, `VNode`
+12. **Component type fields are optional** - Only include what you use
+13. **TypeScript strict mode** - Add return types: `{ state: State; next: Next }`, `Task<...>`, `VNode`
