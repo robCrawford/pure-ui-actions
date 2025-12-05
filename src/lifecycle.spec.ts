@@ -2,6 +2,7 @@
 import { vi } from "vitest";
 import {
   _setTestKey,
+  _resetForTest,
   component,
   html,
   mount,
@@ -20,8 +21,9 @@ describe("Component Lifecycle & State Management", () => {
   beforeEach(() => {
     patchSpy.mockClear();
     renderSpy.mockClear();
+    _resetForTest();
 
-    // Initialize app
+    // Initialize app element
     const appEl = document.createElement("div");
     appEl.setAttribute("id", "app");
     document.body.innerHTML = "";

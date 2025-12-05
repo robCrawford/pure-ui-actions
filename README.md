@@ -269,36 +269,6 @@ const { state } = actionTest("HandleInput", {}, {
 });
 ```
 
-## Efficient List Rendering
-
-Use `withKey` to add unique identifiers to list items for efficient updates when items can be reordered, added, or removed
-
-```JavaScript
-import { component, html, withKey } from "pure-ui-actions";
-const { div, ul, li } = html;
-
-export default component(() => ({
-  state: () => ({
-    items: [
-      { id: '1', label: 'A' },
-      { id: '2', label: 'B' },
-      { id: '3', label: 'C' }
-    ]
-  }),
-
-  view(id, { state }) {
-    return div(`#${id}`, [
-      ul([
-        // Keys help the VDOM library efficiently track changes
-        ...state.items.map(item =>
-          withKey(item.id, li(item.label))
-        )
-      ])
-    ]);
-  }
-}));
-```
-
 ## Component Memoization
 
 Use `memo` to skip re-rendering expensive components that **don't access `rootState`**. Like React's `memo`, it only re-renders when the comparison key changes.

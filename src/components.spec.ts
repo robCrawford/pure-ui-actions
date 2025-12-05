@@ -147,15 +147,15 @@ describe("pure-ui-actions components", () => {
     testReset();
   });
 
-  it("should render component and children when state changes", () => {
+  it("should render all components from root when state changes", () => {
     parentAction("Increment", { step: 1 })(testKey);
-    expect(renderSpy).toHaveBeenCalledTimes(2);
+    expect(renderSpy).toHaveBeenCalledTimes(3); // app + parent + child
     expect(patchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("should not render parent when child state changes", () => {
+  it("should render all components from root when child state changes", () => {
     childAction("Increment", { step: 1 })(testKey);
-    expect(renderSpy).toHaveBeenCalledTimes(1);
+    expect(renderSpy).toHaveBeenCalledTimes(3); // app + parent + child
     expect(patchSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -183,7 +183,7 @@ describe("pure-ui-actions components", () => {
       expect(validateSuccess).toHaveBeenCalled();
       expect(validateFailure).not.toHaveBeenCalled();
       expect(parentActions.Increment).toHaveBeenCalledWith({ step: 5 }, ctx);
-      expect(renderSpy).toHaveBeenCalledTimes(2);
+      expect(renderSpy).toHaveBeenCalledTimes(3); // app + parent + child
       expect(patchSpy).toHaveBeenCalledTimes(1);
     });
   });
@@ -196,7 +196,7 @@ describe("pure-ui-actions components", () => {
       expect(validateSuccess).not.toHaveBeenCalled();
       expect(validateFailure).toHaveBeenCalled();
       expect(parentActions.Decrement).toHaveBeenCalledWith({ step: 3 }, ctx);
-      expect(renderSpy).toHaveBeenCalledTimes(2);
+      expect(renderSpy).toHaveBeenCalledTimes(3); // app + parent + child
       expect(patchSpy).toHaveBeenCalledTimes(1);
     });
   });
@@ -207,7 +207,7 @@ describe("pure-ui-actions components", () => {
       expect(validateSuccess).toHaveBeenCalled();
       expect(validateFailure).not.toHaveBeenCalled();
       expect(parentActions.Increment).toHaveBeenCalledWith({ step: 5 }, ctx);
-      expect(renderSpy).toHaveBeenCalledTimes(2);
+      expect(renderSpy).toHaveBeenCalledTimes(3); // app + parent + child
       expect(patchSpy).toHaveBeenCalledTimes(1);
     });
   });
@@ -218,7 +218,7 @@ describe("pure-ui-actions components", () => {
       expect(validateSuccess).not.toHaveBeenCalled();
       expect(validateFailure).toHaveBeenCalled();
       expect(parentActions.Decrement).toHaveBeenCalledWith({ step: 3 }, ctx);
-      expect(renderSpy).toHaveBeenCalledTimes(2);
+      expect(renderSpy).toHaveBeenCalledTimes(3); // app + parent + child
       expect(patchSpy).toHaveBeenCalledTimes(1);
     });
   });
@@ -285,17 +285,17 @@ describe("pure-ui-actions components", () => {
     };
 
     parentAction("Increment", { step: 1 })(testKey);
-    expect(renderSpy).toHaveBeenCalledTimes(2);
+    expect(renderSpy).toHaveBeenCalledTimes(3); // app + parent + child
     expect(patchSpy).toHaveBeenCalledTimes(1);
     testRefs(["child", "parent", "app"]);
 
     parentAction("Increment", { step: 99 })(testKey);
-    expect(renderSpy).toHaveBeenCalledTimes(3);
+    expect(renderSpy).toHaveBeenCalledTimes(5); // +app + parent (child not rendered)
     expect(patchSpy).toHaveBeenCalledTimes(2);
     testRefs(["parent", "app"]);
 
     parentAction("Decrement", { step: 1 })(testKey);
-    expect(renderSpy).toHaveBeenCalledTimes(5);
+    expect(renderSpy).toHaveBeenCalledTimes(8); // +app + parent + child
     expect(patchSpy).toHaveBeenCalledTimes(3);
     testRefs(["parent", "app", "child"]);
   });

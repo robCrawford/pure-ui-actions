@@ -1,6 +1,7 @@
 import { component, html, VNode } from "pure-ui-actions";
 import themeMenu from "../components/themeMenu";
 import like from "../components/like";
+import datesList from "../components/datesList";
 import { RootState, RootTaskPayloads } from "../app";
 const { div, span, a } = html;
 
@@ -28,7 +29,8 @@ export default component<Component>(({ rootTask }) => ({
           span(" | about page")
         ]),
         like("#about-like", { page: "aboutPage" }),
-        div(".intro", "This is the about page.")
+        div(".intro", "Filter dates by day name or number:"),
+        datesList("#dates-list")
       ])
     );
   }

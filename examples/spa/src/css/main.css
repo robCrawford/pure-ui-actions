@@ -213,3 +213,106 @@ button.like:hover {
   border-color: #495057;
   color: #f8f9fa;
 }
+
+/* Dates List Component */
+.dates-picker {
+  margin: 1rem 0;
+  max-width: 300px;
+}
+
+.dates-picker .filter-row {
+  margin-bottom: 0.5rem;
+}
+
+.dates-picker input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  box-sizing: border-box;
+}
+
+.dates-picker input:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.page.dark .dates-picker input {
+  background: #343a40;
+  border-color: #495057;
+  color: #f8f9fa;
+}
+
+.page.dark .dates-picker input:focus {
+  border-color: #6ea8fe;
+  box-shadow: 0 0 0 0.2rem rgba(110, 168, 254, 0.25);
+}
+
+.dates-picker .dates-info {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.page.dark .dates-picker .dates-info {
+  color: #adb5bd;
+}
+
+.dates-picker .dates-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  background: #fff;
+}
+
+.page.dark .dates-picker .dates-list {
+  background: #343a40;
+  border-color: #495057;
+}
+
+.dates-picker .dates-list li {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.1s ease;
+}
+
+.dates-picker .dates-list li:last-child {
+  border-bottom: none;
+}
+
+.dates-picker .dates-list li:hover {
+  background: #e9ecef;
+}
+
+.dates-picker .dates-list li.selected {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.dates-picker .dates-list li.selected:hover {
+  background: #0b5ed7;
+}
+
+.page.dark .dates-picker .dates-list li {
+  border-bottom-color: #495057;
+}
+
+.page.dark .dates-picker .dates-list li:hover {
+  background: #495057;
+}
+
+.page.dark .dates-picker .dates-list li.selected {
+  background: #6ea8fe;
+  color: #212529;
+}
+
+.page.dark .dates-picker .dates-list li.selected:hover {
+  background: #9ec5fe;
+}

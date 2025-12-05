@@ -38,32 +38,38 @@ export const getComponentRegistry = (): Map<string, ComponentInstance> => compon
 const actionThunkCache = new Map<string, ActionThunk>();
 const taskThunkCache = new Map<string, TaskThunk>();
 
-// Module-level refs to root component's creators, typed via cast when passed to components
+// Root component references
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let rootAction: GetActionThunk<any> | undefined;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let rootTask: GetTaskThunk<any> | undefined;
 let rootState: Record<string, unknown> | undefined;
-let renderRootId: string | undefined;
+
+// Render cycle state
+let renderingFromRoot = false;
+let stateChanged = false;
+let noRender = 0;
+
+const appId = "app";
 
 function resetAppState(): void {
   componentRegistry.clear();
   actionThunkCache.clear();
   taskThunkCache.clear();
 
-  rootState = undefined;
-  renderRootId = undefined;
   rootAction = undefined;
   rootTask = undefined;
+  rootState = undefined;
+
+  renderingFromRoot = false;
+  stateChanged = false;
+  noRender = 0;
 }
 
-const appId = "app";
-let internalKey = {}; // Private unique value
-export const _setTestKey = // Set for tests
-  <T extends object>(k: T): T => (internalKey = k);
-let noRender = 0;
-let rootStateChanged = false;
-let stateChanged = false;
+// Test utilities
+let internalKey = {};
+export const _setTestKey = <T extends object>(k: T): T => (internalKey = k);
+export const _resetForTest = resetAppState;
 
 // Helper to create stable cache keys
 function createCacheKey(id: string, name: string, data: unknown): string {
@@ -176,7 +182,6 @@ function executeAction(
 
   if (isRoot) {
     rootState = instance.state;
-    rootStateChanged = currStateChanged;
   }
 
   if (currStateChanged && instance.state) {
@@ -254,55 +259,52 @@ function runNext(instance: ComponentInstance, next: Next | undefined): void {
   }
 }
 
-// Render function
+// Render function - always renders from root to keep vnode tree consistent
 function renderComponentInstance(instance: ComponentInstance): VNode | undefined {
-  if (!noRender) {
-    if (rootStateChanged) {
+  if (!noRender && (stateChanged || instance.props !== instance.prevProps)) {
+    // Determine if this component should start the render cycle
+    let isRenderRoot = false;
+    if (!renderingFromRoot) {
+      // Redirect to app root if it exists and we're not it
       const rootInstance = componentRegistry.get(appId);
-      rootStateChanged = false;
-      if (rootInstance) {
+      if (rootInstance && !instance.isRoot) {
         return renderComponentInstance(rootInstance);
       }
-    } else if (stateChanged || instance.props !== instance.prevProps) {
-      let isRenderRoot = false;
-      if (!renderRootId) {
-        renderRootId = instance.id;
-        isRenderRoot = true;
-      }
-
-      const prevVNode = instance.vnode;
-      instance.vnode = instance.config.view(instance.id, {
-        props: instance.props ?? {},
-        state: instance.state ?? {},
-        rootState: rootState ?? {}
-      });
-      log.render(instance.id, instance.props);
-
-      // Update global state before patch so DevTools has accurate state
-      log.setStateGlobal(instance.id, instance.state);
-
-      if (isRenderRoot && prevVNode) {
-        patch(prevVNode, instance.vnode);
-        log.patch();
-        stateChanged = false;
-        renderRootId = undefined;
-
-        // Reset render flags
-        Array.from(componentRegistry.values()).forEach((inst) => {
-          inst.inCurrentRender = false;
-        });
-      }
-
-      if (isRenderRoot) {
-        publish("patch");
-      }
-
-      setRenderRef(instance);
+      // Start render cycle from this component (app root, or no app in tests)
+      renderingFromRoot = true;
+      isRenderRoot = true;
     }
+
+    // Mark as rendering to prevent cleanup during patch (destroy hooks may fire)
+    instance.inCurrentRender = true;
+
+    const prevVNode = instance.vnode;
+    instance.vnode = instance.config.view(instance.id, {
+      props: instance.props ?? {},
+      state: instance.state ?? {},
+      rootState: rootState ?? {}
+    });
+    log.render(instance.id, instance.props);
+    log.setStateGlobal(instance.id, instance.state);
+
+    // Only the component that started the render cycle patches the DOM
+    if (isRenderRoot && prevVNode) {
+      patch(prevVNode, instance.vnode);
+      log.patch();
+      publish("patch");
+      stateChanged = false;
+      renderingFromRoot = false;
+
+      // Reset render flags
+      Array.from(componentRegistry.values()).forEach((inst) => {
+        inst.inCurrentRender = false;
+      });
+    }
+
+    setCleanup(instance);
   }
 
   instance.prevProps = instance.props;
-
   return instance.vnode;
 }
 
@@ -410,10 +412,35 @@ export function renderComponent<TComponent extends Component>(
   });
   instance.prevProps = props;
 
-  setRenderRef(instance);
+  setCleanup(instance);
   log.setStateGlobal(id, instance.state);
 
   return instance.vnode;
+}
+
+function setCleanup(instance: ComponentInstance): void {
+  if (!instance.vnode) return;
+
+  setHook(instance.vnode, "destroy", () => {
+    const inst = componentRegistry.get(instance.id);
+    if (inst && !inst.inCurrentRender) {
+      componentRegistry.delete(instance.id);
+
+      // Clean up thunk caches
+      Array.from(actionThunkCache.keys()).forEach((key) => {
+        if (key.startsWith(`${instance.id}:`)) {
+          actionThunkCache.delete(key);
+        }
+      });
+      Array.from(taskThunkCache.keys()).forEach((key) => {
+        if (key.startsWith(`${instance.id}:`)) {
+          taskThunkCache.delete(key);
+        }
+      });
+
+      log.setStateGlobal(instance.id, undefined);
+    }
+  });
 }
 
 export function mount<TActions, TProps>({
@@ -450,39 +477,8 @@ export function mount<TActions, TProps>({
   }
 }
 
-export function withKey(key: string, vnode: VNode): VNode {
-  vnode.key = key;
-  return vnode;
-}
-
 function isDomEvent(e?: Record<string, unknown> | Event): e is Event {
   return Boolean(e && "eventPhase" in e && "target" in e && "type" in e);
-}
-
-function setRenderRef(instance: ComponentInstance): void {
-  if (!instance.vnode) return;
-
-  setHook(instance.vnode, "destroy", () => {
-    const inst = componentRegistry.get(instance.id);
-    if (inst && !inst.inCurrentRender && instance.id !== renderRootId) {
-      // Clean up registry
-      componentRegistry.delete(instance.id);
-
-      // Clean up thunk caches
-      Array.from(actionThunkCache.keys()).forEach((key) => {
-        if (key.startsWith(`${instance.id}:`)) {
-          actionThunkCache.delete(key);
-        }
-      });
-      Array.from(taskThunkCache.keys()).forEach((key) => {
-        if (key.startsWith(`${instance.id}:`)) {
-          taskThunkCache.delete(key);
-        }
-      });
-
-      log.setStateGlobal(instance.id, undefined);
-    }
-  });
 }
 
 function isThunk(next: Next): next is ActionThunk | TaskThunk {

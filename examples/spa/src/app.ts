@@ -93,7 +93,8 @@ export default component<Component>(() => ({
 
   view(id, { state }): VNode {
     return div(
-      `#${id}.page.${state.theme}`,
+      `#${id}.page`,
+      { class: { light: state.theme === "light", dark: state.theme === "dark" } },
       ((): VNode | undefined => {
         switch (state.page) {
           case "aboutPage":

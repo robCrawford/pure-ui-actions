@@ -269,13 +269,6 @@ See `examples/spa/src/components/notification.ts`:
 div(`#${id}.notification`, { class: { show: state.show && props.text.length } }, children);
 ```
 
-### Lists with Keys
-
-```typescript
-import { withKey } from "pure-ui-actions";
-ul(state.items.map((item) => withKey(item.id, li(item.name))));
-```
-
 ### Component Memoization
 
 **CRITICAL**: Only `memo` components that **DO NOT access `rootState`**.
@@ -363,7 +356,6 @@ setHook(vnode, "destroy", () => cleanupChartLibrary(id));
 7. **External events in mount init** - Wire routing/browser events there
 8. **Service functions for I/O** - Extract reusable I/O to services/
 9. **Test with componentTest** - Export Component type for type inference
-10. **Use withKey for lists** - Enable efficient VDOM updates when reordering
-11. **Context in actions** - `props`, `state`, `rootState` non-optional; `event` optional
-12. **Component type fields are optional** - Only include what you use
-13. **TypeScript strict mode** - Add return types: `{ state: State; next: Next }`, `Task<...>`, `VNode`
+10. **Context in actions** - `props`, `state`, `rootState` non-optional; `event` optional
+11. **Component type fields are optional** - Only include what you use
+12. **TypeScript strict mode** - Add return types: `{ state: State; next: Next }`, `Task<...>`, `VNode`
