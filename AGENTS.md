@@ -257,7 +257,7 @@ input({ on: { input: action("HandleInput"), blur: action("HandleBlur") } });
 ### Attributes and Properties
 
 ```typescript
-a({ attrs: { href: "/about", "data-navigo": true } }, "About"); // HTML attributes
+a({ attrs: { href: "/list", "data-navigo": true } }, "List"); // HTML attributes
 input({ props: { value: state.text, type: "text" } }); // DOM properties
 ```
 

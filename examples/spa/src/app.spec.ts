@@ -10,7 +10,7 @@ describe("App", () => {
       page: undefined,
       likes: {
         counterPage: 0,
-        aboutPage: 0
+        listPage: 0
       }
     });
   });
@@ -46,14 +46,14 @@ describe("App", () => {
   });
 
   describe("'Like' action", () => {
-    const { state, next } = actionTest<RootState>("Like", { page: "aboutPage" });
+    const { state, next } = actionTest<RootState>("Like", { page: "listPage" });
 
     it("should update state", () => {
       expect(state).toEqual({
         ...initialState,
         likes: {
           ...initialState.likes,
-          aboutPage: 1
+          listPage: 1
         }
       });
     });

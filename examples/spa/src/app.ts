@@ -1,6 +1,6 @@
 import { component, html, Task, VNode } from "pure-ui-actions";
 import counterPage from "./pages/counterPage";
-import aboutPage from "./pages/aboutPage";
+import listPage from "./pages/listPage";
 import "./router";
 const { div } = html;
 
@@ -11,7 +11,7 @@ export type RootState = Readonly<{
   page?: Page;
   likes: {
     counterPage: number;
-    aboutPage: number;
+    listPage: number;
   };
 }>;
 
@@ -25,7 +25,7 @@ export type RootTaskPayloads = Readonly<{
   SetDocTitle: { title: string };
 }>;
 
-export type Page = "counterPage" | "aboutPage";
+export type Page = "counterPage" | "listPage";
 
 export type Theme = "light" | "dark";
 
@@ -42,7 +42,7 @@ export default component<Component>(() => ({
     page: undefined,
     likes: {
       counterPage: 0,
-      aboutPage: 0
+      listPage: 0
     }
   }),
 
@@ -97,8 +97,8 @@ export default component<Component>(() => ({
       { class: { light: state.theme === "light", dark: state.theme === "dark" } },
       ((): VNode | undefined => {
         switch (state.page) {
-          case "aboutPage":
-            return aboutPage("#about-page");
+          case "listPage":
+            return listPage("#list-page");
 
           case "counterPage":
             return counterPage("#counter-page");

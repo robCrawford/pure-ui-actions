@@ -17,7 +17,7 @@ export type Component = {
 };
 
 export default component<Component>(({ rootTask }) => ({
-  init: rootTask("SetDocTitle", { title: "About Page" }),
+  init: rootTask("SetDocTitle", { title: "List Page" }),
 
   view(id): VNode {
     return div(
@@ -26,9 +26,9 @@ export default component<Component>(({ rootTask }) => ({
         themeMenu("#theme-menu"),
         div(".nav", [
           a({ attrs: { href: "/counter" + location.search, "data-navigo": true } }, "counter page"),
-          span(" | about page")
+          span(" | list page")
         ]),
-        like("#about-like", { page: "aboutPage" }),
+        like("#list-like", { page: "listPage" }),
         div(".intro", "Filter dates by day name or number:"),
         datesList("#dates-list")
       ])

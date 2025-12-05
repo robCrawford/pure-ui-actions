@@ -12,10 +12,10 @@ document.addEventListener("DOMContentLoaded", () =>
     // Manually invoking an action is an error, so `runRootAction` is provided
     // by `mount` for wiring up events to root actions (e.g. routing)
     init: (runRootAction: RunAction<RootActionPayloads>) => {
-      const about = (): void => runRootAction("SetPage", { page: "aboutPage" });
+      const list = (): void => runRootAction("SetPage", { page: "listPage" });
       const counter = (): void => runRootAction("SetPage", { page: "counterPage" });
 
-      router.on({ about, counter, "*": counter }).resolve();
+      router.on({ list, counter, "*": counter }).resolve();
 
       subscribe("patch", () => {
         router.updatePageLinks();
