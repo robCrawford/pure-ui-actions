@@ -269,50 +269,9 @@ const { state } = actionTest("HandleInput", {}, {
 });
 ```
 
-## Component Memoization
+## VDOM Optimizations
 
-Use `memo` to skip re-rendering expensive components that **don't access `rootState`**. Like React's `memo`, it only re-renders when the comparison key changes.
-
-**⚠️ Only use for components that don't read `rootState`** — memoized components bypass the normal render flow when rootState changes, so they won't see updates. Prefer local state or props (see [AGENTS.md](./AGENTS.md) for state management guidance).
-
-```JavaScript
-import { component, html, memo } from "pure-ui-actions";
-const { div, ul, li } = html;
-
-const listComponent = (id, { items }) =>
-  div(`#${id}`, [
-    ul(items.map(item => li(item.name)))
-  ]);
-
-export default component(() => ({
-  state: () => ({
-    items: [/* ... */],
-    counter: 0  // Unrelated state
-  }),
-
-  actions: {
-    Increment: (_, { state }) => ({
-      state: { ...state, counter: state.counter + 1 }
-    })
-  },
-
-  view(id, { state }) {
-    return div(`#${id}`, [
-      div(`Counter: ${state.counter}`),
-
-      // Memoized: counter changes don't re-render the list
-      memo(
-        `#${id}-list`,
-        listComponent,
-        { items: state.items },
-        state.items  // Only re-renders when items change
-      )
-    ]);
-  }
-}));
-```
-
-Components that need `rootState` should be rendered normally or receive it as explicit props.
+Snabbdom's `key` for list diffing and `memo` (thunk) for memoization are available. See [AGENTS.md](./AGENTS.md#list-keys) for usage patterns and `examples/spa/src/components/datesList.ts` for a working example.
 
 ---
 

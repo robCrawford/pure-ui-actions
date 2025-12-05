@@ -12,6 +12,7 @@ The `examples/spa/` directory is the canonical reference. Study these files:
 | `src/components/notification.ts` | ActionThunk callback props, conditional classes                                          |
 | `src/components/like.ts`         | Stateless component with rootState/rootAction/rootTask                                   |
 | `src/components/themeMenu.ts`    | Minimal component (only RootActionPayloads, no local state)                              |
+| `src/components/datesList.ts`    | `memo` for memoization, `key` for list diffing, event delegation                         |
 | `src/pages/counterPage.ts`       | Page component with rootTask init                                                        |
 | `src/services/validation.ts`     | Service function pattern                                                                 |
 | `*.spec.ts` files                | Testing patterns                                                                         |
@@ -269,14 +270,47 @@ See `examples/spa/src/components/notification.ts`:
 div(`#${id}.notification`, { class: { show: state.show && props.text.length } }, children);
 ```
 
+### <a id="list-keys"></a>List Keys
+
+Use `key` on list items for efficient diffing when items are added, removed, or reordered:
+
+```typescript
+items.map((item) => li({ key: item.id }, item.name));
+```
+
 ### Component Memoization
 
-**CRITICAL**: Only `memo` components that **DO NOT access `rootState`**.
+Use `memo` (snabbdom's `thunk`) to skip re-rendering when args haven't changed.
+
+**CRITICAL**: Only `memo` render functions that **DO NOT access `rootState`**.
+
+See `examples/spa/src/components/datesList.ts` for the complete pattern:
 
 ```typescript
 import { memo } from "pure-ui-actions";
-memo(`#${id}-list`, listComponent, { items: state.items }, state.items);
+
+// Render function must be module-level (stable reference)
+const renderList = (filter: string, selected: string | null): VNode =>
+  ul(
+    ".list",
+    filterItems(filter).map((item) =>
+      li({ key: item.id, class: { selected: selected === item.id } }, item.label)
+    )
+  );
+
+// In view: memo(selector, key, renderFn, args)
+// - selector: element selector with tag name (e.g., "ul.list")
+// - key: stable string for vnode identity
+// - renderFn: module-level function (stable reference)
+// - args: array of primitives/stable refs - compared to decide if re-render needed
+memo("ul.list", "my-list", renderList, [state.filterText, state.selectedId]);
 ```
+
+**Key requirements for memo to work:**
+
+- Render function must be defined at module level (not inline)
+- Args must be primitives or stable references (not new arrays/objects each render)
+- The selector must include the tag name (e.g., `ul.list` not `.list`)
 
 ## Testing
 
