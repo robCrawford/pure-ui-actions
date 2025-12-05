@@ -5,9 +5,16 @@
   "type": "module",
   "main": "dist/pure-ui-actions.js",
   "types": "dist/pure-ui-actions.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/pure-ui-actions.d.ts",
+      "import": "./dist/pure-ui-actions.js"
+    }
+  },
+  "sideEffects": false,
   "scripts": {
     "ts:check": "tsc --noEmit",
-    "ts:build": "rm -rf ./dist && tsc",
+    "ts:build": "rm -rf ./dist && tsc -p tsconfig.build.json",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts'",
     "check:project": "yarn ts:check && yarn lint && cd examples/spa && yarn ts:check && yarn lint && cd ../hello-world && yarn ts:check && yarn lint && cd ../../"
@@ -17,6 +24,10 @@
     "type": "git",
     "url": "https://github.com/robCrawford/pure-ui-actions"
   },
+  "homepage": "https://github.com/robCrawford/pure-ui-actions#readme",
+  "bugs": {
+    "url": "https://github.com/robCrawford/pure-ui-actions/issues"
+  },
   "license": "MIT",
   "keywords": [
     "pure-functions",
@@ -24,7 +35,10 @@
     "unidirectional",
     "hyperscript",
     "typescript",
-    "virtual-dom"
+    "virtual-dom",
+    "state-management",
+    "ui-framework",
+    "functional"
   ],
   "devDependencies": {
     "@eslint/js": "^9.39.1",
