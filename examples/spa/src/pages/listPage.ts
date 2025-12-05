@@ -29,7 +29,6 @@ export default component<Component>(({ rootTask }) => ({
           span(" | list page")
         ]),
         like("#list-like", { page: "listPage" }),
-        div(".intro", "Filter dates by day name or number:"),
         datesList("#dates-list")
       ])
     );

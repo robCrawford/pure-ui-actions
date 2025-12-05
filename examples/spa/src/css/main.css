@@ -112,11 +112,6 @@ button.like:hover {
   color: #adb5bd;
 }
 
-.intro {
-  margin: 1.5rem 0;
-  font-size: 1rem;
-}
-
 .counter {
   display: inline-block;
   vertical-align: top;
@@ -216,12 +211,15 @@ button.like:hover {
 
 /* Dates List Component */
 .dates-picker {
-  margin: 1rem 0;
+  margin: 1.5rem 0;
   max-width: 300px;
 }
 
-.dates-picker .filter-row {
-  margin-bottom: 0.5rem;
+.dates-picker .ui-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
 }
 
 .dates-picker input {
@@ -250,10 +248,13 @@ button.like:hover {
   box-shadow: 0 0 0 0.2rem rgba(110, 168, 254, 0.25);
 }
 
+.dates-picker .help-toggle {
+  padding: 2px 6px 0;
+}
+
 .dates-picker .dates-info {
   font-size: 0.85rem;
   color: #6c757d;
-  margin-bottom: 0.5rem;
 }
 
 .page.dark .dates-picker .dates-info {
