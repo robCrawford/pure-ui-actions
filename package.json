@@ -14,7 +14,7 @@
   "sideEffects": false,
   "scripts": {
     "ts:check": "tsc --noEmit",
-    "ts:build": "rm -rf ./dist && tsc -p tsconfig.build.json",
+    "ts:build": "rm -rf ./dist && tsc -p tsconfig.build.json && esbuild dist/*.js --minify --outdir=dist --allow-overwrite",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts'",
     "check:project": "yarn ts:check && yarn lint && cd examples/spa && yarn ts:check && yarn lint && cd ../hello-world && yarn ts:check && yarn lint && cd ../../"
@@ -46,6 +46,7 @@
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
     "@vitest/ui": "^2.1.8",
+    "esbuild": "^0.27.2",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
